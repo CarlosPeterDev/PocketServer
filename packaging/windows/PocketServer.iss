@@ -1,7 +1,7 @@
 [Setup]
 AppId=PocketServer
 AppName=PocketServer
-AppVersion=0.1.0
+AppVersion={#AppVersion}
 DefaultDirName={localappdata}\Programs\PocketServer
 DefaultGroupName=PocketServer
 PrivilegesRequired=lowest

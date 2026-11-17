@@ -17,3 +17,13 @@ flutter run
 
 GitHub Actions builds an Android APK and AAB and a Windows x64 portable archive
 and installer. Android CI packages use a debug signing key and are for testing.
+
+## Versioned releases
+
+Update the app version and add a matching `## vMAJOR.MINOR.PATCH` section in
+`CHANGELOG.md`. Push the corresponding version tag, then dispatch
+`release.yml` using that tag. The workflow tests both platforms, checks
+artifact hashes, and requires the Android signing secrets
+`ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`
+and `ANDROID_KEY_PASSWORD`. Keep the keystore and passwords outside Git.
+Windows packages currently use an unsigned installer.

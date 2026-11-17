@@ -4,6 +4,20 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      sign-android:
+        type: boolean
+        default: false
+    secrets:
+      ANDROID_KEYSTORE_BASE64:
+        required: false
+      ANDROID_KEYSTORE_PASSWORD:
+        required: false
+      ANDROID_KEY_ALIAS:
+        required: false
+      ANDROID_KEY_PASSWORD:
+        required: false
 
 permissions:
   contents: read
@@ -38,15 +52,33 @@ jobs:
           flutter test
       - name: Build APK and app bundle
         working-directory: ${{ env.APP_DIR }}
+        env:
+          SIGN_ANDROID: ${{ inputs.sign-android || false }}
+          ANDROID_KEYSTORE_BASE64: ${{ inputs.sign-android && secrets.ANDROID_KEYSTORE_BASE64 || '' }}
+          POCKETSERVER_STORE_PASSWORD: ${{ inputs.sign-android && secrets.ANDROID_KEYSTORE_PASSWORD || '' }}
+          POCKETSERVER_KEY_ALIAS: ${{ inputs.sign-android && secrets.ANDROID_KEY_ALIAS || '' }}
+          POCKETSERVER_KEY_PASSWORD: ${{ inputs.sign-android && secrets.ANDROID_KEY_PASSWORD || '' }}
         run: |
+          if [[ "$SIGN_ANDROID" == true ]]; then
+            : "${ANDROID_KEYSTORE_BASE64:?Android keystore secret is required}"
+            : "${POCKETSERVER_STORE_PASSWORD:?Android keystore password is required}"
+            : "${POCKETSERVER_KEY_ALIAS:?Android key alias is required}"
+            : "${POCKETSERVER_KEY_PASSWORD:?Android key password is required}"
+            umask 077
+            POCKETSERVER_STORE_FILE="$(mktemp "$RUNNER_TEMP/pocketserver-signing.XXXXXX")"
+            export POCKETSERVER_STORE_FILE
+            trap 'rm -f -- "$POCKETSERVER_STORE_FILE"' EXIT
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$POCKETSERVER_STORE_FILE"
+            unset ANDROID_KEYSTORE_BASE64
+          fi
           flutter build apk --release
           flutter build appbundle --release
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk dist/PocketServer-ci.apk
-          cp build/app/outputs/bundle/release/app-release.aab dist/PocketServer-ci.aab
+          cp build/app/outputs/flutter-apk/app-release.apk dist/PocketServer-Android.apk
+          cp build/app/outputs/bundle/release/app-release.aab dist/PocketServer-Android.aab
           cp FLUTTER_TEMPLATE_LICENSE.txt dist/
           cd dist
-          sha256sum PocketServer-ci.apk PocketServer-ci.aab > SHA256SUMS.txt
+          sha256sum PocketServer-Android.apk PocketServer-Android.aab > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: PocketServer-Android
@@ -89,7 +121,10 @@ jobs:
             choco install innosetup --yes --no-progress
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
-          & $inno "/DAppSource=$releaseDir" "/O$dist" packaging/windows/PocketServer.iss
+          $versionLine = Get-Content "$env:APP_DIR/pubspec.yaml" | Select-String '^version: ([0-9]+\.[0-9]+\.[0-9]+)\+[0-9]+$'
+          if (!$versionLine) { throw 'Expected an app version in MAJOR.MINOR.PATCH+BUILD form.' }
+          $version = $versionLine.Matches[0].Groups[1].Value
+          & $inno "/DAppSource=$releaseDir" "/DAppVersion=$version" "/O$dist" packaging/windows/PocketServer.iss
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Get-ChildItem $dist -File | Get-FileHash -Algorithm SHA256 |
             ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } |

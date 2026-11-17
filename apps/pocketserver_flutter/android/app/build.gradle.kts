@@ -4,6 +4,8 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val releaseStoreFile = providers.environmentVariable("POCKETSERVER_STORE_FILE").orNull
+
 android {
     namespace = "com.pocketserver.app"
     compileSdk = flutter.compileSdkVersion
@@ -29,11 +31,23 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("pocketserverRelease") {
+                storeFile = file(releaseStoreFile)
+                storePassword = providers.environmentVariable("POCKETSERVER_STORE_PASSWORD").get()
+                keyAlias = providers.environmentVariable("POCKETSERVER_KEY_ALIAS").get()
+                keyPassword = providers.environmentVariable("POCKETSERVER_KEY_PASSWORD").get()
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            // CI uses a test key. The explicit release workflow provides a release keystore.
+            signingConfig = signingConfigs.getByName(
+                if (releaseStoreFile == null) "debug" else "pocketserverRelease"
+            )
         }
     }
 }
