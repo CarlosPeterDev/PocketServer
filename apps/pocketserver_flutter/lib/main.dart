@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:pocketserver_contracts/pocketserver_contracts.dart';
 
+import 'dashboard_page.dart';
 import 'files_page.dart';
 import 'native_storage.dart';
 
@@ -73,6 +74,11 @@ class PocketServerApp extends StatelessWidget {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
+                        const _AppCard(
+                          title: 'Web dashboard',
+                          icon: Icons.dns_outlined,
+                          page: DashboardPage(),
+                        ),
                         for (final view in LibraryView.values)
                           _AppCard(
                             title: view.title,
