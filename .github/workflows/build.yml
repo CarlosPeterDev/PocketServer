@@ -56,10 +56,12 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: Use JDK 21 for Android Gradle and lint
+        run: flutter config --jdk-dir="$JAVA_HOME"
       - name: Verify shared contracts
         working-directory: packages/contracts
         run: |
