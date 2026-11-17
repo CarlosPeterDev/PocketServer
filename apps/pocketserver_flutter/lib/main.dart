@@ -2,12 +2,13 @@ import 'package:material_ui/material_ui.dart';
 import 'package:pocketserver_contracts/pocketserver_contracts.dart';
 
 import 'dashboard_page.dart';
+import 'dashboard_server.dart';
 import 'files_page.dart';
 import 'native_storage.dart';
 
 void main() => runApp(PocketServerApp(host: HostDiagnostics.current()));
 
-class PocketServerApp extends StatelessWidget {
+class PocketServerApp extends StatefulWidget {
   const PocketServerApp({
     super.key,
     required this.host,
@@ -18,7 +19,22 @@ class PocketServerApp extends StatelessWidget {
   final Future<int> Function() readStorage;
 
   @override
+  State<PocketServerApp> createState() => _PocketServerAppState();
+}
+
+class _PocketServerAppState extends State<PocketServerApp> {
+  final _dashboard = ValueNotifier<DashboardServer?>(null);
+
+  @override
+  void dispose() {
+    _dashboard.value?.close();
+    _dashboard.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final host = widget.host;
     final platform = switch (host.platform) {
       HostPlatform.android => 'Android',
       HostPlatform.windows => 'Windows',
@@ -59,7 +75,7 @@ class PocketServerApp extends StatelessWidget {
                     subtitle: Text('${host.logicalProcessors}'),
                   ),
                   if (host.platform != HostPlatform.unsupported)
-                    _StorageTile(readStorage: readStorage),
+                    _StorageTile(readStorage: widget.readStorage),
                   if (host.platform != HostPlatform.unsupported) ...[
                     const SizedBox(height: 24),
                     Text(
@@ -74,10 +90,13 @@ class PocketServerApp extends StatelessWidget {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
-                        const _AppCard(
-                          title: 'Web dashboard',
-                          icon: Icons.dns_outlined,
-                          page: DashboardPage(),
+                        ValueListenableBuilder<DashboardServer?>(
+                          valueListenable: _dashboard,
+                          builder: (context, server, child) => _AppCard(
+                            title: server == null ? 'Web dashboard' : 'Server running',
+                            icon: Icons.dns_outlined,
+                            page: DashboardPage(session: _dashboard),
+                          ),
                         ),
                         for (final view in LibraryView.values)
                           _AppCard(

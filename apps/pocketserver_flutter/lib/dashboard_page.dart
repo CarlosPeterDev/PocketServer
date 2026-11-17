@@ -9,14 +9,16 @@ import 'dashboard_server.dart';
 import 'library_location.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  const DashboardPage({super.key, required this.session});
+
+  final ValueNotifier<DashboardServer?> session;
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  DashboardServer? _server;
+  DashboardServer? get _server => widget.session.value;
   bool _busy = false;
   String? _error;
 
@@ -77,7 +79,7 @@ class _DashboardPageState extends State<DashboardPage> {
         await server.close();
         return;
       }
-      setState(() => _server = server);
+      setState(() => widget.session.value = server);
     } on StateError catch (error) {
       if (mounted) setState(() => _error = error.message);
     } on Exception {
@@ -96,14 +98,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _stop() async {
     final server = _server;
-    setState(() => _server = null);
+    setState(() => widget.session.value = null);
     await server?.close();
-  }
-
-  @override
-  void dispose() {
-    _server?.close();
-    super.dispose();
   }
 
   @override
@@ -115,7 +111,7 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.all(16),
         children: [
           if (server == null) ...[
-            const Text('Browse, upload and download PocketServer files. Keep this screen open while serving.'),
+            const Text('Browse, upload and play PocketServer files from a browser.'),
             const SizedBox(height: 12),
             FilledButton(
               onPressed: _busy ? null : () => _start(lan: false),
@@ -138,6 +134,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             const ListTile(title: Text('Username'), subtitle: Text('pocketserver')),
             ListTile(title: const Text('Session password'), subtitle: SelectableText(server.password)),
+            const Text('You can leave this screen while PocketServer stays open.'),
             OutlinedButton(onPressed: _stop, child: const Text('Stop server')),
           ],
           if (_busy) const LinearProgressIndicator(),
