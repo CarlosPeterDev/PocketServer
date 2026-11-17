@@ -24,8 +24,9 @@ class BackupLibrary {
 
   Future<void> create() async {
     final sources = await files.list();
-    if (sources.isEmpty)
+    if (sources.isEmpty) {
       throw StateError('Import files before creating a backup.');
+    }
     await root.create(recursive: true);
     final pending = await root.createTemp('pending-');
     try {
