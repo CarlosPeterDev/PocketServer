@@ -1,7 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:pocketserver_contracts/pocketserver_contracts.dart';
 
-import 'backups_page.dart';
 import 'files_page.dart';
 import 'native_storage.dart';
 
@@ -61,16 +60,26 @@ class PocketServerApp extends StatelessWidget {
                   if (host.platform != HostPlatform.unsupported)
                     _StorageTile(readStorage: readStorage),
                   if (host.platform != HostPlatform.unsupported) ...[
-                    for (final view in LibraryView.values)
-                      _AppCard(
-                        title: view.title,
-                        icon: view.icon,
-                        page: FilesPage(view: view),
-                      ),
-                    const _AppCard(
-                      title: 'Backups',
-                      icon: Icons.backup_outlined,
-                      page: BackupsPage(),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Apps',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 12),
+                    GridView.extent(
+                      maxCrossAxisExtent: 160,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: [
+                        for (final view in LibraryView.values)
+                          _AppCard(
+                            title: view.title,
+                            icon: view.icon,
+                            page: FilesPage(view: view),
+                          ),
+                      ],
                     ),
                   ],
                 ],
@@ -91,14 +100,26 @@ class _AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Card(
-      child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () =>
-            Navigator.of(context)
-                .push(MaterialPageRoute<void>(builder: (_) => page)),
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => page),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              backgroundColor: colors.primaryContainer,
+              foregroundColor: colors.onPrimaryContainer,
+              child: Icon(icon),
+            ),
+            const SizedBox(height: 8),
+            Text(title, textAlign: TextAlign.center),
+          ],
+        ),
       ),
     );
   }

@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pocketserver_flutter/backup_library.dart';
 import 'package:pocketserver_flutter/file_library.dart';
 
 void main() {
@@ -36,26 +35,4 @@ void main() {
       ]),
     );
   });
-
-  test(
-    'restores a local snapshot without replacing an existing file',
-    () async {
-      await importReport(1);
-      final backups = BackupLibrary(library);
-      await backups.create();
-      await importReport(2);
-
-      final snapshot = (await BackupLibrary(library).list()).single;
-      expect(await backups.restore(snapshot).toList(), [1]);
-      final files = await library.list();
-      expect(
-        await Future.wait(files.map((file) => file.readAsBytes())),
-        unorderedEquals([
-          [1],
-          [1],
-          [2],
-        ]),
-      );
-    },
-  );
 }
