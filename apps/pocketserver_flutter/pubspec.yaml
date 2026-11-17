@@ -8,6 +8,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  file_selector: ^1.1.0
+  path_provider: ^2.1.5
   material_ui: ^1.11.1
   pocketserver_contracts:
     path: ../../packages/contracts

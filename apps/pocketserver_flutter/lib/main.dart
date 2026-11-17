@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:pocketserver_contracts/pocketserver_contracts.dart';
 
 import 'native_storage.dart';
+import 'files_page.dart';
 
 void main() => runApp(PocketServerApp(host: HostDiagnostics.current()));
 
@@ -30,34 +31,52 @@ class PocketServerApp extends StatelessWidget {
         colorSchemeSeed: Colors.teal,
         brightness: Brightness.dark,
       ),
-      home: Scaffold(
-        appBar: AppBar(title: const Text('PocketServer')),
-        body: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640),
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Text(
-                  'Host diagnostics',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                ListTile(
-                  title: const Text('Platform'),
-                  subtitle: Text(platform),
-                ),
-                ListTile(
-                  title: const Text('OS version'),
-                  subtitle: SelectableText(host.operatingSystemVersion),
-                ),
-                ListTile(
-                  title: const Text('Logical processors'),
-                  subtitle: Text('${host.logicalProcessors}'),
-                ),
-                if (host.platform != HostPlatform.unsupported)
-                  _StorageTile(readStorage: readStorage),
-              ],
+      home: Builder(
+        builder: (context) => Scaffold(
+          appBar: AppBar(title: const Text('PocketServer')),
+          body: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  if (host.platform != HostPlatform.unsupported)
+                    Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.folder_outlined),
+                        title: const Text('Files'),
+                        subtitle: const Text(
+                          'Import and browse personal files',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const FilesPage(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  Text(
+                    'Host diagnostics',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  ListTile(
+                    title: const Text('Platform'),
+                    subtitle: Text(platform),
+                  ),
+                  ListTile(
+                    title: const Text('OS version'),
+                    subtitle: SelectableText(host.operatingSystemVersion),
+                  ),
+                  ListTile(
+                    title: const Text('Logical processors'),
+                    subtitle: Text('${host.logicalProcessors}'),
+                  ),
+                  if (host.platform != HostPlatform.unsupported)
+                    _StorageTile(readStorage: readStorage),
+                ],
+              ),
             ),
           ),
         ),
