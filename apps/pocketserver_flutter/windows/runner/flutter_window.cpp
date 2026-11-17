@@ -60,8 +60,6 @@ bool FlutterWindow::OnCreate() {
         result->Success(flutter::EncodableValue(
             static_cast<int64_t>(available.QuadPart)));
       });
-  static_site_ = std::make_unique<StaticSiteController>(
-      flutter_controller_->engine()->messenger(), GetHandle());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -77,7 +75,6 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
-  static_site_.reset();
   if (host_diagnostics_channel_) {
     host_diagnostics_channel_->SetMethodCallHandler(nullptr);
     host_diagnostics_channel_.reset();

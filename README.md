@@ -1,5 +1,7 @@
 # PocketServer
 
+PocketServer is a CasaOS-inspired home server for personal storage and locally owned media. The current app provides host and storage diagnostics.
+
 Flutter application targeting Android 8.0+ and Windows 10/11. The initial
 application displays host diagnostics and available app storage on the native
 targets. The shared Dart contracts
