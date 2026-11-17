@@ -115,7 +115,7 @@ class _DashboardPageState extends State<DashboardPage> {
         padding: const EdgeInsets.all(16),
         children: [
           if (server == null) ...[
-            const Text('Browse and download your PocketServer files. Keep this screen open while serving.'),
+            const Text('Browse, upload and download PocketServer files. Keep this screen open while serving.'),
             const SizedBox(height: 12),
             FilledButton(
               onPressed: _busy ? null : () => _start(lan: false),

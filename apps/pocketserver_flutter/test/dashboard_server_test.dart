@@ -30,10 +30,32 @@ void main() {
       return request.close();
     }
 
+    Future<int> upload(String origin) async {
+      final uri = server.url.resolve('/upload?name=from-browser.txt');
+      final request = await client.putUrl(uri);
+      final credentials = base64.encode(
+        utf8.encode('pocketserver:${server.password}'),
+      );
+      request.headers.set(HttpHeaders.authorizationHeader, 'Basic $credentials');
+      request.headers.set('origin', origin);
+      request.headers.set('x-pocketserver-upload', '1');
+      request.write('Browser import');
+      final response = await request.close();
+      await response.drain<void>();
+      return response.statusCode;
+    }
+
+    expect(await upload('https://other.example'), HttpStatus.forbidden);
+    expect(await upload(server.url.origin), HttpStatus.created);
+    final imported = (await library.list()).firstWhere(
+      (file) => FileLibrary.nameOf(file) == 'from-browser.txt',
+    );
+    expect(await imported.readAsString(), 'Browser import');
+
     final dashboard = await get(server.url);
     expect(dashboard.statusCode, HttpStatus.ok);
     final html = await utf8.decoder.bind(dashboard).join();
-    final path = RegExp(r'href="(/download/[^"]+)"').firstMatch(html)!.group(1)!;
+    final path = RegExp(r'href="(/download/[^"]+)">sample.txt').firstMatch(html)!.group(1)!;
     final downloaded = await get(server.url.resolve(path));
     expect(downloaded.statusCode, HttpStatus.ok);
     expect(await utf8.decoder.bind(downloaded).join(), 'PocketServer file');

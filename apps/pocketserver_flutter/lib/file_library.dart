@@ -25,15 +25,18 @@ class FileLibrary {
     return files;
   }
 
-  Future<void> importFile(XFile source) async {
+  Future<void> importFile(XFile source) =>
+      importStream(source.name, source.openRead());
+
+  Future<void> importStream(String filename, Stream<List<int>> bytes) async {
     await root.create(recursive: true);
     final pending = await root.createTemp('pending-');
     try {
-      final name = _safeName(source.name);
+      final name = _safeName(filename);
       final file = File('${pending.path}${Platform.pathSeparator}$name');
       final output = file.openWrite();
       try {
-        await output.addStream(source.openRead());
+        await output.addStream(bytes);
       } finally {
         await output.close();
       }

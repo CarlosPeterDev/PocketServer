@@ -11,6 +11,8 @@ class DashboardServer {
   final FileLibrary library;
   final String password;
   final Uri url;
+  bool _uploading = false;
+  static const _maxUploadBytes = 1024 * 1024 * 1024;
 
   static Future<DashboardServer> start(
     FileLibrary library, {
@@ -69,7 +71,7 @@ class DashboardServer {
       ..set('X-Content-Type-Options', 'nosniff')
       ..set('X-Frame-Options', 'DENY')
       ..set('Referrer-Policy', 'no-referrer')
-      ..set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'");
+      ..set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
     try {
       final hosts = request.headers[HttpHeaders.hostHeader];
       if (hosts == null || hosts.length != 1 || hosts.single != url.authority) {
@@ -82,12 +84,21 @@ class DashboardServer {
         headers.set(HttpHeaders.wwwAuthenticateHeader, 'Basic realm="PocketServer"');
         return;
       }
+      if (request.uri.path == '/upload') {
+        await _upload(request);
+        return;
+      }
       if (request.method != 'GET' && request.method != 'HEAD') {
         response.statusCode = HttpStatus.methodNotAllowed;
         headers.set(HttpHeaders.allowHeader, 'GET, HEAD');
         return;
       }
 
+      if (request.uri.path == '/upload.js') {
+        headers.contentType = ContentType('application', 'javascript', charset: 'utf-8');
+        if (request.method == 'GET') response.write(_uploadScript);
+        return;
+      }
       final files = await library.list();
       if (request.uri.path == '/') {
         headers.contentType = ContentType.html;
@@ -123,6 +134,53 @@ class DashboardServer {
     }
   }
 
+  Future<void> _upload(HttpRequest request) async {
+    final response = request.response;
+    if (request.method != 'PUT') {
+      response.statusCode = HttpStatus.methodNotAllowed;
+      response.headers.set(HttpHeaders.allowHeader, 'PUT');
+      return;
+    }
+    final origin = request.headers['origin'];
+    final marker = request.headers['x-pocketserver-upload'];
+    if (origin == null || origin.length != 1 || origin.single != url.origin ||
+        marker == null || marker.length != 1 || marker.single != '1') {
+      response.statusCode = HttpStatus.forbidden;
+      return;
+    }
+    final name = request.uri.queryParameters['name'] ?? '';
+    if (name.trim().isEmpty || utf8.encode(name).length > 240) {
+      response.statusCode = HttpStatus.badRequest;
+      return;
+    }
+    if (request.contentLength > _maxUploadBytes) {
+      response.statusCode = HttpStatus.requestEntityTooLarge;
+      return;
+    }
+    if (_uploading) {
+      response.statusCode = HttpStatus.conflict;
+      return;
+    }
+
+    _uploading = true;
+    var written = 0;
+    try {
+      final bytes = request.timeout(const Duration(seconds: 30)).map((chunk) {
+        written += chunk.length;
+        if (written > _maxUploadBytes) throw const _UploadLimit();
+        return chunk;
+      });
+      await library.importStream(name, bytes);
+      response.statusCode = HttpStatus.created;
+    } on _UploadLimit {
+      response.statusCode = HttpStatus.requestEntityTooLarge;
+    } on Exception {
+      response.statusCode = HttpStatus.internalServerError;
+    } finally {
+      _uploading = false;
+    }
+  }
+
   static String _id(File file) =>
       file.parent.path.split(Platform.pathSeparator).last;
 
@@ -135,7 +193,7 @@ class DashboardServer {
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PocketServer</title>
+<title>PocketServer</title><script defer src="/upload.js"></script>
 <style>
 :root{color-scheme:light dark;font:16px system-ui,sans-serif}
 body{max-width:56rem;margin:2rem auto;padding:0 1rem}
@@ -143,8 +201,51 @@ section{border:1px solid gray;border-radius:16px;padding:1rem 1.4rem}
 li{padding:.5rem 0;overflow-wrap:anywhere} a{color:inherit}
 </style></head><body>
 <h1>PocketServer</h1><main><section><h2>Files</h2>
+<label>Choose a file <input id="file" type="file"></label>
+<button id="upload" type="button">Upload</button>
+<p id="status" role="status"></p>
 ${files.isEmpty ? '<p>No files in this library.</p>' : '<ul>$links</ul>'}
 </section></main></body></html>
 ''';
   }
 }
+
+class _UploadLimit implements Exception {
+  const _UploadLimit();
+}
+
+const _uploadScript = r'''
+const picker = document.querySelector('#file');
+const button = document.querySelector('#upload');
+const status = document.querySelector('#status');
+button.addEventListener('click', async () => {
+  const file = picker.files[0];
+  if (!file) {
+    status.textContent = 'Choose a file first.';
+    return;
+  }
+  if (file.size > 1024 * 1024 * 1024) {
+    status.textContent = 'Maximum file size is 1 GiB.';
+    return;
+  }
+  button.disabled = true;
+  status.textContent = 'Uploading…';
+  try {
+    const response = await fetch('/upload?name=' + encodeURIComponent(file.name), {
+      method: 'PUT',
+      headers: {'X-PocketServer-Upload': '1'},
+      body: file,
+      credentials: 'same-origin',
+    });
+    if (response.status === 201) {
+      location.reload();
+      return;
+    }
+    status.textContent = 'Upload failed (' + response.status + ').';
+  } catch {
+    status.textContent = 'Connection lost. Try again.';
+  } finally {
+    button.disabled = false;
+  }
+});
+''';
