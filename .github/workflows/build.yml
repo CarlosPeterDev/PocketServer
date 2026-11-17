@@ -60,6 +60,13 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: Exercise the Android loopback engine on the JVM
+        run: |
+          classes="$(mktemp -d "$RUNNER_TEMP/pocketserver-http-test.XXXXXX")"
+          sources="$APP_DIR/android/app/src/main/java/com/pocketserver/app"
+          javac --release 17 -d "$classes" \
+            "$sources/LoopbackSiteServer.java" native/android/test/LoopbackSiteServerSmoke.java
+          java -cp "$classes" com.pocketserver.app.LoopbackSiteServerSmoke
       - name: Verify shared contracts
         working-directory: packages/contracts
         run: |

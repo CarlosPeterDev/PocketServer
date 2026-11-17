@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:pocketserver_contracts/pocketserver_contracts.dart';
 
 import 'native_storage.dart';
+import 'static_site_card.dart';
 
 void main() => runApp(PocketServerApp(host: HostDiagnostics.current()));
 
@@ -57,6 +58,8 @@ class PocketServerApp extends StatelessWidget {
                 ),
                 if (host.platform != HostPlatform.unsupported)
                   _StorageTile(readStorage: readStorage),
+                if (host.platform == HostPlatform.android)
+                  const StaticSiteCard(),
               ],
             ),
           ),
