@@ -27,3 +27,6 @@ artifact hashes, and requires the Android signing secrets
 `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`
 and `ANDROID_KEY_PASSWORD`. Keep the keystore and passwords outside Git.
 Windows packages currently use an unsigned installer.
+
+See [verification.md](docs/verification.md) for test coverage and target-device
+smoke checks.
