@@ -1,0 +1,98 @@
+name: PocketServer build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: '3.50.0'
+  APP_DIR: apps/pocketserver_flutter
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: Verify shared contracts
+        working-directory: packages/contracts
+        run: |
+          dart pub get
+          dart analyze
+          dart test
+      - name: Verify Flutter app
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
+      - name: Build APK and app bundle
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          flutter build apk --release
+          flutter build appbundle --release
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk dist/PocketServer-ci.apk
+          cp build/app/outputs/bundle/release/app-release.aab dist/PocketServer-ci.aab
+          cp FLUTTER_TEMPLATE_LICENSE.txt dist/
+          cd dist
+          sha256sum PocketServer-ci.apk PocketServer-ci.aab > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PocketServer-Android
+          path: ${{ env.APP_DIR }}/dist/
+          if-no-files-found: error
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: Verify shared contracts
+        working-directory: packages/contracts
+        run: |
+          dart pub get
+          dart analyze
+          dart test
+      - name: Verify and build Flutter app
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
+          flutter build windows --release
+      - name: Build installer and portable archive
+        shell: pwsh
+        run: |
+          $releaseDir = Join-Path $PWD "$env:APP_DIR/build/windows/x64/runner/Release"
+          $dist = Join-Path $PWD "dist"
+          New-Item -ItemType Directory -Path $dist | Out-Null
+          Copy-Item "$env:APP_DIR/FLUTTER_TEMPLATE_LICENSE.txt" $releaseDir
+          Compress-Archive -Path "$releaseDir/*" -DestinationPath "$dist/PocketServer-Windows-x64.zip"
+          $inno = "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe"
+          if (!(Test-Path $inno)) {
+            choco install innosetup --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          & $inno "/DAppSource=$releaseDir" "/O$dist" packaging/windows/PocketServer.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-ChildItem $dist -File | Get-FileHash -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } |
+            Set-Content "$dist/SHA256SUMS.txt" -Encoding ascii
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PocketServer-Windows-x64
+          path: dist/
+          if-no-files-found: error
