@@ -1,23 +1,32 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pocketserver_flutter/backup_library.dart';
 import 'package:pocketserver_flutter/file_library.dart';
 
 void main() {
-  test('preserves the content of two imports with the same name', () async {
-    final root = await Directory.systemTemp.createTemp('pocketserver-files-');
-    addTearDown(() => root.delete(recursive: true));
-    final library = FileLibrary(root);
-    await library.importFile(
-      XFile.fromData(Uint8List.fromList([1]), name: 'report.txt'),
-    );
-    await library.importFile(
-      XFile.fromData(Uint8List.fromList([2]), name: 'report.txt'),
-    );
+  late Directory root;
+  late FileLibrary library;
 
-    final files = await FileLibrary(root).list();
+  setUp(() async {
+    root = await Directory.systemTemp.createTemp('pocketserver-files-');
+    library = FileLibrary(Directory.fromUri(root.uri.resolve('library/')));
+  });
+
+  tearDown(() => root.delete(recursive: true));
+
+  Future<void> importReport(int content) async {
+    final source = File.fromUri(root.uri.resolve('report.txt'));
+    await source.writeAsBytes([content]);
+    await library.importFile(XFile(source.path));
+  }
+
+  test('preserves the content of two imports with the same name', () async {
+    await importReport(1);
+    await importReport(2);
+    final files = await FileLibrary(library.root).list();
+
     expect(files.map(FileLibrary.nameOf), ['report.txt', 'report.txt']);
     expect(
       await Future.wait(files.map((file) => file.readAsBytes())),
@@ -27,4 +36,26 @@ void main() {
       ]),
     );
   });
+
+  test(
+    'restores a local snapshot without replacing an existing file',
+    () async {
+      await importReport(1);
+      final backups = BackupLibrary(library);
+      await backups.create();
+      await importReport(2);
+
+      final snapshot = (await BackupLibrary(library).list()).single;
+      expect(await backups.restore(snapshot).toList(), [1]);
+      final files = await library.list();
+      expect(
+        await Future.wait(files.map((file) => file.readAsBytes())),
+        unorderedEquals([
+          [1],
+          [1],
+          [2],
+        ]),
+      );
+    },
+  );
 }

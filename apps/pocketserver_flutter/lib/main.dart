@@ -1,8 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:pocketserver_contracts/pocketserver_contracts.dart';
 
-import 'native_storage.dart';
+import 'backups_page.dart';
 import 'files_page.dart';
+import 'native_storage.dart';
 
 void main() => runApp(PocketServerApp(host: HostDiagnostics.current()));
 
@@ -41,22 +42,6 @@ class PocketServerApp extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  if (host.platform != HostPlatform.unsupported)
-                    Card(
-                      child: ListTile(
-                        leading: const Icon(Icons.folder_outlined),
-                        title: const Text('Files'),
-                        subtitle: const Text(
-                          'Import and browse personal files',
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const FilesPage(),
-                          ),
-                        ),
-                      ),
-                    ),
                   Text(
                     'Host diagnostics',
                     style: Theme.of(context).textTheme.headlineSmall,
@@ -75,11 +60,45 @@ class PocketServerApp extends StatelessWidget {
                   ),
                   if (host.platform != HostPlatform.unsupported)
                     _StorageTile(readStorage: readStorage),
+                  if (host.platform != HostPlatform.unsupported) ...[
+                    for (final view in LibraryView.values)
+                      _AppCard(
+                        title: view.title,
+                        icon: view.icon,
+                        page: FilesPage(view: view),
+                      ),
+                    const _AppCard(
+                      title: 'Backups',
+                      icon: Icons.backup_outlined,
+                      page: BackupsPage(),
+                    ),
+                  ],
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _AppCard extends StatelessWidget {
+  const _AppCard({required this.title, required this.icon, required this.page});
+  final String title;
+  final IconData icon;
+  final Widget page;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: Icon(icon),
+        title: Text(title),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () =>
+            Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => page)),
       ),
     );
   }
