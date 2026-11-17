@@ -1,7 +1,8 @@
 # PocketServer
 
 Flutter application targeting Android 8.0+ and Windows 10/11. The initial
-application reads and displays host diagnostics. The shared Dart contracts
+application displays host diagnostics and available app storage on the native
+targets. The shared Dart contracts
 live in `packages/contracts`.
 
 Use Flutter 3.50.0 and follow Flutter's Android or Windows toolchain setup.

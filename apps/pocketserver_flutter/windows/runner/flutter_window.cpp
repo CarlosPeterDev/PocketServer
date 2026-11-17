@@ -1,5 +1,11 @@
 #include "flutter_window.h"
 
+#include <flutter/encodable_value.h>
+#include <flutter/standard_method_codec.h>
+#include <shlobj.h>
+
+#include <cstdint>
+#include <limits>
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
@@ -25,6 +31,35 @@ bool FlutterWindow::OnCreate() {
     return false;
   }
   RegisterPlugins(flutter_controller_->engine());
+  host_diagnostics_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(),
+          "com.pocketserver.app/host_diagnostics",
+          &flutter::StandardMethodCodec::GetInstance());
+  host_diagnostics_channel_->SetMethodCallHandler(
+      [](const auto& call, auto result) {
+        if (call.method_name() != "getAvailableStorageBytes") {
+          result->NotImplemented();
+          return;
+        }
+
+        PWSTR directory = nullptr;
+        const HRESULT folder_result = SHGetKnownFolderPath(
+            FOLDERID_LocalAppData, KF_FLAG_DEFAULT, nullptr, &directory);
+        ULARGE_INTEGER available = {};
+        const bool success =
+            SUCCEEDED(folder_result) &&
+            GetDiskFreeSpaceExW(directory, &available, nullptr, nullptr);
+        CoTaskMemFree(directory);
+        if (!success ||
+            available.QuadPart >
+                static_cast<uint64_t>(std::numeric_limits<int64_t>::max())) {
+          result->Error("storage_unavailable", "App data volume unavailable");
+          return;
+        }
+        result->Success(flutter::EncodableValue(
+            static_cast<int64_t>(available.QuadPart)));
+      });
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
@@ -40,6 +75,10 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  if (host_diagnostics_channel_) {
+    host_diagnostics_channel_->SetMethodCallHandler(nullptr);
+    host_diagnostics_channel_.reset();
+  }
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }

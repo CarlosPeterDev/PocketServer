@@ -63,12 +63,14 @@ jobs:
       - name: Verify shared contracts
         working-directory: packages/contracts
         run: |
+          $PSNativeCommandUseErrorActionPreference = $true
           dart pub get
           dart analyze
           dart test
       - name: Verify and build Flutter app
         working-directory: ${{ env.APP_DIR }}
         run: |
+          $PSNativeCommandUseErrorActionPreference = $true
           flutter pub get
           flutter analyze
           flutter test
@@ -76,6 +78,7 @@ jobs:
       - name: Build installer and portable archive
         shell: pwsh
         run: |
+          $PSNativeCommandUseErrorActionPreference = $true
           $releaseDir = Join-Path $PWD "$env:APP_DIR/build/windows/x64/runner/Release"
           $dist = Join-Path $PWD "dist"
           New-Item -ItemType Directory -Path $dist | Out-Null

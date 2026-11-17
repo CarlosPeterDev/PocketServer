@@ -3,10 +3,12 @@ description: PocketServer control application.
 publish_to: none
 version: 0.1.0+1
 environment:
-  sdk: ^3.10.0
+  sdk: ^3.14.0
+  flutter: ">=3.50.0"
 dependencies:
   flutter:
     sdk: flutter
+  material_ui: ^1.11.1
   pocketserver_contracts:
     path: ../../packages/contracts
 dev_dependencies:
