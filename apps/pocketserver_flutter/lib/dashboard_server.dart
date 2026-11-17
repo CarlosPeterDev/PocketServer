@@ -71,7 +71,7 @@ class DashboardServer {
       ..set('X-Content-Type-Options', 'nosniff')
       ..set('X-Frame-Options', 'DENY')
       ..set('Referrer-Policy', 'no-referrer')
-      ..set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
+      ..set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; connect-src 'self'; media-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
     try {
       final hosts = request.headers[HttpHeaders.hostHeader];
       if (hosts == null || hosts.length != 1 || hosts.single != url.authority) {
@@ -109,10 +109,17 @@ class DashboardServer {
       }
 
       final parts = request.uri.pathSegments;
-      if (parts.length == 2 && parts.first == 'download') {
+      if (parts.length == 2 &&
+          (parts.first == 'download' || parts.first == 'media')) {
         final matches = files.where((file) => _id(file) == parts.last);
         final file = matches.isEmpty ? null : matches.first;
-        if (file != null) {
+        if (file != null && parts.first == 'media') {
+          final type = _mediaType(file);
+          if (type != null) {
+            await _streamMedia(request, file, type);
+            return;
+          }
+        } else if (file != null) {
           final filename = Uri.encodeComponent(FileLibrary.nameOf(file)).replaceAll("'", '%27');
           headers.contentType = ContentType.binary;
           headers.set('Content-Disposition', "attachment; filename*=UTF-8''$filename");
@@ -181,13 +188,77 @@ class DashboardServer {
     }
   }
 
+  static ContentType? _mediaType(File file) {
+    final suffix = FileLibrary.nameOf(file).toLowerCase().split('.').last;
+    return switch (suffix) {
+      'mp4' || 'm4v' => ContentType('video', 'mp4'),
+      'webm' => ContentType('video', 'webm'),
+      'mp3' => ContentType('audio', 'mpeg'),
+      'm4a' => ContentType('audio', 'mp4'),
+      'ogg' || 'opus' => ContentType('audio', 'ogg'),
+      'wav' => ContentType('audio', 'wav'),
+      _ => null,
+    };
+  }
+
+  Future<void> _streamMedia(
+    HttpRequest request,
+    File file,
+    ContentType type,
+  ) async {
+    final response = request.response;
+    final length = await file.length();
+    var start = 0;
+    var end = length;
+    final ranges = request.headers[HttpHeaders.rangeHeader];
+    response.headers.set('Accept-Ranges', 'bytes');
+    if (ranges != null) {
+      final match = ranges.length == 1
+          ? RegExp(r'^bytes=(\d*)-(\d*)$').firstMatch(ranges.single)
+          : null;
+      final firstText = match?.group(1) ?? '';
+      final lastText = match?.group(2) ?? '';
+      final first = int.tryParse(firstText);
+      final last = int.tryParse(lastText);
+      if (firstText.isEmpty && last != null && last > 0) {
+        start = max(0, length - last);
+      } else if (first != null &&
+          (lastText.isEmpty || (last != null && last >= first))) {
+        start = first;
+        if (last != null && last < length - 1) end = last + 1;
+      } else {
+        start = length;
+      }
+
+      if (start >= end) {
+        response.statusCode = HttpStatus.requestedRangeNotSatisfiable;
+        response.headers.set('Content-Range', 'bytes */$length');
+        return;
+      }
+      response.statusCode = HttpStatus.partialContent;
+      response.headers.set('Content-Range', 'bytes $start-${end - 1}/$length');
+    }
+    response.headers.contentType = type;
+    response.contentLength = end - start;
+    if (request.method == 'GET' && end > start) {
+      await response.addStream(file.openRead(start, end));
+    }
+  }
+
   static String _id(File file) =>
       file.parent.path.split(Platform.pathSeparator).last;
 
   static String _page(List<File> files) {
     final links = files.map((file) {
       final title = const HtmlEscape().convert(FileLibrary.nameOf(file));
-      return '<li><a href="/download/${Uri.encodeComponent(_id(file))}">$title</a></li>';
+      final id = Uri.encodeComponent(_id(file));
+      final type = _mediaType(file);
+      final tag = type?.primaryType == 'video' ? 'video' : 'audio';
+      final player = type == null
+          ? ''
+          : '<details><summary>Play</summary>'
+            '<$tag controls preload="none" src="/media/$id"></$tag></details>';
+      return '<li><a href="/download/$id">$title</a>$player</li>';
     }).join();
     return '''
 <!doctype html>
@@ -199,6 +270,7 @@ class DashboardServer {
 body{max-width:56rem;margin:2rem auto;padding:0 1rem}
 section{border:1px solid gray;border-radius:16px;padding:1rem 1.4rem}
 li{padding:.5rem 0;overflow-wrap:anywhere} a{color:inherit}
+video,audio{display:block;max-width:100%;margin:.5rem 0}
 </style></head><body>
 <h1>PocketServer</h1><main><section><h2>Files</h2>
 <label>Choose a file <input id="file" type="file"></label>

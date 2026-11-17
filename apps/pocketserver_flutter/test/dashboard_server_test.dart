@@ -14,6 +14,7 @@ void main() {
     await source.writeAsString('PocketServer file');
     final library = FileLibrary(Directory.fromUri(root.uri.resolve('library')));
     await library.importFile(XFile(source.path));
+    await library.importStream('sample.mp4', Stream.value([0, 1, 2, 3]));
     final server = await DashboardServer.start(library);
     addTearDown(server.close);
     final client = HttpClient();
@@ -59,6 +60,18 @@ void main() {
     final downloaded = await get(server.url.resolve(path));
     expect(downloaded.statusCode, HttpStatus.ok);
     expect(await utf8.decoder.bind(downloaded).join(), 'PocketServer file');
+    final mediaPath = RegExp(r'src="(/media/[^"]+)"').firstMatch(html)!.group(1)!;
+    final mediaRequest = await client.getUrl(server.url.resolve(mediaPath));
+    mediaRequest.headers.set(
+      HttpHeaders.authorizationHeader,
+      'Basic ${base64.encode(utf8.encode('pocketserver:${server.password}'))}',
+    );
+    mediaRequest.headers.set(HttpHeaders.rangeHeader, 'bytes=1-2');
+    final media = await mediaRequest.close();
+    expect(media.statusCode, HttpStatus.partialContent);
+    expect(media.headers.value('content-range'), 'bytes 1-2/4');
+    expect(await media.expand((chunk) => chunk).toList(), [1, 2]);
+
     final missing = await get(server.url.resolve('/download/missing'));
     expect(missing.statusCode, HttpStatus.notFound);
     await missing.drain<void>();
