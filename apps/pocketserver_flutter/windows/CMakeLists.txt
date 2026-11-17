@@ -49,6 +49,12 @@ endfunction()
 set(FLUTTER_MANAGED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 add_subdirectory(${FLUTTER_MANAGED_DIR})
 
+# The native HTTP engine is independent of the Flutter window.
+include(FetchContent)
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../../native/windows"
+  "${CMAKE_CURRENT_BINARY_DIR}/pocketserver-hosting")
+FetchContent_GetProperties(pocketserver_httplib SOURCE_DIR POCKETSERVER_HTTPLIB_DIR)
+
 # Application build; see runner/CMakeLists.txt.
 add_subdirectory("runner")
 
@@ -71,6 +77,9 @@ endif()
 
 set(INSTALL_BUNDLE_DATA_DIR "${CMAKE_INSTALL_PREFIX}/data")
 set(INSTALL_BUNDLE_LIB_DIR "${CMAKE_INSTALL_PREFIX}")
+install(FILES "${POCKETSERVER_HTTPLIB_DIR}/LICENSE"
+  DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+  RENAME "CPP_HTTPLIB_LICENSE.txt" COMPONENT Runtime)
 
 install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)

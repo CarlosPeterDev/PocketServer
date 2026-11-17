@@ -121,6 +121,13 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: Exercise the Windows loopback engine
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          cmake -S native/windows -B native-test -DPOCKETSERVER_HOSTING_TESTS=ON
+          cmake --build native-test --config Release --parallel
+          ctest --test-dir native-test --build-config Release --output-on-failure
       - name: Verify shared contracts
         working-directory: packages/contracts
         run: |

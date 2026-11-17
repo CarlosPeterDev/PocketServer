@@ -26,17 +26,17 @@ The push APK and AAB use CI test signing. The versioned release workflow
 requires Android release signing credentials and only runs when dispatched on
 a matching version tag.
 
-## Android local website
+## Local website
 
 1. Open **Local website** and select a nonempty UTF-8 HTML file up to 1 MiB.
-2. Copy the displayed address to a browser on the same Android device. The
+2. Copy the displayed address to a browser on the same device. The
    selected document should appear.
 3. Return to PocketServer and select **Stop hosting**. A browser reload should
    report that it cannot connect.
 4. Repeat with a second HTML file and cancel the picker while the first is
    running. The first website should remain available.
 
-The Android CI job also tests the native socket server directly on the JVM.
-The initial preview is scoped to one HTML file, IPv4 loopback and the running
-app. Windows hosting, a site directory with assets, HTTPS and persistent
-services require subsequent implementation.
+CI exercises the Android socket server on the JVM and the Windows socket
+server on the Windows runner. The preview serves one HTML file on IPv4
+loopback while the app is running. Site directories, HTTPS and persistent
+services are separate features.

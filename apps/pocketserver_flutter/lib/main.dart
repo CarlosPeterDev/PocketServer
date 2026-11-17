@@ -58,7 +58,7 @@ class PocketServerApp extends StatelessWidget {
                 ),
                 if (host.platform != HostPlatform.unsupported)
                   _StorageTile(readStorage: readStorage),
-                if (host.platform == HostPlatform.android)
+                if (host.platform != HostPlatform.unsupported)
                   const StaticSiteCard(),
               ],
             ),
