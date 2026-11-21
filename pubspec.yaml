@@ -1,0 +1,31 @@
+name: infinityshare
+description: InfinityShare - personal file hub with web UI, FTP and FTPS servers that keep running in the background.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  path_provider: ^2.1.4
+  path: ^1.9.0
+  mime: ^1.0.5
+  crypto: ^3.0.5
+  archive: ^3.6.1
+  image: ^4.2.0
+  basic_utils: ^5.7.0
+  pointycastle: ^3.7.4
+  url_launcher: ^6.3.0
+  qr_flutter: ^4.1.0
+  flutter_background_service: ^5.0.10
+  permission_handler: ^11.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

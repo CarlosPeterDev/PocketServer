@@ -1,6 +1,0 @@
-name: pocketserver_contracts
-publish_to: none
-environment:
-  sdk: ^3.10.0
-dev_dependencies:
-  test: ^1.26.0

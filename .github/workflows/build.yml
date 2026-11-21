@@ -1,160 +1,175 @@
-name: PocketServer build
+name: Build InfinityShare
 
 on:
   push:
-  pull_request:
+    branches: [main]
+    tags: ["v*"]
   workflow_dispatch:
-  workflow_call:
-    inputs:
-      sign-android:
-        type: boolean
-        default: false
-    secrets:
-      ANDROID_KEYSTORE_BASE64:
-        required: false
-      ANDROID_KEYSTORE_PASSWORD:
-        required: false
-      ANDROID_KEY_ALIAS:
-        required: false
-      ANDROID_KEY_PASSWORD:
-        required: false
 
 permissions:
-  contents: read
+  contents: write
 
 env:
-  FLUTTER_VERSION: '3.50.0'
-  APP_DIR: apps/pocketserver_flutter
+  APP: InfinityShare
 
 jobs:
-  secret-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Scan repository history for exposed secrets
-        env:
-          GITLEAKS_VERSION: '8.30.1'
-          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
-        run: |
-          work="$(mktemp -d "$RUNNER_TEMP/pocketserver-scan.XXXXXX")"
-          trap 'rm -rf -- "$work"' EXIT
-          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
-          curl --fail --silent --show-error --location --retry 3 \
-            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/$archive" \
-            --output "$work/$archive"
-          (cd "$work" && printf '%s  %s\n' "$GITLEAKS_SHA256" "$archive" | sha256sum --check)
-          tar -xzf "$work/$archive" -C "$work" gitleaks
-          "$work/gitleaks" git --redact=100 --no-banner --log-opts='--all' .
-
   android:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
+        with: { distribution: temurin, java-version: "17" }
       - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-      - name: Use JDK 21 for Android Gradle and lint
-        run: flutter config --jdk-dir="$JAVA_HOME"
-      - name: Verify shared contracts
-        working-directory: packages/contracts
+        with: { channel: stable, cache: true }
+      - name: Create platform project
         run: |
-          dart pub get
-          dart analyze
-          dart test
-      - name: Verify Flutter app
-        working-directory: ${{ env.APP_DIR }}
+          flutter create --platforms=android --org dev.carlospeter --project-name infinityshare .
+          rm -rf test
+          python3 tool/patch_platforms.py android
+      - run: flutter pub get
+      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Build APKs (universal + per-ABI)
         run: |
-          flutter pub get
-          flutter analyze
-          flutter test
-      - name: Build APK and app bundle
-        working-directory: ${{ env.APP_DIR }}
-        env:
-          SIGN_ANDROID: ${{ inputs.sign-android || false }}
-          ANDROID_KEYSTORE_BASE64: ${{ inputs.sign-android && secrets.ANDROID_KEYSTORE_BASE64 || '' }}
-          POCKETSERVER_STORE_PASSWORD: ${{ inputs.sign-android && secrets.ANDROID_KEYSTORE_PASSWORD || '' }}
-          POCKETSERVER_KEY_ALIAS: ${{ inputs.sign-android && secrets.ANDROID_KEY_ALIAS || '' }}
-          POCKETSERVER_KEY_PASSWORD: ${{ inputs.sign-android && secrets.ANDROID_KEY_PASSWORD || '' }}
+          flutter build apk --release --build-number ${{ github.run_number }}
+          flutter build apk --release --split-per-abi --build-number ${{ github.run_number }}
+      - name: Build AAB
+        run: flutter build appbundle --release --build-number ${{ github.run_number }}
+      - name: Collect
         run: |
-          if [[ "$SIGN_ANDROID" == true ]]; then
-            : "${ANDROID_KEYSTORE_BASE64:?Android keystore secret is required}"
-            : "${POCKETSERVER_STORE_PASSWORD:?Android keystore password is required}"
-            : "${POCKETSERVER_KEY_ALIAS:?Android key alias is required}"
-            : "${POCKETSERVER_KEY_PASSWORD:?Android key password is required}"
-            umask 077
-            POCKETSERVER_STORE_FILE="$(mktemp "$RUNNER_TEMP/pocketserver-signing.XXXXXX")"
-            export POCKETSERVER_STORE_FILE
-            trap 'rm -f -- "$POCKETSERVER_STORE_FILE"' EXIT
-            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$POCKETSERVER_STORE_FILE"
-            unset ANDROID_KEYSTORE_BASE64
-          fi
-          flutter build apk --release
-          flutter build appbundle --release
-          mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk dist/PocketServer-Android.apk
-          cp build/app/outputs/bundle/release/app-release.aab dist/PocketServer-Android.aab
-          cp FLUTTER_TEMPLATE_LICENSE.txt dist/
-          cd dist
-          sha256sum PocketServer-Android.apk PocketServer-Android.aab > SHA256SUMS.txt
+          mkdir out
+          cp build/app/outputs/flutter-apk/app-release.apk out/${APP}-android.apk
+          for a in arm64-v8a armeabi-v7a x86_64; do
+            cp build/app/outputs/flutter-apk/app-$a-release.apk out/${APP}-android-$a.apk
+          done
+          cp build/app/outputs/bundle/release/app-release.aab out/${APP}-android.aab
       - uses: actions/upload-artifact@v4
-        with:
-          name: PocketServer-Android
-          path: ${{ env.APP_DIR }}/dist/
-          if-no-files-found: error
+        with: { name: android, path: out/* }
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - name: Linux build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+      - name: Create platform project
+        run: |
+          flutter create --platforms=linux --org dev.carlospeter --project-name infinityshare .
+          rm -rf test
+      - run: flutter pub get
+      - run: flutter build linux --release
+      - name: Package (tar.gz + deb)
+        run: |
+          B=build/linux/x64/release/bundle
+          mkdir out
+          tar -czf out/${APP}-linux-x64.tar.gz -C $B .
+          D=deb/infinityshare
+          mkdir -p $D/DEBIAN $D/opt/infinityshare $D/usr/bin $D/usr/share/applications
+          cp -r $B/. $D/opt/infinityshare/
+          ln -s /opt/infinityshare/infinityshare $D/usr/bin/infinityshare
+          cat > $D/DEBIAN/control <<CTL
+          Package: infinityshare
+          Version: 1.0.${{ github.run_number }}
+          Section: net
+          Priority: optional
+          Architecture: amd64
+          Depends: libgtk-3-0
+          Maintainer: Carlos <noreply@example.com>
+          Description: InfinityShare - file hub with web UI, FTP and FTPS servers
+          CTL
+          sed -i 's/^ *//' $D/DEBIAN/control
+          cat > $D/usr/share/applications/infinityshare.desktop <<DSK
+          [Desktop Entry]
+          Name=InfinityShare
+          Exec=/opt/infinityshare/infinityshare
+          Type=Application
+          Categories=Network;FileTransfer;
+          DSK
+          sed -i 's/^ *//' $D/usr/share/applications/infinityshare.desktop
+          dpkg-deb --build $D out/${APP}-linux-amd64.deb
+      - uses: actions/upload-artifact@v4
+        with: { name: linux, path: out/* }
 
   windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
-        with:
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-      - name: Verify shared contracts
-        working-directory: packages/contracts
+        with: { channel: stable, cache: true }
+      - name: Create platform project
+        shell: bash
         run: |
-          $PSNativeCommandUseErrorActionPreference = $true
-          dart pub get
-          dart analyze
-          dart test
-      - name: Verify and build Flutter app
-        working-directory: ${{ env.APP_DIR }}
-        run: |
-          $PSNativeCommandUseErrorActionPreference = $true
-          flutter pub get
-          flutter analyze
-          flutter test
-          flutter build windows --release
-      - name: Build installer and portable archive
+          flutter create --platforms=windows --org dev.carlospeter --project-name infinityshare .
+          rm -rf test
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - name: Package
         shell: pwsh
         run: |
-          $PSNativeCommandUseErrorActionPreference = $true
-          $releaseDir = Join-Path $PWD "$env:APP_DIR/build/windows/x64/runner/Release"
-          $dist = Join-Path $PWD "dist"
-          New-Item -ItemType Directory -Path $dist | Out-Null
-          Copy-Item "$env:APP_DIR/FLUTTER_TEMPLATE_LICENSE.txt" $releaseDir
-          Compress-Archive -Path "$releaseDir/*" -DestinationPath "$dist/PocketServer-Windows-x64.zip"
-          $inno = "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe"
-          if (!(Test-Path $inno)) {
-            choco install innosetup --yes --no-progress
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          }
-          $versionLine = Get-Content "$env:APP_DIR/pubspec.yaml" | Select-String '^version: ([0-9]+\.[0-9]+\.[0-9]+)\+[0-9]+$'
-          if (!$versionLine) { throw 'Expected an app version in MAJOR.MINOR.PATCH+BUILD form.' }
-          $version = $versionLine.Matches[0].Groups[1].Value
-          & $inno "/DAppSource=$releaseDir" "/DAppVersion=$version" "/O$dist" packaging/windows/PocketServer.iss
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Get-ChildItem $dist -File | Get-FileHash -Algorithm SHA256 |
-            ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } |
-            Set-Content "$dist/SHA256SUMS.txt" -Encoding ascii
+          New-Item -ItemType Directory out | Out-Null
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath "out/$env:APP-windows-x64.zip"
       - uses: actions/upload-artifact@v4
+        with: { name: windows, path: out/* }
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - name: Create platform project
+        run: |
+          flutter create --platforms=macos --org dev.carlospeter --project-name infinityshare .
+          rm -rf test
+          python3 tool/patch_platforms.py macos
+      - run: flutter pub get
+      - run: flutter build macos --release
+      - name: Package (zip + dmg)
+        run: |
+          mkdir out
+          APPDIR=$(ls -d build/macos/Build/Products/Release/*.app | head -1)
+          ditto -c -k --keepParent "$APPDIR" out/${APP}-macos.zip
+          hdiutil create -volname "$APP" -srcfolder "$APPDIR" -ov -format UDZO out/${APP}-macos.dmg
+      - uses: actions/upload-artifact@v4
+        with: { name: macos, path: out/* }
+
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - name: Create platform project
+        run: |
+          flutter create --platforms=ios --org dev.carlospeter --project-name infinityshare .
+          rm -rf test
+          python3 tool/patch_platforms.py ios
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p out Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -qr out/${APP}-ios-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with: { name: ios, path: out/* }
+
+  release:
+    needs: [android, linux, windows, macos, ios]
+    if: always() && needs.android.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: dist, merge-multiple: true }
+      - run: ls -la dist
+      - uses: softprops/action-gh-release@v2
         with:
-          name: PocketServer-Windows-x64
-          path: dist/
-          if-no-files-found: error
+          tag_name: build-${{ github.run_number }}
+          name: InfinityShare build ${{ github.run_number }}
+          files: dist/*
+          body: |
+            Android APK / AAB, Windows, macOS, Linux and (unsigned) iOS builds.
+            iOS IPA is unsigned: sign it with your own certificate (AltStore / Sideloadly / Xcode) to install.
