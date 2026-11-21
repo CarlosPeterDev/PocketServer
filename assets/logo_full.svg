@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7C4DFF"/>
+      <stop offset="1" stop-color="#00B8D9"/>
+    </linearGradient>
+    <linearGradient id="inf" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E0F7FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <circle cx="512" cy="512" r="400" fill="#FFFFFF" opacity="0.07"/>
+  <!-- infinity loop -->
+  <path d="M512 512 C 430 380, 200 380, 200 512 C 200 644, 430 644, 512 512 C 594 380, 824 380, 824 512 C 824 644, 594 644, 512 512 Z"
+        fill="none" stroke="url(#inf)" stroke-width="64" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- share nodes -->
+  <circle cx="200" cy="512" r="46" fill="#FFFFFF"/>
+  <circle cx="824" cy="512" r="46" fill="#FFFFFF"/>
+  <circle cx="200" cy="512" r="20" fill="#7C4DFF"/>
+  <circle cx="824" cy="512" r="20" fill="#00B8D9"/>
+</svg>
