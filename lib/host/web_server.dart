@@ -693,7 +693,7 @@ class WebServer {
       return;
     }
     Stats.i.addOut(count, id);
-    if (start == 0) Stats.i.event(id, 'download', filename);
+    if (start == 0) Stats.i.event(id, 'download', name);
     try {
       await res.addStream(f.openRead(start, end + 1));
     } catch (_) {}
