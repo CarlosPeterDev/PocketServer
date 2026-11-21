@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../config.dart';
 
 class FtpDialog extends StatefulWidget {
-  const FtpDialog({super.key, this.initial, required this.usedPorts});
+  const FtpDialog({super.key, this.initial, required this.usedPorts, required this.cfg});
+  final AppConfig cfg;
   final FtpServerConfig? initial;
   final Set<int> usedPorts;
   @override
@@ -15,6 +16,7 @@ class _FtpDialogState extends State<FtpDialog> {
   late final TextEditingController name, user, pass, port;
   late FtpMode mode;
   late bool readOnly, anonymous, enabled, hide;
+  late Set<String> folderIds;
 
   @override
   void initState() {
@@ -33,6 +35,10 @@ class _FtpDialogState extends State<FtpDialog> {
     anonymous = i?.anonymous ?? false;
     enabled = i?.enabled ?? true;
     hide = true;
+    folderIds = {...(i?.folderIds ?? <String>[])};
+    final valid = {kDefaultFolderId, ...widget.cfg.folders.map((f) => f.id)};
+    folderIds.removeWhere((e) => !valid.contains(e));
+    if (folderIds.isEmpty) folderIds.add(kDefaultFolderId);
   }
 
   @override
@@ -80,11 +86,31 @@ class _FtpDialogState extends State<FtpDialog> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<FtpMode>(
-                value: mode,
+                initialValue: mode,
                 decoration: const InputDecoration(labelText: 'Protocol'),
                 items: [for (final m in FtpMode.values) DropdownMenuItem(value: m, child: Text(m.label))],
                 onChanged: (m) => setState(() => mode = m ?? mode),
               ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Folders (several = merged)', style: Theme.of(context).textTheme.labelLarge),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: const Text('App folder'),
+                value: folderIds.contains(kDefaultFolderId),
+                onChanged: (v) => setState(() => v == true ? folderIds.add(kDefaultFolderId) : folderIds.remove(kDefaultFolderId)),
+              ),
+              for (final f in widget.cfg.folders)
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: Text(f.name),
+                  value: folderIds.contains(f.id),
+                  onChanged: (v) => setState(() => v == true ? folderIds.add(f.id) : folderIds.remove(f.id)),
+                ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Read-only'),
@@ -112,6 +138,7 @@ class _FtpDialogState extends State<FtpDialog> {
         FilledButton(
           onPressed: () {
             if (!_form.currentState!.validate()) return;
+            if (folderIds.isEmpty) return;
             Navigator.pop(
               context,
               FtpServerConfig(
@@ -124,6 +151,7 @@ class _FtpDialogState extends State<FtpDialog> {
                 readOnly: readOnly,
                 anonymous: anonymous,
                 enabled: enabled,
+                folderIds: folderIds.toList(),
               ),
             );
           },

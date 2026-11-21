@@ -1,4 +1,4 @@
-name: Build InfinityShare
+name: Build PocketServer
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 env:
-  APP: InfinityShare
+  APP: PocketServer
 
 jobs:
   android:
@@ -23,25 +23,28 @@ jobs:
         with: { channel: stable, cache: true }
       - name: Create platform project
         run: |
-          flutter create --platforms=android --org dev.carlospeter --project-name infinityshare .
+          flutter create --platforms=android --org dev.carlospeter --project-name pocketserver .
           rm -rf test
           python3 tool/patch_platforms.py android
       - run: flutter pub get
+      - run: dart run flutter_launcher_icons -f tool/icons/android.yaml
       - run: flutter analyze --no-fatal-infos --no-fatal-warnings
-      - name: Build APKs (universal + per-ABI)
+      - name: Build full APKs (all-files access, any folder)
         run: |
           flutter build apk --release --build-number ${{ github.run_number }}
           flutter build apk --release --split-per-abi --build-number ${{ github.run_number }}
-      - name: Build AAB
-        run: flutter build appbundle --release --build-number ${{ github.run_number }}
-      - name: Collect
-        run: |
           mkdir out
           cp build/app/outputs/flutter-apk/app-release.apk out/${APP}-android.apk
           for a in arm64-v8a armeabi-v7a x86_64; do
             cp build/app/outputs/flutter-apk/app-$a-release.apk out/${APP}-android-$a.apk
           done
-          cp build/app/outputs/bundle/release/app-release.aab out/${APP}-android.aab
+      - name: Build Google Play versions (no restricted permission)
+        run: |
+          python3 tool/patch_platforms.py strip-allfiles
+          flutter build appbundle --release --build-number ${{ github.run_number }}
+          cp build/app/outputs/bundle/release/app-release.aab out/${APP}-android-play.aab
+          flutter build apk --release --build-number ${{ github.run_number }}
+          cp build/app/outputs/flutter-apk/app-release.apk out/${APP}-android-play.apk
       - uses: actions/upload-artifact@v4
         with: { name: android, path: out/* }
 
@@ -57,7 +60,7 @@ jobs:
           sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
       - name: Create platform project
         run: |
-          flutter create --platforms=linux --org dev.carlospeter --project-name infinityshare .
+          flutter create --platforms=linux --org dev.carlospeter --project-name pocketserver .
           rm -rf test
       - run: flutter pub get
       - run: flutter build linux --release
@@ -66,29 +69,29 @@ jobs:
           B=build/linux/x64/release/bundle
           mkdir out
           tar -czf out/${APP}-linux-x64.tar.gz -C $B .
-          D=deb/infinityshare
-          mkdir -p $D/DEBIAN $D/opt/infinityshare $D/usr/bin $D/usr/share/applications
-          cp -r $B/. $D/opt/infinityshare/
-          ln -s /opt/infinityshare/infinityshare $D/usr/bin/infinityshare
+          D=deb/pocketserver
+          mkdir -p $D/DEBIAN $D/opt/pocketserver $D/usr/bin $D/usr/share/applications
+          cp -r $B/. $D/opt/pocketserver/
+          ln -s /opt/pocketserver/pocketserver $D/usr/bin/pocketserver
           cat > $D/DEBIAN/control <<CTL
-          Package: infinityshare
+          Package: pocketserver
           Version: 1.0.${{ github.run_number }}
           Section: net
           Priority: optional
           Architecture: amd64
           Depends: libgtk-3-0
           Maintainer: Carlos <noreply@example.com>
-          Description: InfinityShare - file hub with web UI, FTP and FTPS servers
+          Description: PocketServer - file hub with web UI, FTP and FTPS servers
           CTL
           sed -i 's/^ *//' $D/DEBIAN/control
-          cat > $D/usr/share/applications/infinityshare.desktop <<DSK
+          cat > $D/usr/share/applications/pocketserver.desktop <<DSK
           [Desktop Entry]
-          Name=InfinityShare
-          Exec=/opt/infinityshare/infinityshare
+          Name=PocketServer
+          Exec=/opt/pocketserver/pocketserver
           Type=Application
           Categories=Network;FileTransfer;
           DSK
-          sed -i 's/^ *//' $D/usr/share/applications/infinityshare.desktop
+          sed -i 's/^ *//' $D/usr/share/applications/pocketserver.desktop
           dpkg-deb --build $D out/${APP}-linux-amd64.deb
       - uses: actions/upload-artifact@v4
         with: { name: linux, path: out/* }
@@ -102,9 +105,10 @@ jobs:
       - name: Create platform project
         shell: bash
         run: |
-          flutter create --platforms=windows --org dev.carlospeter --project-name infinityshare .
+          flutter create --platforms=windows --org dev.carlospeter --project-name pocketserver .
           rm -rf test
       - run: flutter pub get
+      - run: dart run flutter_launcher_icons -f tool/icons/windows.yaml
       - run: flutter build windows --release
       - name: Package
         shell: pwsh
@@ -122,10 +126,11 @@ jobs:
         with: { channel: stable, cache: true }
       - name: Create platform project
         run: |
-          flutter create --platforms=macos --org dev.carlospeter --project-name infinityshare .
+          flutter create --platforms=macos --org dev.carlospeter --project-name pocketserver .
           rm -rf test
           python3 tool/patch_platforms.py macos
       - run: flutter pub get
+      - run: dart run flutter_launcher_icons -f tool/icons/macos.yaml
       - run: flutter build macos --release
       - name: Package (zip + dmg)
         run: |
@@ -144,10 +149,11 @@ jobs:
         with: { channel: stable, cache: true }
       - name: Create platform project
         run: |
-          flutter create --platforms=ios --org dev.carlospeter --project-name infinityshare .
+          flutter create --platforms=ios --org dev.carlospeter --project-name pocketserver .
           rm -rf test
           python3 tool/patch_platforms.py ios
       - run: flutter pub get
+      - run: dart run flutter_launcher_icons -f tool/icons/ios.yaml
       - run: flutter build ios --release --no-codesign
       - name: Package unsigned IPA
         run: |
@@ -168,7 +174,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: InfinityShare build ${{ github.run_number }}
+          name: PocketServer build ${{ github.run_number }}
           files: dist/*
           body: |
             Android APK / AAB, Windows, macOS, Linux and (unsigned) iOS builds.

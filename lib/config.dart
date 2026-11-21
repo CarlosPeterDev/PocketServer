@@ -25,7 +25,8 @@ class FtpServerConfig {
     this.readOnly = false,
     this.enabled = false,
     this.anonymous = false,
-  });
+    List<String>? folderIds,
+  }) : folderIds = folderIds ?? [];
 
   final String id;
   String name; // display name of the server
@@ -36,6 +37,7 @@ class FtpServerConfig {
   bool readOnly;
   bool enabled; // start automatically with the app
   bool anonymous;
+  List<String> folderIds; // empty = default folder; several = merged as top-level dirs
 
   static String newId() {
     final r = Random.secure();
@@ -54,6 +56,7 @@ class FtpServerConfig {
         'readOnly': readOnly,
         'enabled': enabled,
         'anonymous': anonymous,
+        'folderIds': folderIds,
       };
 
   factory FtpServerConfig.fromJson(Map<String, dynamic> j) => FtpServerConfig(
@@ -69,37 +72,89 @@ class FtpServerConfig {
         readOnly: j['readOnly'] as bool? ?? false,
         enabled: j['enabled'] as bool? ?? false,
         anonymous: j['anonymous'] as bool? ?? false,
+        folderIds: ((j['folderIds'] as List?) ?? []).cast<String>(),
+      );
+}
+
+const String kDefaultFolderId = 'default';
+
+/// A folder the user shared ("space"). The default one lives inside the app.
+class SharedFolder {
+  SharedFolder({required this.id, required this.name, required this.path});
+  final String id;
+  String name;
+  String path; // empty for the built-in default folder
+
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'path': path};
+  factory SharedFolder.fromJson(Map<String, dynamic> j) => SharedFolder(
+        id: j['id'] as String? ?? FtpServerConfig.newId(),
+        name: j['name'] as String? ?? 'Folder',
+        path: j['path'] as String? ?? '',
+      );
+}
+
+/// One web file hub (its own port and folder).
+class WebHubConfig {
+  WebHubConfig({
+    required this.id,
+    required this.name,
+    this.port = 2011,
+    this.folderId = kDefaultFolderId,
+    this.enabled = true,
+  });
+  final String id;
+  String name;
+  int port;
+  String folderId;
+  bool enabled;
+
+  Map<String, dynamic> toJson() =>
+      {'id': id, 'name': name, 'port': port, 'folderId': folderId, 'enabled': enabled};
+  factory WebHubConfig.fromJson(Map<String, dynamic> j) => WebHubConfig(
+        id: j['id'] as String? ?? FtpServerConfig.newId(),
+        name: j['name'] as String? ?? 'Web hub',
+        port: (j['port'] as num?)?.toInt() ?? 2011,
+        folderId: j['folderId'] as String? ?? kDefaultFolderId,
+        enabled: j['enabled'] as bool? ?? true,
       );
 }
 
 class AppConfig {
-  AppConfig({
-    this.webPort = 2011,
-    this.webEnabled = true,
-    this.storageDir = '',
-    List<FtpServerConfig>? ftp,
-  }) : ftp = ftp ?? [];
+  AppConfig({List<SharedFolder>? folders, List<WebHubConfig>? webHubs, List<FtpServerConfig>? ftp})
+      : folders = folders ?? [],
+        webHubs = webHubs ?? [WebHubConfig(id: 'web-main', name: 'Web hub')],
+        ftp = ftp ?? [];
 
-  int webPort;
-  bool webEnabled; // start web server automatically
-  String storageDir; // resolved at runtime when empty
+  List<SharedFolder> folders; // user added spaces (default is implicit)
+  List<WebHubConfig> webHubs;
   List<FtpServerConfig> ftp;
 
+  /// Resolve a folder id to a real directory path.
+  String pathOf(String id, String defaultPath) {
+    if (id == kDefaultFolderId) return defaultPath;
+    final f = folders.where((e) => e.id == id).firstOrNull;
+    return (f == null || f.path.isEmpty) ? defaultPath : f.path;
+  }
+
+  String nameOf(String id) =>
+      id == kDefaultFolderId ? 'App folder' : (folders.where((e) => e.id == id).firstOrNull?.name ?? 'App folder');
+
   Map<String, dynamic> toJson() => {
-        'webPort': webPort,
-        'webEnabled': webEnabled,
-        'storageDir': storageDir,
+        'folders': folders.map((e) => e.toJson()).toList(),
+        'webHubs': webHubs.map((e) => e.toJson()).toList(),
         'ftp': ftp.map((e) => e.toJson()).toList(),
       };
 
-  factory AppConfig.fromJson(Map<String, dynamic> j) => AppConfig(
-        webPort: (j['webPort'] as num?)?.toInt() ?? 2011,
-        webEnabled: j['webEnabled'] as bool? ?? true,
-        storageDir: j['storageDir'] as String? ?? '',
-        ftp: ((j['ftp'] as List?) ?? [])
-            .map((e) => FtpServerConfig.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList(),
-      );
+  factory AppConfig.fromJson(Map<String, dynamic> j) {
+    List<T> list<T>(String k, T Function(Map<String, dynamic>) f) =>
+        ((j[k] as List?) ?? []).map((e) => f(Map<String, dynamic>.from(e as Map))).toList();
+    final hubs = list('webHubs', WebHubConfig.fromJson);
+    return AppConfig(
+      folders: list('folders', SharedFolder.fromJson),
+      webHubs: j.containsKey('webHubs') ? hubs : null,
+      ftp: list('ftp', FtpServerConfig.fromJson),
+    );
+  }
 
   String encode() => jsonEncode(toJson());
   factory AppConfig.decode(String s) =>
@@ -120,32 +175,27 @@ class AppConfig {
 
 /// Live status published by the server host (and sent across isolates as a Map).
 class HostStatus {
-  HostStatus({
-    this.webRunning = false,
-    this.webError,
-    this.ips = const [],
-    Map<String, FtpStatus>? ftp,
-  }) : ftp = ftp ?? {};
+  HostStatus({this.ips = const [], Map<String, FtpStatus>? web, Map<String, FtpStatus>? ftp})
+      : web = web ?? {},
+        ftp = ftp ?? {};
 
-  final bool webRunning;
-  final String? webError;
   final List<String> ips;
+  final Map<String, FtpStatus> web; // web hub id -> status
   final Map<String, FtpStatus> ftp;
 
+  bool get anyRunning => web.values.any((e) => e.running) || ftp.values.any((e) => e.running);
+
   Map<String, dynamic> toJson() => {
-        'webRunning': webRunning,
-        'webError': webError,
         'ips': ips,
+        'web': web.map((k, v) => MapEntry(k, v.toJson())),
         'ftp': ftp.map((k, v) => MapEntry(k, v.toJson())),
       };
 
-  factory HostStatus.fromJson(Map<String, dynamic> j) => HostStatus(
-        webRunning: j['webRunning'] as bool? ?? false,
-        webError: j['webError'] as String?,
-        ips: ((j['ips'] as List?) ?? []).cast<String>(),
-        ftp: ((j['ftp'] as Map?) ?? {}).map((k, v) =>
-            MapEntry(k as String, FtpStatus.fromJson(Map<String, dynamic>.from(v as Map)))),
-      );
+  factory HostStatus.fromJson(Map<String, dynamic> j) {
+    Map<String, FtpStatus> m(String k) => ((j[k] as Map?) ?? {}).map((a, v) =>
+        MapEntry(a as String, FtpStatus.fromJson(Map<String, dynamic>.from(v as Map))));
+    return HostStatus(ips: ((j['ips'] as List?) ?? []).cast<String>(), web: m('web'), ftp: m('ftp'));
+  }
 }
 
 class FtpStatus {

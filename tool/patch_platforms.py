@@ -4,8 +4,8 @@ import re
 import sys
 from pathlib import Path
 
-APP = "InfinityShare"
-ID = "dev.carlospeter.infinityshare"
+APP = "PocketServer"
+ID = "dev.carlospeter.pocketserver"
 
 
 def rd(p):
@@ -31,18 +31,43 @@ def android_manifest():
         s = s.replace("<manifest ", '<manifest xmlns:tools="http://schemas.android.com/tools" ', 1)
     perms = [
         "INTERNET", "ACCESS_NETWORK_STATE", "ACCESS_WIFI_STATE", "WAKE_LOCK",
-        "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_DATA_SYNC", "POST_NOTIFICATIONS",
-        "CHANGE_WIFI_MULTICAST_STATE", "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+        "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_SPECIAL_USE", "POST_NOTIFICATIONS",
+        "CHANGE_WIFI_MULTICAST_STATE", "MANAGE_EXTERNAL_STORAGE",
     ]
     block = "".join(f'    <uses-permission android:name="android.permission.{x}"/>\n' for x in perms)
     s = re.sub(r"(<manifest[^>]*>\s*)", lambda m: m.group(1) + "\n" + block, s, count=1)
     s = re.sub(r'android:label="[^"]*"', f'android:label="{APP}"', s, count=1)
     svc = (
+        '        <meta-data android:name="com.google.android.gms.ads.APPLICATION_ID"\n'
+        '            android:value="ca-app-pub-3940256099942544~3347511713"/>\n'  # AdMob TEST app id
         '        <service android:name="id.flutter.flutter_background_service.BackgroundService"\n'
-        '            android:foregroundServiceType="dataSync" android:exported="true"\n'
-        '            tools:replace="android:exported,android:foregroundServiceType"/>\n'
+        '            android:foregroundServiceType="specialUse" android:exported="true"\n'
+        '            tools:replace="android:exported,android:foregroundServiceType">\n'
+        '            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"\n'
+        '                android:value="Local file sharing server (HTTP, FTP, FTPS) that the user starts and stops"/>\n'
+        '        </service>\n'
     )
     s = insert_before_last(s, "</application>", svc)
+    # Android TV / leanback support
+    tv = (
+        '    <uses-feature android:name="android.software.leanback" android:required="false"/>\n'
+        '    <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>\n'
+    )
+    s = re.sub(r"(<manifest[^>]*>\s*)", lambda m: m.group(1) + "\n" + tv, s, count=1)
+    s = s.replace(
+        '<category android:name="android.intent.category.LAUNCHER"/>',
+        '<category android:name="android.intent.category.LAUNCHER"/>\n'
+        '                <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>',
+        1,
+    )
+    wr(p, s)
+
+
+def strip_all_files():
+    """Play Store build: remove the restricted 'all files access' permission."""
+    p = "android/app/src/main/AndroidManifest.xml"
+    s = rd(p)
+    s = re.sub(r'\s*<uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>', "", s)
     wr(p, s)
 
 
@@ -56,10 +81,10 @@ def android_gradle():
         s = re.sub(r"minSdk\s*=\s*[^\n]+", "minSdk = 24", s)
         signing = '''    signingConfigs {
         create("release") {
-            storeFile = rootProject.file("../signing/infinityshare.jks")
-            storePassword = "infinityshare"
-            keyAlias = "infinityshare"
-            keyPassword = "infinityshare"
+            storeFile = rootProject.file("../signing/pocketserver.jks")
+            storePassword = "pocketserver"
+            keyAlias = "pocketserver"
+            keyPassword = "pocketserver"
         }
     }
 
@@ -78,10 +103,10 @@ def android_gradle():
     s = re.sub(r"minSdkVersion\s+[^\n]+", "minSdkVersion 24", s)
     signing = '''    signingConfigs {
         release {
-            storeFile rootProject.file("../signing/infinityshare.jks")
-            storePassword "infinityshare"
-            keyAlias "infinityshare"
-            keyPassword "infinityshare"
+            storeFile rootProject.file("../signing/pocketserver.jks")
+            storePassword "pocketserver"
+            keyAlias "pocketserver"
+            keyPassword "pocketserver"
         }
     }
 
@@ -101,6 +126,9 @@ def ios():
 \t<true/>
 \t<key>LSSupportsOpeningDocumentsInPlace</key>
 \t<true/>
+"""
+    add += """\t<key>GADApplicationIdentifier</key>
+\t<string>ca-app-pub-3940256099942544~1458002511</string>
 """
     s = insert_before_last(s, "</dict>", add)
     s = re.sub(r"(<key>CFBundleDisplayName</key>\s*<string>)[^<]*", r"\g<1>" + APP, s)
@@ -128,10 +156,16 @@ def macos():
                 out += lines[i:i + 2]
         if out:
             s = insert_before_last(s, "</dict>", "\n".join(out) + "\n")
+        # not sandboxed: lets the user share any folder (not distributed through the Mac App Store)
+        s = re.sub(r"(<key>com.apple.security.app-sandbox</key>\s*)<true/>", r"\1<false/>", s)
         wr(p, s)
 
 
 if __name__ == "__main__":
+    if sys.argv[1:] == ["strip-allfiles"]:
+        strip_all_files()
+        print("stripped MANAGE_EXTERNAL_STORAGE")
+        sys.exit(0)
     which = set(sys.argv[1:]) or {"android", "ios", "macos"}
     if "android" in which:
         android_manifest()

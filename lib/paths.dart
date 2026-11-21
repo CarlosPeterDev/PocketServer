@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-import 'config.dart';
 
 class AppPaths {
   AppPaths(this.dataDir, this.defaultStorage);
@@ -13,13 +12,19 @@ class AppPaths {
   File get configFile => File(p.join(dataDir.path, 'config.json'));
   Directory get certDir => Directory(p.join(dataDir.path, 'tls'));
 
-  String storageFor(AppConfig c) => c.storageDir.trim().isEmpty ? defaultStorage.path : c.storageDir.trim();
 
   static Future<AppPaths> resolve() async {
     final support = await getApplicationSupportDirectory();
-    final docs = await getApplicationDocumentsDirectory();
-    final data = Directory(p.join(support.path, 'infinityshare'));
-    final storage = Directory(p.join(docs.path, 'InfinityShare'));
+    Directory docs = await getApplicationDocumentsDirectory();
+    if (Platform.isAndroid) {
+      // app-specific external storage: needs no permission, visible over USB / file managers
+      try {
+        final ext = await getExternalStorageDirectory();
+        if (ext != null) docs = ext;
+      } catch (_) {}
+    }
+    final data = Directory(p.join(support.path, 'pocketserver'));
+    final storage = Directory(p.join(docs.path, 'PocketServer'));
     await data.create(recursive: true);
     await storage.create(recursive: true);
     return AppPaths(data, storage);

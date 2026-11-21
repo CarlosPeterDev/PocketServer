@@ -8,9 +8,10 @@ import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 
 import 'share_store.dart';
+import 'tv_ui.dart';
 import 'web_ui.dart';
 
-/// Dart port of the original Flask "InfinityShare" server (files.py), without
+/// Dart port of the original Flask "PocketServer" server (files.py), without
 /// the converter / compressor.
 class WebServer {
   WebServer(this.store, this.port);
@@ -85,6 +86,13 @@ class WebServer {
         res.headers.contentType = ContentType.html;
         res.headers.set('Cache-Control', 'no-cache');
         res.write(kWebUiHtml);
+        await res.close();
+        return;
+      }
+      if (m == 'GET' && (path == '/tv' || path == '/tv/')) {
+        res.headers.contentType = ContentType.html;
+        res.headers.set('Cache-Control', 'no-cache');
+        res.write(kTvHtml);
         await res.close();
         return;
       }

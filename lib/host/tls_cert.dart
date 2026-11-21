@@ -41,7 +41,7 @@ class TlsCert {
     final priv = pair.privateKey as pc.RSAPrivateKey;
     final pub = pair.publicKey as pc.RSAPublicKey;
     final csr = X509Utils.generateRsaCsrPem(
-      {'CN': 'InfinityShare', 'O': 'InfinityShare'},
+      {'CN': 'PocketServer', 'O': 'PocketServer'},
       priv,
       pub,
     );

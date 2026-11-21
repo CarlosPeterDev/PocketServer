@@ -5,7 +5,7 @@ const String kWebUiHtml = r'''<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>InfinityShare</title>
+<title>PocketServer</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={darkMode:'class'}</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -287,7 +287,7 @@ button:focus-visible{outline:3px solid #3b82f6;outline-offset:2px}
         <i class="fa-solid fa-infinity text-white text-2xl"></i>
       </div>
       <div>
-        <h1 class="text-2xl font-black text-white">InfinityShare</h1>
+        <h1 class="text-2xl font-black text-white">PocketServer</h1>
         <p class="text-xs text-blue-400 font-semibold">Your personal file hub</p>
       </div>
     </div>

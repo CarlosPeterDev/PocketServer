@@ -17,8 +17,8 @@ abstract class HostController {
   Future<void> reload();
   Future<void> startAll();
   Future<void> stopAll();
-  Future<void> startWeb();
-  Future<void> stopWeb();
+  Future<void> startWeb(String id);
+  Future<void> stopWeb(String id);
   Future<void> startFtp(String id);
   Future<void> stopFtp(String id);
   Future<void> shutdown();
@@ -46,9 +46,9 @@ class LocalHost implements HostController {
   @override
   Future<void> stopAll() => host.stopAll();
   @override
-  Future<void> startWeb() => host.startWeb();
+  Future<void> startWeb(String id) => host.startWeb(id);
   @override
-  Future<void> stopWeb() => host.stopWeb();
+  Future<void> stopWeb(String id) => host.stopWeb(id);
   @override
   Future<void> startFtp(String id) => host.startFtp(id);
   @override
@@ -72,10 +72,10 @@ class AndroidServiceHost implements HostController {
         onStart: serviceMain,
         autoStart: false,
         isForegroundMode: true,
-        initialNotificationTitle: 'InfinityShare',
+        initialNotificationTitle: 'PocketServer',
         initialNotificationContent: 'Starting servers…',
         foregroundServiceNotificationId: 4711,
-        foregroundServiceTypes: [AndroidForegroundType.dataSync],
+        foregroundServiceTypes: [AndroidForegroundType.specialUse],
       ),
       iosConfiguration: IosConfiguration(autoStart: false),
     );
@@ -107,9 +107,9 @@ class AndroidServiceHost implements HostController {
   @override
   Future<void> stopAll() async => _cmd('stopAll');
   @override
-  Future<void> startWeb() async => _cmd('startWeb');
+  Future<void> startWeb(String id) async => _cmd('startWeb', id);
   @override
-  Future<void> stopWeb() async => _cmd('stopWeb');
+  Future<void> stopWeb(String id) async => _cmd('stopWeb', id);
   @override
   Future<void> startFtp(String id) async => _cmd('startFtp', id);
   @override
@@ -131,15 +131,14 @@ Future<void> serviceMain(ServiceInstance service) async {
   void publish(HostStatus s) {
     service.invoke('status', s.toJson());
     if (service is AndroidServiceInstance) {
-      final web = s.webRunning;
+      final w = s.web.values.where((f) => f.running).length;
       final n = s.ftp.values.where((f) => f.running).length;
-      final ip = s.ips.isEmpty ? '' : s.ips.first;
       final parts = <String>[
-        if (web) 'Web http://$ip:${host.cfg.webPort}',
+        if (w > 0) '$w web hub${w == 1 ? '' : 's'}',
         if (n > 0) '$n FTP server${n == 1 ? '' : 's'}',
       ];
       service.setForegroundNotificationInfo(
-        title: 'InfinityShare',
+        title: 'PocketServer',
         content: parts.isEmpty ? 'No server running' : parts.join('  •  '),
       );
     }
@@ -162,9 +161,9 @@ Future<void> serviceMain(ServiceInstance service) async {
       case 'stopAll':
         await host.stopAll();
       case 'startWeb':
-        await host.startWeb();
+        if (id != null) await host.startWeb(id);
       case 'stopWeb':
-        await host.stopWeb();
+        if (id != null) await host.stopWeb(id);
       case 'startFtp':
         if (id != null) await host.startFtp(id);
       case 'stopFtp':

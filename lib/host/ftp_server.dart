@@ -9,11 +9,18 @@ import '../config.dart';
 const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /// Minimal but complete FTP / FTPS (explicit + implicit) server.
+class FtpRoot {
+  const FtpRoot(this.name, this.path);
+  final String name;
+  final String path;
+}
+
 class FtpServer {
-  FtpServer(this.cfg, this.rootPath, {this.tls});
+  FtpServer(this.cfg, this.roots, {this.tls});
 
   final FtpServerConfig cfg;
-  final String rootPath;
+  final List<FtpRoot> roots; // one = plain root, several = merged top-level dirs
+  bool get merged => roots.length > 1;
   final SecurityContext? tls;
 
   ServerSocket? _plain;
@@ -95,7 +102,7 @@ class _FtpSession {
 
   void start() {
     _attach(_ctl);
-    _send('220 InfinityShare FTP ready');
+    _send('220 PocketServer FTP ready');
     _resetIdle();
   }
 
@@ -280,7 +287,7 @@ class _FtpSession {
       case 'ABOR':
         return _send('226 No transfer in progress');
       case 'STAT':
-        return _send('211 InfinityShare FTP: logged in as ${_user ?? ''}');
+        return _send('211 PocketServer FTP: logged in as ${_user ?? ''}');
       case 'SITE':
         return _send('200 OK');
       case 'HELP':
@@ -355,12 +362,23 @@ class _FtpSession {
     return '/${parts.join('/')}';
   }
 
-  /// Virtual path -> real path (null when hidden / outside the root).
+  /// Virtual path -> real path (null when hidden / outside the root / virtual root of a merged server).
   String? _real(String vpath) {
     final segs = vpath.split('/').where((s) => s.isNotEmpty).toList();
     if (segs.any((s) => s.startsWith('.') || s.contains('\\') || s.contains('\u0000'))) return null;
-    final full = p.normalize(p.join(srv.rootPath, p.joinAll(segs.isEmpty ? [''] : segs)));
-    final root = p.normalize(srv.rootPath);
+    String rootPath;
+    var rest = segs;
+    if (srv.merged) {
+      if (segs.isEmpty) return null;
+      final r = srv.roots.where((e) => e.name == segs.first).firstOrNull;
+      if (r == null) return null;
+      rootPath = r.path;
+      rest = segs.sublist(1);
+    } else {
+      rootPath = srv.roots.first.path;
+    }
+    final full = p.normalize(p.join(rootPath, p.joinAll(rest.isEmpty ? [''] : rest)));
+    final root = p.normalize(rootPath);
     if (full == root || p.isWithin(root, full)) return full;
     return null;
   }
@@ -373,6 +391,10 @@ class _FtpSession {
 
   Future<void> _cwdTo(String arg) async {
     final v = _v(arg);
+    if (srv.merged && v == '/') {
+      _cwd = v;
+      return _send('250 Directory changed to /');
+    }
     final r = _real(v);
     if (r == null || !FileSystemEntity.isDirectorySync(r)) return _send('550 No such directory');
     _cwd = v;
@@ -470,32 +492,41 @@ class _FtpSession {
     }
     final v = _v(a);
     final r = _real(v);
-    if (r == null || FileSystemEntity.typeSync(r) == FileSystemEntityType.notFound) {
-      return _send('550 No such file or directory');
-    }
-    final entries = <FileSystemEntity>[];
-    if (FileSystemEntity.isDirectorySync(r)) {
-      try {
-        entries.addAll(Directory(r).listSync(followLinks: false).where((e) => !p.basename(e.path).startsWith('.')));
-      } catch (_) {
-        return _send('550 Cannot read directory');
+    final entries = <MapEntry<String, FileSystemEntity>>[]; // display name -> entity
+    if (srv.merged && v == '/') {
+      for (final root in srv.roots) {
+        entries.add(MapEntry(root.name, Directory(root.path)));
       }
     } else {
-      entries.add(File(r));
+      if (r == null || FileSystemEntity.typeSync(r) == FileSystemEntityType.notFound) {
+        return _send('550 No such file or directory');
+      }
+      if (FileSystemEntity.isDirectorySync(r)) {
+        try {
+          for (final e in Directory(r).listSync(followLinks: false)) {
+            final n = p.basename(e.path);
+            if (!n.startsWith('.')) entries.add(MapEntry(n, e));
+          }
+        } catch (_) {
+          return _send('550 Cannot read directory');
+        }
+      } else {
+        entries.add(MapEntry(p.basename(r), File(r)));
+      }
+      entries.sort((x, y) => x.key.toLowerCase().compareTo(y.key.toLowerCase()));
     }
-    entries.sort((x, y) => p.basename(x.path).toLowerCase().compareTo(p.basename(y.path).toLowerCase()));
     _send('150 Opening data connection');
     final data = await _openData();
     if (data == null) return _send('425 Cannot open data connection');
     final sb = StringBuffer();
-    for (final e in entries) {
+    for (final en in entries) {
       FileStat st;
       try {
-        st = e.statSync();
+        st = en.value.statSync();
       } catch (_) {
         continue;
       }
-      final name = p.basename(e.path);
+      final name = en.key;
       final isDir = st.type == FileSystemEntityType.directory;
       if (mode == 'NLST') {
         sb.write('$name\r\n');
@@ -518,6 +549,7 @@ class _FtpSession {
 
   Future<void> _mlst(String arg) async {
     final v = _v(arg);
+    if (srv.merged && v == '/') return _send('250-Listing /\r\n type=dir; /\r\n250 End');
     final r = _real(v);
     if (r == null || FileSystemEntity.typeSync(r) == FileSystemEntityType.notFound) {
       return _send('550 Not found');
