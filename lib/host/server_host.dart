@@ -8,6 +8,7 @@ import '../config.dart';
 import '../paths.dart';
 import 'ftp_server.dart';
 import 'share_store.dart';
+import 'stats.dart';
 import 'tls_cert.dart';
 import 'web_server.dart';
 
@@ -31,6 +32,7 @@ class ServerHost {
 
   HostStatus get current => HostStatus(
         ips: _ips,
+        stats: Stats.i.toJson(),
         web: {
           for (final w in cfg.webHubs)
             w.id: FtpStatus(running: _web[w.id]?.running ?? false, error: _webErr[w.id]),
@@ -52,8 +54,10 @@ class ServerHost {
   Future<void> init() async {
     cfg = await AppConfig.load(paths.configFile);
     _ips = await localIps();
-    _tick = Timer.periodic(const Duration(seconds: 3), (_) async {
-      _ips = await localIps();
+    var n = 0;
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) async {
+      Stats.i.sample();
+      if (n++ % 5 == 0) _ips = await localIps();
       _emit();
     });
     for (final w in cfg.webHubs.where((e) => e.enabled)) {
@@ -109,7 +113,7 @@ class ServerHost {
     try {
       final root = _dirOf(c.folderId);
       await Directory(root).create(recursive: true);
-      final w = WebServer(ShareStore(root), c.port);
+      final w = WebServer(ShareStore(root), c.port, id: c.id);
       await w.start();
       _web[id] = w;
       _webErr.remove(id);

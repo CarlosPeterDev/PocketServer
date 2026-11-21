@@ -10,6 +10,7 @@ import '../ads.dart';
 import '../config.dart';
 import '../host/host_controller.dart';
 import '../paths.dart';
+import 'dashboard_page.dart';
 import 'folders_page.dart';
 import 'ftp_dialog.dart';
 import 'hub_dialog.dart';
@@ -216,6 +217,12 @@ class _HomePageState extends State<HomePage> {
             tooltip: anyRunning ? 'Stop everything' : 'Start everything',
             icon: Icon(anyRunning ? Icons.stop_circle_outlined : Icons.play_circle_outline),
             onPressed: () => anyRunning ? widget.host.stopAll() : widget.host.startAll(),
+          ),
+          IconButton(
+            tooltip: 'Dashboard',
+            icon: const Icon(Icons.insights_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) => DashboardPage(cfg: cfg, paths: widget.paths, host: widget.host))),
           ),
           IconButton(tooltip: 'Folders', icon: const Icon(Icons.folder_open), onPressed: _folders),
           if (Platform.isAndroid)

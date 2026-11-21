@@ -8,14 +8,16 @@ import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 
 import 'share_store.dart';
+import 'stats.dart';
 import 'tv_ui.dart';
 import 'web_ui.dart';
 
 /// Dart port of the original Flask "PocketServer" server (files.py), without
 /// the converter / compressor.
 class WebServer {
-  WebServer(this.store, this.port);
+  WebServer(this.store, this.port, {this.id = 'web'});
 
+  final String id;
   final ShareStore store;
   final int port;
   HttpServer? _server;
@@ -81,6 +83,7 @@ class WebServer {
       final path = req.uri.path;
       final m = req.method;
       final user = store.sessionUser(_sid(req));
+      Stats.i.requests++;
 
       if (m == 'GET' && path == '/') {
         res.headers.contentType = ContentType.html;
@@ -252,9 +255,11 @@ class WebServer {
     final users = store.loadMap(store.usersFile);
     final rec = users[u];
     if (rec is! Map || rec['password'] != sha256Hex(pw)) {
+      Stats.i.event(id, 'failed', u);
       return _err(res, 'Invalid username or password', 401);
     }
     _setSessionCookie(res, store.createSession(u));
+    Stats.i.event(id, 'login', u);
     return _json(res, {'status': 'ok', 'username': u, 'avatar': store.userAvatar(u)});
   }
 
@@ -404,6 +409,10 @@ class WebServer {
         final full = store.safeJoin(target, rel);
         if (full == null || full == target || p.basename(full).startsWith('.')) continue;
         Directory(p.dirname(full)).createSync(recursive: true);
+        try {
+          Stats.i.addIn(await f.tmp.length(), id);
+          Stats.i.event(id, 'upload', rel);
+        } catch (_) {}
         if (kTextExts.contains(p.extension(rel).toLowerCase())) {
           final raw = await f.tmp.readAsBytes();
           await File(full).writeAsBytes(raw.isEmpty ? raw : store.asCleanUtf8(raw));
@@ -683,6 +692,8 @@ class WebServer {
       await res.close();
       return;
     }
+    Stats.i.addOut(count, id);
+    if (start == 0) Stats.i.event(id, 'download', filename);
     try {
       await res.addStream(f.openRead(start, end + 1));
     } catch (_) {}

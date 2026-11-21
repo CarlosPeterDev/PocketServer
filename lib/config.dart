@@ -175,13 +175,14 @@ class AppConfig {
 
 /// Live status published by the server host (and sent across isolates as a Map).
 class HostStatus {
-  HostStatus({this.ips = const [], Map<String, FtpStatus>? web, Map<String, FtpStatus>? ftp})
+  HostStatus({this.ips = const [], Map<String, FtpStatus>? web, Map<String, FtpStatus>? ftp, this.stats = const {}})
       : web = web ?? {},
         ftp = ftp ?? {};
 
   final List<String> ips;
   final Map<String, FtpStatus> web; // web hub id -> status
   final Map<String, FtpStatus> ftp;
+  final Map<String, dynamic> stats; // see Stats.toJson
 
   bool get anyRunning => web.values.any((e) => e.running) || ftp.values.any((e) => e.running);
 
@@ -189,12 +190,14 @@ class HostStatus {
         'ips': ips,
         'web': web.map((k, v) => MapEntry(k, v.toJson())),
         'ftp': ftp.map((k, v) => MapEntry(k, v.toJson())),
+        'stats': stats,
       };
 
   factory HostStatus.fromJson(Map<String, dynamic> j) {
     Map<String, FtpStatus> m(String k) => ((j[k] as Map?) ?? {}).map((a, v) =>
         MapEntry(a as String, FtpStatus.fromJson(Map<String, dynamic>.from(v as Map))));
-    return HostStatus(ips: ((j['ips'] as List?) ?? []).cast<String>(), web: m('web'), ftp: m('ftp'));
+    return HostStatus(ips: ((j['ips'] as List?) ?? []).cast<String>(), web: m('web'), ftp: m('ftp'),
+        stats: j['stats'] is Map ? Map<String, dynamic>.from(j['stats'] as Map) : const {});
   }
 }
 

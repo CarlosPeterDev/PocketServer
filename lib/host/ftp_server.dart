@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../config.dart';
+import 'stats.dart';
 
 const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -54,6 +55,7 @@ class FtpServer {
     }
     final s = _FtpSession(this, c, implicitTls: cfg.mode == FtpMode.ftpsImplicit);
     _sessions.add(s);
+    Stats.i.ftpConnections++;
     s.start();
   }
 
@@ -127,6 +129,7 @@ class _FtpSession {
       _ctl.destroy();
     } catch (_) {}
     srv._removed(this);
+    if (Stats.i.ftpConnections > 0) Stats.i.ftpConnections--;
   }
 
   // ── control channel ──────────────────────────────────────────────────────
@@ -305,13 +308,16 @@ class _FtpSession {
     if (isAnon) {
       _authed = true;
       _anon = true;
+      Stats.i.event(cfg.id, 'login', 'anonymous');
       return _send('230 Anonymous access granted (read-only)');
     }
     if (_safeEq(u, cfg.username) & _safeEq(pw, cfg.password)) {
       _authed = true;
       _anon = false;
+      Stats.i.event(cfg.id, 'login', u);
       return _send('230 Login successful');
     }
+    Stats.i.event(cfg.id, 'failed', u);
     await Future<void>.delayed(const Duration(milliseconds: 600)); // slow brute force
     _send('530 Login incorrect');
   }
@@ -591,6 +597,8 @@ class _FtpSession {
     if (data == null) return _send('425 Cannot open data connection');
     try {
       await data.addStream(f.openRead(offset));
+      Stats.i.addOut(len - offset, cfg.id);
+      Stats.i.event(cfg.id, 'download', p.basename(f.path));
       await data.flush();
       await data.close();
       _send('226 Transfer complete');
@@ -615,8 +623,14 @@ class _FtpSession {
     if (data == null) return _send('425 Cannot open data connection');
     try {
       final sink = f.openWrite(mode: doAppend ? FileMode.append : FileMode.write);
-      await sink.addStream(data);
+      var got = 0;
+      await sink.addStream(data.map((c) {
+        got += c.length;
+        return c;
+      }));
       await sink.close();
+      Stats.i.addIn(got, cfg.id);
+      Stats.i.event(cfg.id, 'upload', p.basename(f.path));
       _send('226 Transfer complete');
     } catch (_) {
       data.destroy();
