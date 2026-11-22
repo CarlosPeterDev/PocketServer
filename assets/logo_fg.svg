@@ -1,22 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs>
   <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C4DFF"/><stop offset="1" stop-color="#00B8D9"/></linearGradient>
-  <linearGradient id="srv" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#F3EEFF"/><stop offset="1" stop-color="#DDF7FF"/></linearGradient>
-  <linearGradient id="srvd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2B1B6B"/><stop offset="1" stop-color="#14305F"/></linearGradient>
-</defs><g transform="translate(512 540) scale(0.72) translate(-512 -540)">
-  <!-- server peeking out of the pocket -->
-  <rect x="330" y="210" width="364" height="108" rx="24" fill="url(#srvd)"/>
-  <circle cx="378" cy="264" r="15" fill="#7C4DFF"/><circle cx="426" cy="264" r="15" fill="#fff" opacity=".35"/>
-  <rect x="480" y="252" width="170" height="24" rx="12" fill="#fff" opacity=".28"/>
-  <rect x="330" y="334" width="364" height="108" rx="24" fill="url(#srvd)"/>
-  <circle cx="378" cy="388" r="15" fill="#00B8D9"/><circle cx="426" cy="388" r="15" fill="#fff" opacity=".35"/>
-  <rect x="480" y="376" width="170" height="24" rx="12" fill="#fff" opacity=".28"/>
-  <rect x="330" y="458" width="364" height="108" rx="24" fill="url(#srvd)"/>
-  <circle cx="378" cy="512" r="15" fill="#7C4DFF"/><circle cx="426" cy="512" r="15" fill="#fff" opacity=".35"/>
-  <rect x="480" y="500" width="170" height="24" rx="12" fill="#fff" opacity=".28"/>
-
-  <!-- pocket (front) -->
-  <path d="M262 560H762V776Q762 868 670 868H354Q262 868 262 776Z" fill="#fff"/>
-  <path d="M262 560H762V632H262Z" fill="#7C4DFF" opacity=".16"/>
-  <path d="M262 632H762" stroke="#7C4DFF" stroke-opacity=".6" stroke-width="7" stroke-dasharray="20 14" stroke-linecap="round"/>
-  <path d="M296 664V774Q296 834 356 834H668Q728 834 728 774V664" fill="none" stroke="#7C4DFF" stroke-opacity=".6" stroke-width="7" stroke-dasharray="20 14" stroke-linecap="round"/>
+  <linearGradient id="emb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6C3FF0"/><stop offset="1" stop-color="#00A8CC"/></linearGradient>
+</defs><g transform="translate(512 580) scale(0.72) translate(-512 -580)">
+  <!-- pocket -->
+  <path d="M232 250H792Q812 250 812 270V700Q812 790 700 840L560 905Q512 928 464 905L324 840Q212 790 212 700V270Q212 250 232 250Z" fill="#fff" transform="translate(0 -20)"/>
+  <path d="M212 230H812V330H212Z" fill="#7C4DFF" opacity=".15"/>
+  <path d="M212 330H812" stroke="#7C4DFF" stroke-opacity=".6" stroke-width="7" stroke-dasharray="20 14" stroke-linecap="round"/>
+  <path d="M252 366V690Q252 760 330 796L470 860Q512 880 554 860L694 796Q772 760 772 690V366" fill="none" stroke="#7C4DFF" stroke-opacity=".5" stroke-width="7" stroke-dasharray="20 14" stroke-linecap="round" transform="translate(0 -20)"/>
+  <!-- server emblem sewn on the pocket -->
+  <rect x="360" y="400" width="304" height="96" rx="22" fill="url(#emb)"/>
+  <circle cx="404" cy="448" r="13" fill="#fff"/><circle cx="446" cy="448" r="13" fill="#fff" opacity=".55"/>
+  <rect x="490" y="438" width="132" height="20" rx="10" fill="#fff" opacity=".6"/>
+  <rect x="360" y="520" width="304" height="96" rx="22" fill="url(#emb)"/>
+  <circle cx="404" cy="568" r="13" fill="#fff"/><circle cx="446" cy="568" r="13" fill="#fff" opacity=".55"/>
+  <rect x="490" y="558" width="132" height="20" rx="10" fill="#fff" opacity=".6"/>
+  <rect x="360" y="640" width="304" height="96" rx="22" fill="url(#emb)"/>
+  <circle cx="404" cy="688" r="13" fill="#fff"/><circle cx="446" cy="688" r="13" fill="#fff" opacity=".55"/>
+  <rect x="490" y="678" width="132" height="20" rx="10" fill="#fff" opacity=".6"/>
 </g></svg>
