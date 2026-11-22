@@ -72,7 +72,32 @@ def strip_all_files():
 
 
 # ───────────── Android gradle (kts or groovy) ─────────────
+def disable_lint_vital():
+    """Some plugin AARs crash Android lint during release builds; lint is not needed for CI."""
+    kts = Path("android/build.gradle.kts")
+    if kts.exists():
+        kts.write_text(kts.read_text() + """
+subprojects {
+    tasks.configureEach {
+        if (name.startsWith("lintVital") || name.startsWith("lintAnalyze")) {
+            enabled = false
+        }
+    }
+}
+""")
+        return
+    g = Path("android/build.gradle")
+    g.write_text(g.read_text() + """
+subprojects {
+    tasks.configureEach { t ->
+        if (t.name.startsWith("lintVital") || t.name.startsWith("lintAnalyze")) { t.enabled = false }
+    }
+}
+""")
+
+
 def android_gradle():
+    disable_lint_vital()
     kts = Path("android/app/build.gradle.kts")
     if kts.exists():
         s = kts.read_text()
