@@ -78,7 +78,7 @@ class Ftp {
   }
 
   Future<void> startTls() async {
-    await _sub!.cancel();
+    _sub!.pause(); // cancelling would close the socket
     sock = await SecureSocket.secure(sock, onBadCertificate: (_) => true);
     _attach();
   }
@@ -481,9 +481,12 @@ void main() {
       final file = await call('GET', '/file/hello.txt');
       expect(file.$1, 200);
       expect(file.$2, 'hello from web');
-      final ranged = await call('GET', '/file/hello.txt', headers: {'range': 'bytes=0-4'});
+      // text files are served whole; binary / media files honour Range (video seeking)
+      expect((await upload('clip.mp4', 'abcdefghij')).$1, 200);
+      final ranged = await call('GET', '/file/clip.mp4', headers: {'range': 'bytes=2-5'});
       expect(ranged.$1, 206);
-      expect(ranged.$2, 'hello');
+      expect(ranged.$2, 'cdef');
+      expect(ranged.$3.value('content-range'), 'bytes 2-5/10');
       final dl = await call('GET', '/download/hello.txt');
       expect(dl.$1, 200);
       expect(dl.$3.value('content-disposition'), contains('hello.txt'));

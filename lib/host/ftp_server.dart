@@ -347,12 +347,10 @@ class _FtpSession {
       await _ctl.flush();
       _sub?.pause();
       final secure = await SecureSocket.secureServer(_ctl, srv.tls);
-      final old = _sub;
       _ctl = secure;
       _tls = true;
       _buf.clear();
       _attach(secure);
-      unawaited(old?.cancel());
     } catch (_) {
       close();
     }
