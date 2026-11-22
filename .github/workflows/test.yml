@@ -1,0 +1,17 @@
+name: Server tests
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with: { channel: stable, cache: true }
+      - run: flutter pub get
+      - name: Server integration tests (FTP, FTPS, WebDAV, web hub)
+        run: flutter test --reporter expanded

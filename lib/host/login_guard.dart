@@ -29,4 +29,9 @@ class LoginGuard {
   }
 
   void ok(String ip) => _fails.remove(ip);
+
+  void clear() {
+    _fails.clear();
+    _locked.clear();
+  }
 }
