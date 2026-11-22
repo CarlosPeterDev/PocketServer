@@ -81,7 +81,7 @@ class _SplashPageState extends State<SplashPage> {
         ),
         child: Center(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Image.asset('assets/icon.png', width: 112, height: 112, errorBuilder: (_, __, ___) => const Icon(Icons.all_inclusive, size: 96, color: Colors.white)),
+            Image.asset('assets/icon.png', width: 112, height: 112, errorBuilder: (_, __, ___) => const Icon(Icons.dns_rounded, size: 96, color: Colors.white)),
             const SizedBox(height: 20),
             const Text('PocketServer',
                 style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700)),

@@ -284,7 +284,7 @@ button:focus-visible{outline:3px solid #3b82f6;outline-offset:2px}
     <!-- Logo -->
     <div class="flex items-center gap-3 mb-8 justify-center">
       <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
-        <i class="fa-solid fa-infinity text-white text-2xl"></i>
+        <i class="fa-solid fa-server text-white text-2xl"></i>
       </div>
       <div>
         <h1 class="text-2xl font-black text-white">PocketServer</h1>
@@ -621,7 +621,7 @@ button:focus-visible{outline:3px solid #3b82f6;outline-offset:2px}
   <div class="flex items-center gap-2 px-3 py-2 min-h-[50px]">
     <!-- Logo -->
     <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white shrink-0 cursor-pointer" onclick="goTab('files')">
-      <i class="fa-solid fa-infinity text-sm"></i>
+      <i class="fa-solid fa-server text-sm"></i>
     </div>
     <!-- Search (files only) -->
     <div id="srchWrap" class="relative flex-1">

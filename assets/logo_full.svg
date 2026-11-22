@@ -1,22 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#7C4DFF"/>
-      <stop offset="1" stop-color="#00B8D9"/>
-    </linearGradient>
-    <linearGradient id="inf" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#FFFFFF"/>
-      <stop offset="1" stop-color="#E0F7FF"/>
-    </linearGradient>
-  </defs>
-  <rect width="1024" height="1024" fill="url(#bg)"/>
-  <circle cx="512" cy="512" r="400" fill="#FFFFFF" opacity="0.07"/>
-  <!-- infinity loop -->
-  <path d="M512 512 C 430 380, 200 380, 200 512 C 200 644, 430 644, 512 512 C 594 380, 824 380, 824 512 C 824 644, 594 644, 512 512 Z"
-        fill="none" stroke="url(#inf)" stroke-width="64" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- share nodes -->
-  <circle cx="200" cy="512" r="46" fill="#FFFFFF"/>
-  <circle cx="824" cy="512" r="46" fill="#FFFFFF"/>
-  <circle cx="200" cy="512" r="20" fill="#7C4DFF"/>
-  <circle cx="824" cy="512" r="20" fill="#00B8D9"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C4DFF"/><stop offset="1" stop-color="#00B8D9"/></linearGradient>
+  <linearGradient id="srv" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#EDE7FF"/><stop offset="1" stop-color="#D9F6FF"/></linearGradient>
+</defs><rect width="1024" height="1024" fill="url(#bg)"/>
+  <!-- wifi / sharing waves -->
+  <circle cx="512" cy="330" r="28" fill="#fff"/>
+  <path d="M441.3 259.3 A100 100 0 0 1 582.7 259.3" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round"/>
+  <path d="M391.8 209.8 A170 170 0 0 1 632.2 209.8" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round"/>
+  <path d="M342.3 160.3 A240 240 0 0 1 681.7 160.3" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round"/>
+  <!-- pocket -->
+  <path d="M292 400H732Q764 400 764 432V610Q764 730 512 860Q260 730 260 610V432Q260 400 292 400Z" fill="#fff"/>
+  <g transform="translate(512 640) scale(0.88) translate(-512 -640)">
+    <path d="M292 400H732Q764 400 764 432V610Q764 730 512 860Q260 730 260 610V432Q260 400 292 400Z" fill="none" stroke="#7C4DFF" stroke-opacity=".55" stroke-width="7" stroke-dasharray="22 16" stroke-linecap="round"/>
+  </g>
+  <!-- server units inside the pocket -->
+  <rect x="352" y="520" width="320" height="84" rx="20" fill="url(#srv)" stroke="#7C4DFF" stroke-opacity=".35" stroke-width="5"/>
+  <rect x="352" y="628" width="320" height="84" rx="20" fill="url(#srv)" stroke="#7C4DFF" stroke-opacity=".35" stroke-width="5"/>
+  <circle cx="394" cy="562" r="13" fill="#7C4DFF"/><circle cx="394" cy="670" r="13" fill="#00B8D9"/>
+  <rect x="430" y="553" width="150" height="18" rx="9" fill="#7C4DFF" opacity=".35"/>
+  <rect x="430" y="661" width="150" height="18" rx="9" fill="#00B8D9" opacity=".45"/>
 </svg>
