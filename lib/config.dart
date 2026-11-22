@@ -26,6 +26,8 @@ class FtpServerConfig {
     this.enabled = false,
     this.anonymous = false,
     List<String>? folderIds,
+    this.maxConnections = 0,
+    this.speedLimitKBps = 0,
   }) : folderIds = folderIds ?? [];
 
   final String id;
@@ -37,6 +39,8 @@ class FtpServerConfig {
   bool readOnly;
   bool enabled; // start automatically with the app
   bool anonymous;
+  int maxConnections; // 0 = default (64)
+  int speedLimitKBps; // per transfer, 0 = unlimited
   List<String> folderIds; // empty = default folder; several = merged as top-level dirs
 
   static String newId() {
@@ -57,6 +61,8 @@ class FtpServerConfig {
         'enabled': enabled,
         'anonymous': anonymous,
         'folderIds': folderIds,
+        'maxConnections': maxConnections,
+        'speedLimitKBps': speedLimitKBps,
       };
 
   factory FtpServerConfig.fromJson(Map<String, dynamic> j) => FtpServerConfig(
@@ -73,6 +79,8 @@ class FtpServerConfig {
         enabled: j['enabled'] as bool? ?? false,
         anonymous: j['anonymous'] as bool? ?? false,
         folderIds: ((j['folderIds'] as List?) ?? []).cast<String>(),
+        maxConnections: (j['maxConnections'] as num?)?.toInt() ?? 0,
+        speedLimitKBps: (j['speedLimitKBps'] as num?)?.toInt() ?? 0,
       );
 }
 

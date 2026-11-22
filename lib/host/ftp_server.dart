@@ -28,7 +28,7 @@ class FtpServer {
   ServerSocket? _plain;
   SecureServerSocket? _secure;
   final Set<_FtpSession> _sessions = {};
-  static const int maxSessions = 24;
+  int get maxSessions => cfg.maxConnections > 0 ? cfg.maxConnections : 64;
 
   int get connections => _sessions.length;
   bool get running => _plain != null || _secure != null;
@@ -589,6 +589,24 @@ class _FtpSession {
     return '$perms 1 ftp ftp ${st.size.toString().padLeft(12)} $when $name';
   }
 
+  /// Per-transfer speed limit (cfg.speedLimitKBps, 0 = unlimited).
+  Stream<List<int>> _lim(Stream<List<int>> s) async* {
+    final bps = cfg.speedLimitKBps * 1024;
+    if (bps <= 0) {
+      yield* s;
+      return;
+    }
+    final sw = Stopwatch()..start();
+    var sent = 0;
+    await for (final c in s) {
+      yield c;
+      sent += c.length;
+      final should = Duration(microseconds: sent * 1000000 ~/ bps);
+      final wait = should - sw.elapsed;
+      if (wait > Duration.zero) await Future<void>.delayed(wait);
+    }
+  }
+
   // ── transfers ────────────────────────────────────────────────────────────
   Future<void> _retr(String arg) async {
     final f = _realFile(arg);
@@ -601,7 +619,7 @@ class _FtpSession {
     final data = await _openData();
     if (data == null) return _send('425 Cannot open data connection');
     try {
-      await data.addStream(f.openRead(offset));
+      await data.addStream(_lim(f.openRead(offset)));
       Stats.i.addOut(len - offset, cfg.id);
       Stats.i.event(cfg.id, 'download', p.basename(f.path));
       await data.flush();
@@ -629,7 +647,7 @@ class _FtpSession {
     try {
       final sink = f.openWrite(mode: doAppend ? FileMode.append : FileMode.write);
       var got = 0;
-      await sink.addStream(data.map((c) {
+      await sink.addStream(_lim(data).map((c) {
         got += c.length;
         return c;
       }));

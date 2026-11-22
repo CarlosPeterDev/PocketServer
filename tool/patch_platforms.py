@@ -32,7 +32,7 @@ def android_manifest():
     perms = [
         "INTERNET", "ACCESS_NETWORK_STATE", "ACCESS_WIFI_STATE", "WAKE_LOCK",
         "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_SPECIAL_USE", "POST_NOTIFICATIONS",
-        "CHANGE_WIFI_MULTICAST_STATE", "MANAGE_EXTERNAL_STORAGE",
+        "CHANGE_WIFI_MULTICAST_STATE", "MANAGE_EXTERNAL_STORAGE", "RECEIVE_BOOT_COMPLETED",
     ]
     block = "".join(f'    <uses-permission android:name="android.permission.{x}"/>\n' for x in perms)
     s = re.sub(r"(<manifest[^>]*>\s*)", lambda m: m.group(1) + "\n" + block, s, count=1)
@@ -117,6 +117,10 @@ def android_gradle():
         s = s.replace("    buildTypes {", signing + "    buildTypes {", 1)
         s = re.sub(r'signingConfig\s*=\s*signingConfigs\.getByName\("debug"\)',
                    'signingConfig = signingConfigs.getByName("release")', s)
+        # R8 strips Room/WorkManager classes (pulled in by the ads SDK) and the app crashes on launch
+        s = re.sub(r"(buildTypes\s*\{\s*release\s*\{)", r"\1\n            isMinifyEnabled = false\n            isShrinkResources = false", s, count=1)
+        if "isMinifyEnabled = false" not in s:
+            sys.exit("could not disable minify in build.gradle.kts")
         if 'getByName("release")' not in s:
             sys.exit("could not patch signing in build.gradle.kts")
         kts.write_text(s)
@@ -138,6 +142,7 @@ def android_gradle():
 '''
     s = s.replace("    buildTypes {", signing + "    buildTypes {", 1)
     s = s.replace("signingConfig signingConfigs.debug", "signingConfig signingConfigs.release")
+    s = re.sub(r"(buildTypes\s*\{\s*release\s*\{)", r"\1\n            minifyEnabled false\n            shrinkResources false", s, count=1)
     g.write_text(s)
 
 

@@ -13,7 +13,7 @@ class FtpDialog extends StatefulWidget {
 
 class _FtpDialogState extends State<FtpDialog> {
   final _form = GlobalKey<FormState>();
-  late final TextEditingController name, user, pass, port;
+  late final TextEditingController name, user, pass, port, maxConn, speed;
   late FtpMode mode;
   late bool readOnly, anonymous, enabled, hide;
   late Set<String> folderIds;
@@ -30,6 +30,8 @@ class _FtpDialogState extends State<FtpDialog> {
     user = TextEditingController(text: i?.username ?? 'user');
     pass = TextEditingController(text: i?.password ?? '');
     port = TextEditingController(text: '${i?.port ?? p}');
+    maxConn = TextEditingController(text: (i?.maxConnections ?? 0) == 0 ? '' : '${i!.maxConnections}');
+    speed = TextEditingController(text: (i?.speedLimitKBps ?? 0) == 0 ? '' : '${i!.speedLimitKBps}');
     mode = i?.mode ?? FtpMode.ftp;
     readOnly = i?.readOnly ?? false;
     anonymous = i?.anonymous ?? false;
@@ -83,6 +85,18 @@ class _FtpDialogState extends State<FtpDialog> {
                   if (widget.usedPorts.contains(n)) return 'Port already used by another server';
                   return null;
                 },
+              ),
+              TextFormField(
+                controller: maxConn,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Max connections (empty = 64)'),
+                validator: (v) => (v != null && v.isNotEmpty && (int.tryParse(v) ?? 0) < 1) ? 'Number >= 1' : null,
+              ),
+              TextFormField(
+                controller: speed,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: 'Speed limit per transfer, KB/s (empty = unlimited)'),
+                validator: (v) => (v != null && v.isNotEmpty && (int.tryParse(v) ?? 0) < 1) ? 'Number >= 1' : null,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<FtpMode>(
@@ -152,6 +166,8 @@ class _FtpDialogState extends State<FtpDialog> {
                 anonymous: anonymous,
                 enabled: enabled,
                 folderIds: folderIds.toList(),
+                maxConnections: int.tryParse(maxConn.text) ?? 0,
+                speedLimitKBps: int.tryParse(speed.text) ?? 0,
               ),
             );
           },
