@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   path_provider: ^2.1.4
   path: ^1.9.0
   mime: ^1.0.5
@@ -35,3 +37,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icon.png
+    - assets/privacy.json

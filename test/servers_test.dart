@@ -460,13 +460,10 @@ void main() {
       return call('POST', '/api/upload', raw: body.toBytes(), contentType: 'multipart/form-data; boundary=$b');
     }
 
-    test('serves the web UI and the TV page', () async {
+    test('serves the web UI', () async {
       final home = await call('GET', '/');
       expect(home.$1, 200);
       expect(home.$2, contains('PocketServer'));
-      final tv = await call('GET', '/tv');
-      expect(tv.$1, 200);
-      expect(tv.$2, contains('PocketServer TV'));
     });
 
     test('register, login, upload, list, download, range, delete', () async {

@@ -2,13 +2,15 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'l10n.dart';
+
 enum FtpMode { ftp, ftpsExplicit, ftpsImplicit }
 
 extension FtpModeLabel on FtpMode {
   String get label => switch (this) {
-        FtpMode.ftp => 'FTP (plain)',
-        FtpMode.ftpsExplicit => 'FTPS (explicit, AUTH TLS)',
-        FtpMode.ftpsImplicit => 'FTPS (implicit, TLS)',
+        FtpMode.ftp => tr('FTP (plain)'),
+        FtpMode.ftpsExplicit => tr('FTPS (explicit, AUTH TLS)'),
+        FtpMode.ftpsImplicit => tr('FTPS (implicit, TLS)'),
       };
   String get scheme => this == FtpMode.ftp ? 'ftp' : 'ftps';
 }
@@ -190,7 +192,7 @@ class AppConfig {
   }
 
   String nameOf(String id) =>
-      id == kDefaultFolderId ? 'App folder' : (folders.where((e) => e.id == id).firstOrNull?.name ?? 'App folder');
+      id == kDefaultFolderId ? tr('App folder') : (folders.where((e) => e.id == id).firstOrNull?.name ?? tr('App folder'));
 
   Map<String, dynamic> toJson() => {
         'folders': folders.map((e) => e.toJson()).toList(),

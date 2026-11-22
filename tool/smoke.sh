@@ -14,7 +14,6 @@ adb logcat -d > smoke/logcat.txt
 adb shell pidof $PKG > smoke/pid.txt || true
 adb forward tcp:2011 tcp:2011
 curl -s -m 10 -o smoke/hub.html -w "%{http_code}\n" http://127.0.0.1:2011/ > smoke/http.txt || echo "no response" > smoke/http.txt
-curl -s -m 10 -o smoke/tv.html -w "%{http_code}\n" http://127.0.0.1:2011/tv >> smoke/http.txt || true
 grep -n "FATAL EXCEPTION" -A25 smoke/logcat.txt | head -80 > smoke/crash.txt
 if [ -s smoke/crash.txt ]; then echo CRASH > smoke/result.txt; else echo OK > smoke/result.txt; fi
 cat smoke/result.txt smoke/http.txt smoke/pid.txt

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../config.dart';
 import '../host/host_controller.dart';
+import '../l10n.dart';
 import '../paths.dart';
 import 'storage_scan.dart';
 
@@ -82,9 +83,9 @@ class _DashboardPageState extends State<DashboardPage> {
     final events = ((st.stats['events'] as List?) ?? []).cast<Map>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard'), actions: [
+      appBar: AppBar(title: Text(tr('Dashboard')), actions: [
         IconButton(
-          tooltip: 'Rescan storage',
+          tooltip: tr('Rescan storage'),
           icon: scanning
               ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.refresh),
@@ -96,25 +97,25 @@ class _DashboardPageState extends State<DashboardPage> {
           final cols = math.max(2, (c.maxWidth / 190).floor());
           _tileWidth = (c.maxWidth - 12 * (cols - 1)) / cols;
           return Wrap(spacing: 12, runSpacing: 12, children: [
-          _tile(Icons.dns_outlined, '$total', 'Servers running', cs.primary),
-          _tile(Icons.people_alt_outlined, '${_n('conns')}', 'FTP connections', cs.tertiary),
-          _tile(Icons.download_outlined, fmtBytes(_n('out')), 'Sent (session)', const Color(0xFFE91E63)),
-          _tile(Icons.upload_outlined, fmtBytes(_n('in')), 'Received (session)', const Color(0xFF4CAF50)),
-          _tile(Icons.http, '${_n('req')}', 'Web requests', cs.secondary),
-          _tile(Icons.gpp_maybe_outlined, '${_n('failed')}', 'Failed logins', cs.error),
+          _tile(Icons.dns_outlined, '$total', tr('Servers running'), cs.primary),
+          _tile(Icons.people_alt_outlined, '${_n('conns')}', tr('FTP connections'), cs.tertiary),
+          _tile(Icons.download_outlined, fmtBytes(_n('out')), tr('Sent (session)'), const Color(0xFFE91E63)),
+          _tile(Icons.upload_outlined, fmtBytes(_n('in')), tr('Received (session)'), const Color(0xFF4CAF50)),
+          _tile(Icons.http, '${_n('req')}', tr('Web requests'), cs.secondary),
+          _tile(Icons.gpp_maybe_outlined, '${_n('failed')}', tr('Failed logins'), cs.error),
         ]);
         }),
         const SizedBox(height: 20),
-        _section('Live speed (last 60 s)'),
+        _section(tr('Live speed (last 60 s)')),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(children: [
               Row(children: [
                 _dot(const Color(0xFFE91E63)),
-                Text(' Send ${fmtBytes(nowOut)}/s    '),
+                Text(' ${tr('Send')} ${fmtBytes(nowOut)}/s    '),
                 _dot(const Color(0xFF4CAF50)),
-                Text(' Receive ${fmtBytes(nowIn)}/s'),
+                Text(' ${tr('Receive')} ${fmtBytes(nowIn)}/s'),
               ]),
               const SizedBox(height: 10),
               SizedBox(
@@ -126,27 +127,27 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
         const SizedBox(height: 20),
-        _section('Traffic per server'),
+        _section(tr('Traffic per server')),
         if (servers.isEmpty)
-          const Card(child: Padding(padding: EdgeInsets.all(16), child: Text('No traffic yet.')))
+          Card(child: Padding(padding: const EdgeInsets.all(16), child: Text(tr('No traffic yet.'))))
         else
           Card(
             child: Column(children: [
               for (final id in servers)
                 ListTile(
                   dense: true,
-                  title: Text(_nameOfServer(id)),
-                  subtitle: Text('Sent ${fmtBytes((outBy[id] as num?) ?? 0)}   •   Received ${fmtBytes((inBy[id] as num?) ?? 0)}'),
+                  title: Text(tr(_nameOfServer(id))),
+                  subtitle: Text(tr('Sent {a}   •   Received {b}', {'a': fmtBytes((outBy[id] as num?) ?? 0), 'b': fmtBytes((inBy[id] as num?) ?? 0)})),
                 ),
             ]),
           ),
         const SizedBox(height: 20),
-        _section('Storage'),
+        _section(tr('Storage')),
         _storage(cs),
         const SizedBox(height: 20),
-        _section('Recent activity'),
+        _section(tr('Recent activity')),
         if (events.isEmpty)
-          const Card(child: Padding(padding: EdgeInsets.all(16), child: Text('Nothing yet.')))
+          Card(child: Padding(padding: const EdgeInsets.all(16), child: Text(tr('Nothing yet.'))))
         else
           Card(
             child: Column(children: [
@@ -171,8 +172,8 @@ class _DashboardPageState extends State<DashboardPage> {
     return ListTile(
       dense: true,
       leading: Icon(icon, color: k == 'failed' ? cs.error : cs.primary, size: 20),
-      title: Text('${k[0].toUpperCase()}${k.substring(1)}: ${e['x']}', maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(_nameOfServer(e['s'] as String? ?? '')),
+      title: Text('${tr(switch (k) { 'upload' => 'Upload', 'download' => 'Download', 'login' => 'Login', 'failed' => 'Failed', _ => 'Info' })}: ${e['x']}', maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(tr(_nameOfServer(e['s'] as String? ?? ''))),
       trailing: Text('${two(t.hour)}:${two(t.minute)}:${two(t.second)}', style: const TextStyle(fontSize: 12)),
     );
   }
@@ -187,7 +188,7 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('${fmtBytes(r.totalBytes)} in ${r.files} files, ${r.folders} folders${r.truncated ? ' (partial scan)' : ''}',
+          Text('${tr('{size} in {files} files, {folders} folders', {'size': fmtBytes(r.totalBytes), 'files': r.files, 'folders': r.folders})}${r.truncated ? ' ${tr('(partial scan)')}' : ''}',
               style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 12),
           if (r.totalBytes > 0)
@@ -211,13 +212,13 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Row(children: [
                 _dot(catColors[c.key] ?? Colors.grey),
                 const SizedBox(width: 8),
-                Expanded(child: Text('${c.key}  (${r.countByCategory[c.key] ?? 0})')),
+                Expanded(child: Text('${tr(c.key)}  (${r.countByCategory[c.key] ?? 0})')),
                 Text(fmtBytes(c.value)),
               ]),
             ),
           if (r.largest.isNotEmpty) ...[
             const Divider(height: 24),
-            Text('Largest files', style: Theme.of(context).textTheme.labelLarge),
+            Text(tr('Largest files'), style: Theme.of(context).textTheme.labelLarge),
             for (final f in r.largest)
               ListTile(
                 dense: true,

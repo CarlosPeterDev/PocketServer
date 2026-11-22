@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../config.dart';
+import '../l10n.dart';
 
 class HubDialog extends StatefulWidget {
   const HubDialog({super.key, this.initial, required this.cfg, required this.usedPorts});
@@ -25,7 +26,7 @@ class _HubDialogState extends State<HubDialog> {
     while (widget.usedPorts.contains(p)) {
       p++;
     }
-    name = TextEditingController(text: i?.name ?? 'Web hub');
+    name = TextEditingController(text: i?.name ?? tr('Web hub'));
     port = TextEditingController(text: '${i?.port ?? p}');
     folderId = i?.folderId ?? kDefaultFolderId;
     if (folderId != kDefaultFolderId && !widget.cfg.folders.any((f) => f.id == folderId)) {
@@ -37,40 +38,40 @@ class _HubDialogState extends State<HubDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.initial == null ? 'New web hub' : 'Edit web hub'),
+      title: Text(widget.initial == null ? tr('New web hub') : tr('Edit web hub')),
       content: Form(
         key: _form,
         child: SingleChildScrollView(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             TextFormField(
               controller: name,
-              decoration: const InputDecoration(labelText: 'Name'),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+              decoration: InputDecoration(labelText: tr('Name')),
+              validator: (v) => (v == null || v.trim().isEmpty) ? tr('Required') : null,
             ),
             TextFormField(
               controller: port,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Port'),
+              decoration: InputDecoration(labelText: tr('Port')),
               validator: (v) {
                 final n = int.tryParse(v ?? '');
                 if (n == null || n < 1 || n > 65535) return '1 - 65535';
-                if (widget.usedPorts.contains(n)) return 'Port already used';
+                if (widget.usedPorts.contains(n)) return tr('Port already used');
                 return null;
               },
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: folderId,
-              decoration: const InputDecoration(labelText: 'Folder'),
+              decoration: InputDecoration(labelText: tr('Folder')),
               items: [
-                const DropdownMenuItem(value: kDefaultFolderId, child: Text('App folder')),
+                DropdownMenuItem(value: kDefaultFolderId, child: Text(tr('App folder'))),
                 for (final f in widget.cfg.folders) DropdownMenuItem(value: f.id, child: Text(f.name)),
               ],
               onChanged: (v) => setState(() => folderId = v ?? folderId),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Start automatically'),
+              title: Text(tr('Start automatically')),
               value: enabled,
               onChanged: (v) => setState(() => enabled = v),
             ),
@@ -78,7 +79,7 @@ class _HubDialogState extends State<HubDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('Cancel'))),
         FilledButton(
           onPressed: () {
             if (!_form.currentState!.validate()) return;
@@ -93,7 +94,7 @@ class _HubDialogState extends State<HubDialog> {
               ),
             );
           },
-          child: const Text('Save'),
+          child: Text(tr('Save')),
         ),
       ],
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../config.dart';
+import '../l10n.dart';
 
 class DavDialog extends StatefulWidget {
   const DavDialog({super.key, this.initial, required this.cfg, required this.usedPorts});
@@ -25,7 +26,7 @@ class _DavDialogState extends State<DavDialog> {
     while (widget.usedPorts.contains(p)) {
       p++;
     }
-    name = TextEditingController(text: i?.name ?? 'My WebDAV drive');
+    name = TextEditingController(text: i?.name ?? tr('My WebDAV drive'));
     user = TextEditingController(text: i?.username ?? 'user');
     pass = TextEditingController(text: i?.password ?? '');
     port = TextEditingController(text: '${i?.port ?? p}');
@@ -39,7 +40,7 @@ class _DavDialogState extends State<DavDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.initial == null ? 'New WebDAV server' : 'Edit WebDAV server'),
+      title: Text(widget.initial == null ? tr('New WebDAV server') : tr('Edit WebDAV server')),
       content: SizedBox(
         width: 420,
         child: Form(
@@ -48,56 +49,56 @@ class _DavDialogState extends State<DavDialog> {
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               TextFormField(
                 controller: name,
-                decoration: const InputDecoration(labelText: 'Name'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                decoration: InputDecoration(labelText: tr('Name')),
+                validator: (v) => (v == null || v.trim().isEmpty) ? tr('Required') : null,
               ),
               TextFormField(
                 controller: user,
-                decoration: const InputDecoration(labelText: 'Username'),
-                validator: (v) => (v == null || v.trim().isEmpty || v.contains(':')) ? 'Required, no ":"' : null,
+                decoration: InputDecoration(labelText: tr('Username')),
+                validator: (v) => (v == null || v.trim().isEmpty || v.contains(':')) ? tr('Required, no ":"') : null,
               ),
               TextFormField(
                 controller: pass,
                 obscureText: hide,
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: tr('Password'),
                   suffixIcon: IconButton(
                     icon: Icon(hide ? Icons.visibility : Icons.visibility_off),
                     onPressed: () => setState(() => hide = !hide),
                   ),
                 ),
-                validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                validator: (v) => (v == null || v.isEmpty) ? tr('Required') : null,
               ),
               TextFormField(
                 controller: port,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Port'),
+                decoration: InputDecoration(labelText: tr('Port')),
                 validator: (v) {
                   final n = int.tryParse(v ?? '');
                   if (n == null || n < 1 || n > 65535) return '1 - 65535';
-                  if (widget.usedPorts.contains(n)) return 'Port already used';
+                  if (widget.usedPorts.contains(n)) return tr('Port already used');
                   return null;
                 },
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: folderId,
-                decoration: const InputDecoration(labelText: 'Folder'),
+                decoration: InputDecoration(labelText: tr('Folder')),
                 items: [
-                  const DropdownMenuItem(value: kDefaultFolderId, child: Text('App folder')),
+                  DropdownMenuItem(value: kDefaultFolderId, child: Text(tr('App folder'))),
                   for (final f in widget.cfg.folders) DropdownMenuItem(value: f.id, child: Text(f.name)),
                 ],
                 onChanged: (v) => setState(() => folderId = v ?? folderId),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Read-only'),
+                title: Text(tr('Read-only')),
                 value: readOnly,
                 onChanged: (v) => setState(() => readOnly = v),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Start automatically'),
+                title: Text(tr('Start automatically')),
                 value: enabled,
                 onChanged: (v) => setState(() => enabled = v),
               ),
@@ -106,7 +107,7 @@ class _DavDialogState extends State<DavDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('Cancel'))),
         FilledButton(
           onPressed: () {
             if (!_form.currentState!.validate()) return;
@@ -124,7 +125,7 @@ class _DavDialogState extends State<DavDialog> {
               ),
             );
           },
-          child: const Text('Save'),
+          child: Text(tr('Save')),
         ),
       ],
     );

@@ -10,7 +10,6 @@ import 'package:path/path.dart' as p;
 import 'share_store.dart';
 import 'login_guard.dart';
 import 'stats.dart';
-import 'tv_ui.dart';
 import 'web_ui.dart';
 
 /// Dart port of the original Flask "PocketServer" server (files.py), without
@@ -90,13 +89,6 @@ class WebServer {
         res.headers.contentType = ContentType.html;
         res.headers.set('Cache-Control', 'no-cache');
         res.write(kWebUiHtml);
-        await res.close();
-        return;
-      }
-      if (m == 'GET' && (path == '/tv' || path == '/tv/')) {
-        res.headers.contentType = ContentType.html;
-        res.headers.set('Cache-Control', 'no-cache');
-        res.write(kTvHtml);
         await res.close();
         return;
       }

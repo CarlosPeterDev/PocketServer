@@ -1,22 +1,22 @@
 import 'dart:io';
 
-import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:path/path.dart' as p;
-import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../ads.dart';
+import '../battery.dart';
 import '../config.dart';
 import '../host/host_controller.dart';
+import '../l10n.dart';
 import '../paths.dart';
 import 'dashboard_page.dart';
 import 'dav_dialog.dart';
 import 'folders_page.dart';
 import 'ftp_dialog.dart';
 import 'hub_dialog.dart';
+import 'settings_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.paths, required this.host});
@@ -99,7 +99,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _deleteHub(WebHubConfig w) async {
-    if (!await _confirm('Delete "${w.name}"?')) return;
+    if (!await _confirm(tr('Delete "{name}"?', {'name': tr(w.name)}))) return;
     cfg.webHubs.removeWhere((e) => e.id == w.id);
     await _save();
   }
@@ -158,7 +158,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _deleteDav(DavConfig d) async {
-    if (!await _confirm('Delete "${d.name}"?')) return;
+    if (!await _confirm(tr('Delete "{name}"?', {'name': tr(d.name)}))) return;
     cfg.dav.removeWhere((e) => e.id == d.id);
     await _save();
   }
@@ -168,10 +168,10 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (c) => AlertDialog(
         title: Text(title),
-        content: const Text('The server is stopped and removed. Your files are not touched.'),
+        content: Text(tr('The server is stopped and removed. Your files are not touched.')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(c, true), child: const Text('Delete')),
+          TextButton(onPressed: () => Navigator.pop(c, false), child: Text(tr('Cancel'))),
+          FilledButton(onPressed: () => Navigator.pop(c, true), child: Text(tr('Delete'))),
         ],
       ),
     );
@@ -179,7 +179,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _deleteFtp(FtpServerConfig f) async {
-    if (!await _confirm('Delete "${f.name}"?')) return;
+    if (!await _confirm(tr('Delete "{name}"?', {'name': tr(f.name)}))) return;
     cfg.ftp.removeWhere((e) => e.id == f.id);
     await _save();
   }
@@ -201,59 +201,14 @@ class _HomePageState extends State<HomePage> {
     if (mounted) setState(() {});
   }
 
-  /// On every launch (until fixed or dismissed for good): ask the user to set battery to Unrestricted.
+  /// On every launch (until fixed or dismissed for good): explain, then show the small system "Allow" box.
   Future<void> _maybeAskBattery() async {
     if (!Platform.isAndroid || !mounted) return;
-    try {
-      if (await Permission.ignoreBatteryOptimizations.isGranted) return;
-    } catch (_) {}
-    final marker = File(p.join(widget.paths.dataDir.path, 'no_battery_prompt'));
+    if (await batteryUnrestricted()) return;
+    final marker = batteryMarker(widget.paths);
     if (marker.existsSync()) return;
-    await _batteryHelp(marker: marker);
-  }
-
-  Future<void> _batteryHelp({File? marker}) async {
-    await showDialog<void>(
-      context: context,
-      builder: (c) => AlertDialog(
-        icon: const Icon(Icons.battery_charging_full, size: 36),
-        title: const Text('Set battery to "Unrestricted"'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'Why: PocketServer shares your files from this phone, so it has to keep running when the screen is '
-            'off or the app is in the background. With the default battery setting, Android may stop it after a '
-            'while to save power, and your FTP, WebDAV and web connections (and any transfer in progress) would '
-            'stop working.\n\n'
-            'What to do: tap "Open battery settings", choose PocketServer, then pick "Unrestricted" '
-            '(on some phones: "No restrictions" or "Don\'t optimize"). You can change this back at any time.',
-          ),
-        ),
-        actions: [
-          if (marker != null)
-            TextButton(
-              onPressed: () {
-                try {
-                  marker.writeAsStringSync('1');
-                } catch (_) {}
-                Navigator.pop(c);
-              },
-              child: const Text("Don't ask again"),
-            ),
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Later')),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(c);
-              try {
-                await const AndroidIntent(action: 'android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS').launch();
-              } catch (_) {
-                _toast('Open Settings > Apps > PocketServer > Battery');
-              }
-            },
-            child: const Text('Open battery settings'),
-          ),
-        ],
-      ),
-    );
+    if (!mounted) return;
+    await showBatteryHelp(context, marker: marker);
   }
 
   void _qr(String url) {
@@ -263,9 +218,9 @@ class _HomePageState extends State<HomePage> {
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           Container(color: Colors.white, padding: const EdgeInsets.all(10), child: QrImageView(data: url, size: 220)),
           const SizedBox(height: 10),
-          SelectableText(url),
+          SelectableText(url, textDirection: TextDirection.ltr),
         ]),
-        actions: [TextButton(onPressed: () => Navigator.pop(c), child: const Text('Close'))],
+        actions: [TextButton(onPressed: () => Navigator.pop(c), child: Text(tr('Close')))],
       ),
     );
   }
@@ -285,32 +240,36 @@ class _HomePageState extends State<HomePage> {
         title: const Text('PocketServer'),
         actions: [
           IconButton(
-            tooltip: anyRunning ? 'Stop everything' : 'Start everything',
+            tooltip: anyRunning ? tr('Stop everything') : tr('Start everything'),
             icon: Icon(anyRunning ? Icons.stop_circle_outlined : Icons.play_circle_outline),
             onPressed: () => anyRunning ? widget.host.stopAll() : widget.host.startAll(),
           ),
           IconButton(
-            tooltip: 'Dashboard',
+            tooltip: tr('Dashboard'),
             icon: const Icon(Icons.insights_outlined),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
                 builder: (_) => DashboardPage(cfg: cfg, paths: widget.paths, host: widget.host))),
           ),
-          IconButton(tooltip: 'Folders', icon: const Icon(Icons.folder_open), onPressed: _folders),
-          if (Platform.isAndroid)
-            IconButton(tooltip: 'Keep alive', icon: const Icon(Icons.battery_saver_outlined), onPressed: _batteryHelp),
+          IconButton(tooltip: tr('Folders'), icon: const Icon(Icons.folder_open), onPressed: _folders),
+          IconButton(
+            tooltip: tr('Settings'),
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => SettingsPage(paths: widget.paths, host: widget.host))),
+          ),
         ],
       ),
       floatingActionButton: PopupMenuButton<String>(
         onSelected: (v) => v == 'web' ? _editHub() : (v == 'dav' ? _editDav() : _editFtp()),
-        itemBuilder: (_) => const [
-          PopupMenuItem(value: 'web', child: Text('New web hub')),
-          PopupMenuItem(value: 'ftp', child: Text('New FTP / FTPS server')),
-          PopupMenuItem(value: 'dav', child: Text('New WebDAV server')),
+        itemBuilder: (_) => [
+          PopupMenuItem(value: 'web', child: Text(tr('New web hub'))),
+          PopupMenuItem(value: 'ftp', child: Text(tr('New FTP / FTPS server'))),
+          PopupMenuItem(value: 'dav', child: Text(tr('New WebDAV server'))),
         ],
         child: FloatingActionButton.extended(
           onPressed: null,
           icon: const Icon(Icons.add),
-          label: const Text('Add server'),
+          label: Text(tr('Add server')),
         ),
       ),
       body: Column(children: [
@@ -319,34 +278,33 @@ class _HomePageState extends State<HomePage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
             children: [
-              Text('Web hubs', style: Theme.of(context).textTheme.titleMedium),
+              Text(tr('Web hubs'), style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               for (final w in cfg.webHubs) _hubCard(w, scheme),
               const SizedBox(height: 16),
-              Text('FTP / FTPS servers', style: Theme.of(context).textTheme.titleMedium),
+              Text(tr('FTP / FTPS servers'), style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               if (cfg.ftp.isEmpty)
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(20),
-                    child: Text('No FTP servers yet. Use "Add server" to create one with your own name, '
-                        'username, password, port and folders.',
+                    child: Text(tr('No FTP servers yet. Use "Add server" to create one with your own name, username, password, port and folders.'),
                         style: TextStyle(color: scheme.onSurfaceVariant)),
                   ),
                 ),
               for (final f in cfg.ftp) _ftpCard(f, scheme),
               if (cfg.dav.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Text('WebDAV drives', style: Theme.of(context).textTheme.titleMedium),
+                Text(tr('WebDAV drives'), style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 for (final d in cfg.dav) _davCard(d, scheme),
               ],
               const SizedBox(height: 16),
               if (Platform.isIOS)
-                Text('iOS pauses apps shortly after you leave them, so servers only work while PocketServer is open.',
+                Text(tr('iOS pauses apps shortly after you leave them, so servers only work while PocketServer is open.'),
                     style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
               if (Platform.isWindows || Platform.isLinux || Platform.isMacOS)
-                Text('Servers run while this window is open. Closing the window stops them.',
+                Text(tr('Servers run while this window is open. Closing the window stops them.'),
                     style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant)),
             ],
           ),
@@ -366,33 +324,28 @@ class _HomePageState extends State<HomePage> {
           Row(children: [
             const Icon(Icons.language),
             const SizedBox(width: 8),
-            Expanded(child: Text(w.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
+            Expanded(child: Text(tr(w.name), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
             Switch(value: running, onChanged: (v) => _toggleHub(w, v)),
           ]),
-          Text('Port ${w.port} • folder: ${cfg.nameOf(w.folderId)}',
+          Text(tr('Port {port} • folder: {folder}', {'port': w.port, 'folder': cfg.nameOf(w.folderId)}),
               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
           if (s?.error != null) Text(s!.error!, style: TextStyle(color: scheme.error)),
           if (running) ...[
             const SizedBox(height: 4),
-            SelectableText(url, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
-            Text('TV mode: $url/tv', style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
+            SelectableText(url, textDirection: TextDirection.ltr, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
           ],
           Wrap(alignment: WrapAlignment.end, children: [
             if (running) ...[
-              TextButton.icon(onPressed: () => _qr(url), icon: const Icon(Icons.qr_code, size: 16), label: const Text('QR')),
+              TextButton.icon(onPressed: () => _qr(url), icon: const Icon(Icons.qr_code, size: 16), label: Text(tr('QR'))),
               TextButton.icon(
                   onPressed: () => launchUrl(Uri.parse('http://localhost:${w.port}'), mode: LaunchMode.externalApplication),
                   icon: const Icon(Icons.open_in_browser, size: 16),
-                  label: const Text('Open')),
-              TextButton.icon(
-                  onPressed: () => launchUrl(Uri.parse('http://localhost:${w.port}/tv'), mode: LaunchMode.externalApplication),
-                  icon: const Icon(Icons.tv, size: 16),
-                  label: const Text('TV mode')),
+                  label: Text(tr('Open'))),
             ],
-            TextButton.icon(onPressed: () => _copy(url, 'Link copied'), icon: const Icon(Icons.copy, size: 16), label: const Text('Copy')),
-            TextButton.icon(onPressed: () => _editHub(w), icon: const Icon(Icons.edit, size: 16), label: const Text('Edit')),
+            TextButton.icon(onPressed: () => _copy(url, tr('Link copied')), icon: const Icon(Icons.copy, size: 16), label: Text(tr('Copy'))),
+            TextButton.icon(onPressed: () => _editHub(w), icon: const Icon(Icons.edit, size: 16), label: Text(tr('Edit'))),
             if (cfg.webHubs.length > 1)
-              TextButton.icon(onPressed: () => _deleteHub(w), icon: const Icon(Icons.delete_outline, size: 16), label: const Text('Delete')),
+              TextButton.icon(onPressed: () => _deleteHub(w), icon: const Icon(Icons.delete_outline, size: 16), label: Text(tr('Delete'))),
           ]),
         ]),
       ),
@@ -410,22 +363,22 @@ class _HomePageState extends State<HomePage> {
           Row(children: [
             const Icon(Icons.storage_outlined),
             const SizedBox(width: 8),
-            Expanded(child: Text(d.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
+            Expanded(child: Text(tr(d.name), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
             Switch(value: running, onChanged: (v) => _toggleDav(d, v)),
           ]),
-          Text('Port ${d.port} • user ${d.username}${d.readOnly ? ' • read-only' : ''}\nFolder: ${cfg.nameOf(d.folderId)}',
+          Text('${tr('Port {port} • user {user}', {'port': d.port, 'user': d.username})}${d.readOnly ? ' • ${tr('read-only')}' : ''}\n${tr('Folder: {folder}', {'folder': cfg.nameOf(d.folderId)})}',
               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
           if (s?.error != null) Text(s!.error!, style: TextStyle(color: scheme.error)),
           if (running) ...[
             const SizedBox(height: 4),
-            SelectableText(url),
-            Text('Windows: Map network drive. macOS: Connect to Server. Linux/Android: any WebDAV client.',
+            SelectableText(url, textDirection: TextDirection.ltr),
+            Text(tr('Windows: Map network drive. macOS: Connect to Server. Linux/Android: any WebDAV client.'),
                 style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
           ],
           Wrap(alignment: WrapAlignment.end, children: [
-            TextButton.icon(onPressed: () => _copy(url, 'Address copied'), icon: const Icon(Icons.copy, size: 16), label: const Text('Copy')),
-            TextButton.icon(onPressed: () => _editDav(d), icon: const Icon(Icons.edit, size: 16), label: const Text('Edit')),
-            TextButton.icon(onPressed: () => _deleteDav(d), icon: const Icon(Icons.delete_outline, size: 16), label: const Text('Delete')),
+            TextButton.icon(onPressed: () => _copy(url, tr('Address copied')), icon: const Icon(Icons.copy, size: 16), label: Text(tr('Copy'))),
+            TextButton.icon(onPressed: () => _editDav(d), icon: const Icon(Icons.edit, size: 16), label: Text(tr('Edit'))),
+            TextButton.icon(onPressed: () => _deleteDav(d), icon: const Icon(Icons.delete_outline, size: 16), label: Text(tr('Delete'))),
           ]),
         ]),
       ),
@@ -444,27 +397,27 @@ class _HomePageState extends State<HomePage> {
           Row(children: [
             Icon(f.mode == FtpMode.ftp ? Icons.dns_outlined : Icons.lock_outline),
             const SizedBox(width: 8),
-            Expanded(child: Text(f.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
+            Expanded(child: Text(tr(f.name), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
             Switch(value: running, onChanged: (v) => _toggleFtp(f, v)),
           ]),
           Text(
-              '${f.mode.label} • port ${f.port} • user ${f.anonymous ? 'anonymous / ${f.username}' : f.username}'
-              '${f.readOnly ? ' • read-only' : ''}\nFolder: $folders',
+              '${f.mode.label} • ${tr('port {port}', {'port': f.port})} • ${tr('user {user}', {'user': f.anonymous ? 'anonymous / ${f.username}' : f.username})}'
+              '${f.readOnly ? ' • ${tr('read-only')}' : ''}\n${tr('Folder: {folder}', {'folder': folders})}',
               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
           if (s?.error != null) Text(s!.error!, style: TextStyle(color: scheme.error)),
           if (running) ...[
             const SizedBox(height: 4),
-            SelectableText(url),
-            Text('${s!.connections} connection${s.connections == 1 ? '' : 's'}',
+            SelectableText(url, textDirection: TextDirection.ltr),
+            Text(tr(s!.connections == 1 ? '{n} connection' : '{n} connections', {'n': s.connections}),
                 style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
             if (f.mode != FtpMode.ftp)
-              Text('Self-signed certificate: accept it in your FTP client.',
+              Text(tr('Self-signed certificate: accept it in your FTP client.'),
                   style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
           ],
           Wrap(alignment: WrapAlignment.end, children: [
-            TextButton.icon(onPressed: () => _copy(url, 'Address copied'), icon: const Icon(Icons.copy, size: 16), label: const Text('Copy')),
-            TextButton.icon(onPressed: () => _editFtp(f), icon: const Icon(Icons.edit, size: 16), label: const Text('Edit')),
-            TextButton.icon(onPressed: () => _deleteFtp(f), icon: const Icon(Icons.delete_outline, size: 16), label: const Text('Delete')),
+            TextButton.icon(onPressed: () => _copy(url, tr('Address copied')), icon: const Icon(Icons.copy, size: 16), label: Text(tr('Copy'))),
+            TextButton.icon(onPressed: () => _editFtp(f), icon: const Icon(Icons.edit, size: 16), label: Text(tr('Edit'))),
+            TextButton.icon(onPressed: () => _deleteFtp(f), icon: const Icon(Icons.delete_outline, size: 16), label: Text(tr('Delete'))),
           ]),
         ]),
       ),

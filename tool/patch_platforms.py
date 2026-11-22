@@ -33,6 +33,7 @@ def android_manifest():
         "INTERNET", "ACCESS_NETWORK_STATE", "ACCESS_WIFI_STATE", "WAKE_LOCK",
         "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_SPECIAL_USE", "POST_NOTIFICATIONS",
         "CHANGE_WIFI_MULTICAST_STATE", "MANAGE_EXTERNAL_STORAGE", "RECEIVE_BOOT_COMPLETED",
+        "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
     ]
     block = "".join(f'    <uses-permission android:name="android.permission.{x}"/>\n' for x in perms)
     s = re.sub(r"(<manifest[^>]*>\s*)", lambda m: m.group(1) + "\n" + block, s, count=1)
@@ -68,6 +69,8 @@ def strip_all_files():
     p = "android/app/src/main/AndroidManifest.xml"
     s = rd(p)
     s = re.sub(r'\s*<uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>', "", s)
+    # Play restricts the battery-optimisation exemption request too (the app then opens the settings page instead)
+    s = re.sub(r'\s*<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>', "", s)
     wr(p, s)
 
 
@@ -194,7 +197,7 @@ def macos():
 if __name__ == "__main__":
     if sys.argv[1:] == ["strip-allfiles"]:
         strip_all_files()
-        print("stripped MANAGE_EXTERNAL_STORAGE")
+        print("stripped MANAGE_EXTERNAL_STORAGE + REQUEST_IGNORE_BATTERY_OPTIMIZATIONS")
         sys.exit(0)
     which = set(sys.argv[1:]) or {"android", "ios", "macos"}
     if "android" in which:

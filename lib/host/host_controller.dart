@@ -6,7 +6,9 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 
 import '../config.dart';
+import '../l10n.dart';
 import '../paths.dart';
+import '../settings.dart';
 import 'server_host.dart';
 
 /// What the UI talks to. Config is always written to the shared config file
@@ -79,7 +81,7 @@ class AndroidServiceHost implements HostController {
         autoStart: false,
         isForegroundMode: true,
         initialNotificationTitle: 'PocketServer',
-        initialNotificationContent: 'Starting servers…',
+        initialNotificationContent: tr('Starting servers…'),
         foregroundServiceNotificationId: 4711,
         foregroundServiceTypes: [AndroidForegroundType.specialUse],
       ),
@@ -135,6 +137,12 @@ Future<void> serviceMain(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
   final paths = await AppPaths.resolve();
+  Future<void> applyLang() async {
+    final st = await AppSettings.load(paths.settingsFile);
+    Lang.set(st.lang ?? Lang.deviceDefault());
+  }
+
+  await applyLang();
   final host = ServerHost(paths);
   await host.init();
 
@@ -145,13 +153,13 @@ Future<void> serviceMain(ServiceInstance service) async {
       final n = s.ftp.values.where((f) => f.running).length;
       final d = s.dav.values.where((f) => f.running).length;
       final parts = <String>[
-        if (w > 0) '$w web hub${w == 1 ? '' : 's'}',
-        if (d > 0) '$d WebDAV',
-        if (n > 0) '$n FTP server${n == 1 ? '' : 's'}',
+        if (w > 0) tr(w == 1 ? '{n} web hub' : '{n} web hubs', {'n': w}),
+        if (d > 0) tr('{n} WebDAV', {'n': d}),
+        if (n > 0) tr(n == 1 ? '{n} FTP server' : '{n} FTP servers', {'n': n}),
       ];
       service.setForegroundNotificationInfo(
         title: 'PocketServer',
-        content: parts.isEmpty ? 'No server running' : parts.join('  •  '),
+        content: parts.isEmpty ? tr('No server running') : parts.join('  •  '),
       );
     }
   }
@@ -167,7 +175,9 @@ Future<void> serviceMain(ServiceInstance service) async {
     final id = e['id'] as String?;
     switch (e['c']) {
       case 'reload':
+        await applyLang();
         await host.reload();
+        publish(host.current); // refresh the notification text (language may have changed)
       case 'startAll':
         await host.startAll();
       case 'stopAll':

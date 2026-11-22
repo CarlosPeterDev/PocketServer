@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../config.dart';
+import '../l10n.dart';
 
 class FtpDialog extends StatefulWidget {
   const FtpDialog({super.key, this.initial, required this.usedPorts, required this.cfg});
@@ -26,7 +27,7 @@ class _FtpDialogState extends State<FtpDialog> {
     while (widget.usedPorts.contains(p)) {
       p++;
     }
-    name = TextEditingController(text: i?.name ?? 'My FTP server');
+    name = TextEditingController(text: i?.name ?? tr('My FTP server'));
     user = TextEditingController(text: i?.username ?? 'user');
     pass = TextEditingController(text: i?.password ?? '');
     port = TextEditingController(text: '${i?.port ?? p}');
@@ -46,7 +47,7 @@ class _FtpDialogState extends State<FtpDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.initial == null ? 'New FTP / FTPS server' : 'Edit server'),
+      title: Text(widget.initial == null ? tr('New FTP / FTPS server') : tr('Edit server')),
       content: SizedBox(
         width: 420,
         child: Form(
@@ -55,65 +56,65 @@ class _FtpDialogState extends State<FtpDialog> {
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               TextFormField(
                 controller: name,
-                decoration: const InputDecoration(labelText: 'Server name'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                decoration: InputDecoration(labelText: tr('Server name')),
+                validator: (v) => (v == null || v.trim().isEmpty) ? tr('Required') : null,
               ),
               TextFormField(
                 controller: user,
-                decoration: const InputDecoration(labelText: 'Username'),
-                validator: (v) => (v == null || v.trim().isEmpty || v.contains(' ')) ? 'Required, no spaces' : null,
+                decoration: InputDecoration(labelText: tr('Username')),
+                validator: (v) => (v == null || v.trim().isEmpty || v.contains(' ')) ? tr('Required, no spaces') : null,
               ),
               TextFormField(
                 controller: pass,
                 obscureText: hide,
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: tr('Password'),
                   suffixIcon: IconButton(
                     icon: Icon(hide ? Icons.visibility : Icons.visibility_off),
                     onPressed: () => setState(() => hide = !hide),
                   ),
                 ),
-                validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                validator: (v) => (v == null || v.isEmpty) ? tr('Required') : null,
               ),
               TextFormField(
                 controller: port,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Port', helperText: 'Ports under 1024 may need admin rights'),
+                decoration: InputDecoration(labelText: tr('Port'), helperText: tr('Ports under 1024 may need admin rights')),
                 validator: (v) {
                   final n = int.tryParse(v ?? '');
                   if (n == null || n < 1 || n > 65535) return '1 - 65535';
-                  if (widget.usedPorts.contains(n)) return 'Port already used by another server';
+                  if (widget.usedPorts.contains(n)) return tr('Port already used by another server');
                   return null;
                 },
               ),
               TextFormField(
                 controller: maxConn,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Max connections (empty = 64)'),
-                validator: (v) => (v != null && v.isNotEmpty && (int.tryParse(v) ?? 0) < 1) ? 'Number >= 1' : null,
+                decoration: InputDecoration(labelText: tr('Max connections (empty = 64)')),
+                validator: (v) => (v != null && v.isNotEmpty && (int.tryParse(v) ?? 0) < 1) ? tr('Number >= 1') : null,
               ),
               TextFormField(
                 controller: speed,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Speed limit per transfer, KB/s (empty = unlimited)'),
-                validator: (v) => (v != null && v.isNotEmpty && (int.tryParse(v) ?? 0) < 1) ? 'Number >= 1' : null,
+                decoration: InputDecoration(labelText: tr('Speed limit per transfer, KB/s (empty = unlimited)')),
+                validator: (v) => (v != null && v.isNotEmpty && (int.tryParse(v) ?? 0) < 1) ? tr('Number >= 1') : null,
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<FtpMode>(
                 initialValue: mode,
-                decoration: const InputDecoration(labelText: 'Protocol'),
+                decoration: InputDecoration(labelText: tr('Protocol')),
                 items: [for (final m in FtpMode.values) DropdownMenuItem(value: m, child: Text(m.label))],
                 onChanged: (m) => setState(() => mode = m ?? mode),
               ),
               const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Folders (several = merged)', style: Theme.of(context).textTheme.labelLarge),
+                child: Text(tr('Folders (several = merged)'), style: Theme.of(context).textTheme.labelLarge),
               ),
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 dense: true,
-                title: const Text('App folder'),
+                title: Text(tr('App folder')),
                 value: folderIds.contains(kDefaultFolderId),
                 onChanged: (v) => setState(() => v == true ? folderIds.add(kDefaultFolderId) : folderIds.remove(kDefaultFolderId)),
               ),
@@ -127,19 +128,19 @@ class _FtpDialogState extends State<FtpDialog> {
                 ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Read-only'),
+                title: Text(tr('Read-only')),
                 value: readOnly,
                 onChanged: (v) => setState(() => readOnly = v),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Allow anonymous (read-only)'),
+                title: Text(tr('Allow anonymous (read-only)')),
                 value: anonymous,
                 onChanged: (v) => setState(() => anonymous = v),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Start automatically'),
+                title: Text(tr('Start automatically')),
                 value: enabled,
                 onChanged: (v) => setState(() => enabled = v),
               ),
@@ -148,7 +149,7 @@ class _FtpDialogState extends State<FtpDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(tr('Cancel'))),
         FilledButton(
           onPressed: () {
             if (!_form.currentState!.validate()) return;
@@ -171,7 +172,7 @@ class _FtpDialogState extends State<FtpDialog> {
               ),
             );
           },
-          child: const Text('Save'),
+          child: Text(tr('Save')),
         ),
       ],
     );

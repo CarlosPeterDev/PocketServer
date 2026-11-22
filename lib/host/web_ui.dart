@@ -781,1616 +781,1813 @@ button:focus-visible{outline:3px solid #3b82f6;outline-offset:2px}
 
 <!-- ═══════════════ SCRIPTS ═══════════════ -->
 <script>
-pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-// ── STATE ──────────────────────────────────────────────────────────────────
-let curPath='', selItems=new Set(), curTab='files', clips=[], links=[];
-let curUser=null, isGuest=false;
-let permCurFile=null, ctxFile=null;
-let pdfDoc=null, pdfPg=1;
-let lpTimer=null, upStart=0;
-let allUsers=[];
-
-// ── INIT ──────────────────────────────────────────────────────────────────
-async function init(){
-  applyTheme(localStorage.theme||'auto');
-  try{
-    const r=await fetch('/api/me');
-    const d=await r.json();
-    if(d.username){
-      setUser(d.username,d.avatar);
-      dismissAuthWall();
-      loadStars();
+/*ps-es2015*/
+(function(){
+  var o=Object, A=Array.prototype, S=String.prototype;
+  if(!o.entries)o.entries=function(x){return Object.keys(x).map(function(k){return[k,x[k]]})};
+  if(!o.values)o.values=function(x){return Object.keys(x).map(function(k){return x[k]})};
+  if(!S.padStart)S.padStart=function(n,c){var s=String(this);c=c===undefined?' ':String(c);while(s.length<n)s=c+s;return s};
+  if(!S.padEnd)S.padEnd=function(n,c){var s=String(this);c=c===undefined?' ':String(c);while(s.length<n)s=s+c;return s};
+  if(!A.includes)A.includes=function(v){return this.indexOf(v)>=0};
+  if(!S.includes)S.includes=function(v,i){return this.indexOf(v,i)>=0};
+  if(window.Promise&&!Promise.prototype.finally)Promise.prototype.finally=function(f){var P=this.constructor;return this.then(function(v){return P.resolve(f()).then(function(){return v})},function(e){return P.resolve(f()).then(function(){throw e})})};
+  window.addEventListener('error',function(e){
+    try{var d=document.getElementById('ps-err');
+    if(!d){d=document.createElement('div');d.id='ps-err';d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#7f1d1d;color:#fff;font:14px monospace;padding:8px;white-space:pre-wrap';(document.body||document.documentElement).appendChild(d)}
+    d.textContent='Script error: '+(e.message||'')+' ('+(e.lineno||'?')+')'}catch(_){}
+  });
+})();
+var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
     }
-  }catch(e){}
-  fetchUsers();
-}
-init();
-
-async function fetchUsers(){
-  try{const r=await fetch('/api/users');const d=await r.json();allUsers=d.users||[];}catch(e){}
-}
-
-// ── THEME ──────────────────────────────────────────────────────────────────
-function applyTheme(t){
-  localStorage.theme=t;
-  if(t==='dark') document.documentElement.classList.add('dark');
-  else if(t==='light') document.documentElement.classList.remove('dark');
-  else{
-    if(window.matchMedia('(prefers-color-scheme:dark)').matches) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-  }
-}
-function setTheme(t){applyTheme(t);toast('Theme: '+t,'info');}
-
-// ── TOAST ──────────────────────────────────────────────────────────────────
-function toast(msg,type='info'){
-  const el=document.createElement('div');
-  const bg={success:'bg-green-500',error:'bg-red-500',info:'bg-blue-500',warn:'bg-amber-500'}[type]||'bg-blue-500';
-  const ic={success:'fa-check-circle',error:'fa-triangle-exclamation',info:'fa-info-circle',warn:'fa-bell'}[type]||'fa-info-circle';
-  el.className=`toast ${bg}`;
-  el.innerHTML=`<i class="fa-solid ${ic}"></i>${msg}`;
-  const b=document.getElementById('toastBox');b.appendChild(el);
-  setTimeout(()=>{el.style.cssText='opacity:0;transform:translateY(-12px);transition:all .3s';},2700);
-  setTimeout(()=>el.remove(),3100);
-}
-
-// ── MODAL ──────────────────────────────────────────────────────────────────
-let mCB=null;
-function showM(title,desc,inp,cb){
-  document.getElementById('mT').innerText=title;
-  const de=document.getElementById('mD'),iw=document.getElementById('mIW'),ie=document.getElementById('mI');
-  if(desc){de.innerText=desc;de.classList.remove('hidden');}else de.classList.add('hidden');
-  if(inp!==null){iw.classList.remove('hidden');ie.value=inp||'';setTimeout(()=>ie.focus(),80);}else iw.classList.add('hidden');
-  mCB=cb; document.getElementById('modal').classList.add('show');
-}
-function closeM(){document.getElementById('modal').classList.remove('show');mCB=null;}
-document.getElementById('mOK').onclick=()=>{const v=document.getElementById('mI').value;if(mCB)mCB(v);closeM();};
-document.getElementById('mI').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('mOK').click();});
-function mAlert(t,m){showM(t,m,null,null);}
-function mPrompt(t,m,def,cb){showM(t,m,def||'',cb);}
-function mConfirm(t,m,cb){showM(t,m,null,()=>cb());}
-
-// ── ESC/HTML helpers ──────────────────────────────────────────────────────
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function ea(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"');}
-
-// ── AUTH WALL ──────────────────────────────────────────────────────────────
-let awMode='login';
-function awTab(m){
-  awMode=m;
-  const isL=m==='login';
-  document.getElementById('awTabLogin').className=`flex-1 py-2.5 rounded-xl text-sm font-black text-white ${isL?'bg-blue-600':'bg-transparent opacity-50'} transition`;
-  document.getElementById('awTabReg').className=`flex-1 py-2.5 rounded-xl text-sm font-black text-white ${!isL?'bg-blue-600':'bg-transparent opacity-50'} transition`;
-  document.getElementById('awBtn').innerText=isL?'Sign In':'Create Account';
-  document.getElementById('awErr').classList.add('hidden');
-}
-function awSubmit(){
-  const u=(document.getElementById('awUser').value||'').trim();
-  const p=document.getElementById('awPass').value||'';
-  if(!u||!p){awErr('Enter username and password');return;}
-  const ep=awMode==='login'?'/api/login':'/api/register';
-  const btn=document.getElementById('awBtn');
-  if(btn){btn.disabled=true;btn.innerText='Please wait...';}
-  xhrPost(ep,{username:u,password:p},function(d){
-    if(btn){btn.disabled=false;btn.innerText=awMode==='login'?'Sign In':'Create Account';}
-    if(d&&d.status==='ok'){setUser(u,d.avatar);dismissAuthWall();toast('Welcome, '+u+'! 👋','success');}
-    else awErr((d&&d.error)||'Failed — check your details');
-  },function(e){
-    if(btn){btn.disabled=false;btn.innerText=awMode==='login'?'Sign In':'Create Account';}
-    awErr('Network error — is the server running?');
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+var __async = (__this, __arguments, generator) => {
+  return new Promise((resolve, reject) => {
+    var fulfilled = (value) => {
+      try {
+        step(generator.next(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var rejected = (value) => {
+      try {
+        step(generator.throw(value));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
+    step((generator = generator.apply(__this, __arguments)).next());
+  });
+};
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+let curPath = "", selItems = /* @__PURE__ */ new Set(), curTab = "files", clips = [], links = [];
+let curUser = null, isGuest = false;
+let permCurFile = null, ctxFile = null;
+let pdfDoc = null, pdfPg = 1;
+let lpTimer = null, upStart = 0;
+let allUsers = [];
+function init() {
+  return __async(this, null, function* () {
+    applyTheme(localStorage.theme || "auto");
+    try {
+      const r = yield fetch("/api/me");
+      const d = yield r.json();
+      if (d.username) {
+        setUser(d.username, d.avatar);
+        dismissAuthWall();
+        loadStars();
+      }
+    } catch (e) {
+    }
+    fetchUsers();
   });
 }
-
-// XHR helper — works on ALL browsers including old WebOS
-function xhrPost(url,data,onSuccess,onError){
-  var xhr=new XMLHttpRequest();
-  xhr.open('POST',url,true);
-  xhr.setRequestHeader('Content-Type','application/json');
-  xhr.onreadystatechange=function(){
-    if(xhr.readyState!==4)return;
-    try{
-      var d=JSON.parse(xhr.responseText);
+init();
+function fetchUsers() {
+  return __async(this, null, function* () {
+    try {
+      const r = yield fetch("/api/users");
+      const d = yield r.json();
+      allUsers = d.users || [];
+    } catch (e) {
+    }
+  });
+}
+function applyTheme(t) {
+  localStorage.theme = t;
+  if (t === "dark") document.documentElement.classList.add("dark");
+  else if (t === "light") document.documentElement.classList.remove("dark");
+  else {
+    if (window.matchMedia("(prefers-color-scheme:dark)").matches) document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
+  }
+}
+function setTheme(t) {
+  applyTheme(t);
+  toast("Theme: " + t, "info");
+}
+function toast(msg, type = "info") {
+  const el = document.createElement("div");
+  const bg = { success: "bg-green-500", error: "bg-red-500", info: "bg-blue-500", warn: "bg-amber-500" }[type] || "bg-blue-500";
+  const ic = { success: "fa-check-circle", error: "fa-triangle-exclamation", info: "fa-info-circle", warn: "fa-bell" }[type] || "fa-info-circle";
+  el.className = "toast ".concat(bg);
+  el.innerHTML = '<i class="fa-solid '.concat(ic, '"></i>').concat(msg);
+  const b = document.getElementById("toastBox");
+  b.appendChild(el);
+  setTimeout(() => {
+    el.style.cssText = "opacity:0;transform:translateY(-12px);transition:all .3s";
+  }, 2700);
+  setTimeout(() => el.remove(), 3100);
+}
+let mCB = null;
+function showM(title, desc, inp, cb) {
+  document.getElementById("mT").innerText = title;
+  const de = document.getElementById("mD"), iw = document.getElementById("mIW"), ie = document.getElementById("mI");
+  if (desc) {
+    de.innerText = desc;
+    de.classList.remove("hidden");
+  } else de.classList.add("hidden");
+  if (inp !== null) {
+    iw.classList.remove("hidden");
+    ie.value = inp || "";
+    setTimeout(() => ie.focus(), 80);
+  } else iw.classList.add("hidden");
+  mCB = cb;
+  document.getElementById("modal").classList.add("show");
+}
+function closeM() {
+  document.getElementById("modal").classList.remove("show");
+  mCB = null;
+}
+document.getElementById("mOK").onclick = () => {
+  const v = document.getElementById("mI").value;
+  if (mCB) mCB(v);
+  closeM();
+};
+document.getElementById("mI").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("mOK").click();
+});
+function mAlert(t, m) {
+  showM(t, m, null, null);
+}
+function mPrompt(t, m, def, cb) {
+  showM(t, m, def || "", cb);
+}
+function mConfirm(t, m, cb) {
+  showM(t, m, null, () => cb());
+}
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function ea(s) {
+  return String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+let awMode = "login";
+function awTab(m) {
+  awMode = m;
+  const isL = m === "login";
+  document.getElementById("awTabLogin").className = "flex-1 py-2.5 rounded-xl text-sm font-black text-white ".concat(isL ? "bg-blue-600" : "bg-transparent opacity-50", " transition");
+  document.getElementById("awTabReg").className = "flex-1 py-2.5 rounded-xl text-sm font-black text-white ".concat(!isL ? "bg-blue-600" : "bg-transparent opacity-50", " transition");
+  document.getElementById("awBtn").innerText = isL ? "Sign In" : "Create Account";
+  document.getElementById("awErr").classList.add("hidden");
+}
+function awSubmit() {
+  const u = (document.getElementById("awUser").value || "").trim();
+  const p = document.getElementById("awPass").value || "";
+  if (!u || !p) {
+    awErr("Enter username and password");
+    return;
+  }
+  const ep = awMode === "login" ? "/api/login" : "/api/register";
+  const btn = document.getElementById("awBtn");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = "Please wait...";
+  }
+  xhrPost(ep, { username: u, password: p }, function(d) {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = awMode === "login" ? "Sign In" : "Create Account";
+    }
+    if (d && d.status === "ok") {
+      setUser(u, d.avatar);
+      dismissAuthWall();
+      toast("Welcome, " + u + "! \u{1F44B}", "success");
+    } else awErr(d && d.error || "Failed \u2014 check your details");
+  }, function(e) {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = awMode === "login" ? "Sign In" : "Create Account";
+    }
+    awErr("Network error \u2014 is the server running?");
+  });
+}
+function xhrPost(url, data, onSuccess, onError) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", url, true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    try {
+      var d = JSON.parse(xhr.responseText);
       onSuccess(d);
-    }catch(e){
-      if(xhr.status>=200&&xhr.status<300)onSuccess({});
+    } catch (e) {
+      if (xhr.status >= 200 && xhr.status < 300) onSuccess({});
       else onError(e);
     }
   };
-  xhr.onerror=function(){if(onError)onError(new Error('Network error'));};
+  xhr.onerror = function() {
+    if (onError) onError(new Error("Network error"));
+  };
   xhr.send(JSON.stringify(data));
 }
-function awErr(m){const e=document.getElementById('awErr');e.innerText=m;e.classList.remove('hidden');}
-// TV: Enter key in auth form submits
-(function(){
-  function bindAWEnter(){
-    var ids=['awUser','awPass'];
-    ids.forEach(function(id){
-      var el=document.getElementById(id);
-      if(el)el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.keyCode===13)awSubmit();});
+function awErr(m) {
+  const e = document.getElementById("awErr");
+  e.innerText = m;
+  e.classList.remove("hidden");
+}
+(function() {
+  function bindAWEnter() {
+    var ids = ["awUser", "awPass"];
+    ids.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" || e.keyCode === 13) awSubmit();
+      });
     });
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindAWEnter);
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindAWEnter);
   else bindAWEnter();
 })();
-function guestMode(){
-  isGuest=true;
+function guestMode() {
+  var _a;
+  isGuest = true;
   dismissAuthWall();
-  toast('Browsing as guest 👀 (view & download only)','info');
-  // Hide all nav tabs except Files
-  ['bn-clipboard','bn-links'].forEach(id=>{
-    const b=document.getElementById(id);if(b)b.style.display='none';
+  toast("Browsing as guest \u{1F440} (view & download only)", "info");
+  ["bn-clipboard", "bn-links"].forEach((id) => {
+    const b = document.getElementById(id);
+    if (b) b.style.display = "none";
   });
-  // Hide upload / folder action tiles and drag overlay
-  ['mainFI','folderFI'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=true;});
-  // Hide action tiles (upload, folder, new-folder, select)
-  document.querySelectorAll('#pg-files .grid.grid-cols-4 button').forEach(btn=>btn.style.display='none');
-  // Hide the bulk bar trigger too
-  document.getElementById('bulk')?.style.setProperty('display','none','important');
-  // Prevent drag-drop upload
-  window._guestMode=true;
+  ["mainFI", "folderFI"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = true;
+  });
+  document.querySelectorAll("#pg-files .grid.grid-cols-4 button").forEach((btn) => btn.style.display = "none");
+  (_a = document.getElementById("bulk")) == null ? void 0 : _a.style.setProperty("display", "none", "important");
+  window._guestMode = true;
   showGuestSignIn();
 }
-function showGuestSignIn(){
-  if(document.getElementById('guestSignIn'))return;
-  var b=document.createElement('button');b.id='guestSignIn';
-  b.innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Sign in';
-  b.style.cssText='position:fixed;top:12px;right:12px;z-index:650;background:#6366f1;color:#fff;border:0;border-radius:999px;padding:9px 16px;font-weight:700;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer';
-  b.onclick=function(){var aw=document.getElementById('authWall');if(aw){aw.classList.remove('gone');aw.style.display='';aw.style.pointerEvents='';}};
+function showGuestSignIn() {
+  if (document.getElementById("guestSignIn")) return;
+  var b = document.createElement("button");
+  b.id = "guestSignIn";
+  b.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign in';
+  b.style.cssText = "position:fixed;top:12px;right:12px;z-index:650;background:#6366f1;color:#fff;border:0;border-radius:999px;padding:9px 16px;font-weight:700;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer";
+  b.onclick = function() {
+    var aw = document.getElementById("authWall");
+    if (aw) {
+      aw.classList.remove("gone");
+      aw.style.display = "";
+      aw.style.pointerEvents = "";
+    }
+  };
   document.body.appendChild(b);
 }
-function dismissAuthWall(){
-  var aw=document.getElementById('authWall');
-  if(aw){aw.classList.add('gone');aw.style.display='none';aw.style.pointerEvents='none';}
-  goTab('files');refreshFiles();
+function dismissAuthWall() {
+  var aw = document.getElementById("authWall");
+  if (aw) {
+    aw.classList.add("gone");
+    aw.style.display = "none";
+    aw.style.pointerEvents = "none";
+  }
+  goTab("files");
+  refreshFiles();
 }
-
-function setUser(username, avatarB64){
-  if(window._guestMode){location.reload();return;}
-  curUser=username;isGuest=false;
-  document.getElementById('hdrAvIni').innerText=username[0].toUpperCase();
-  ['clipPageAvIni','linksPageAvIni'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerText=username[0].toUpperCase();});
-  if(avatarB64){
-    // Update header avatar
-    const btn=document.getElementById('hdrAv');
-    btn.style.position='relative';
-    document.querySelectorAll('#hdrAv img').forEach(e=>e.remove());
-    const av=document.createElement('img');av.src=avatarB64;av.style.cssText='position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:cover;border-radius:50%';
+function setUser(username, avatarB64) {
+  var _a;
+  if (window._guestMode) {
+    location.reload();
+    return;
+  }
+  curUser = username;
+  isGuest = false;
+  document.getElementById("hdrAvIni").innerText = username[0].toUpperCase();
+  ["clipPageAvIni", "linksPageAvIni"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = username[0].toUpperCase();
+  });
+  if (avatarB64) {
+    const btn = document.getElementById("hdrAv");
+    btn.style.position = "relative";
+    document.querySelectorAll("#hdrAv img").forEach((e) => e.remove());
+    const av = document.createElement("img");
+    av.src = avatarB64;
+    av.style.cssText = "position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:cover;border-radius:50%";
     btn.appendChild(av);
-    // Update page avatars
-    ['clipPageAv','linksPageAv'].forEach(id=>{
-      const wrap=document.getElementById(id);if(!wrap)return;
-      document.querySelectorAll('#'+id+' img').forEach(e=>e.remove());
-      const img=document.createElement('img');img.src=avatarB64;img.style.cssText='position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:cover;border-radius:50%';
-      wrap.style.position='relative';wrap.appendChild(img);
+    ["clipPageAv", "linksPageAv"].forEach((id) => {
+      const wrap = document.getElementById(id);
+      if (!wrap) return;
+      document.querySelectorAll("#" + id + " img").forEach((e) => e.remove());
+      const img = document.createElement("img");
+      img.src = avatarB64;
+      img.style.cssText = "position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;object-fit:cover;border-radius:50%";
+      wrap.style.position = "relative";
+      wrap.appendChild(img);
     });
-    // Update settings avatar
-    const settImg=document.getElementById('settAvImg');
-    if(settImg){settImg.src=avatarB64;settImg.classList.remove('hidden');document.getElementById('settAvIni')?.classList.add('hidden');}
+    const settImg = document.getElementById("settAvImg");
+    if (settImg) {
+      settImg.src = avatarB64;
+      settImg.classList.remove("hidden");
+      (_a = document.getElementById("settAvIni")) == null ? void 0 : _a.classList.add("hidden");
+    }
   }
   fetchUsers();
   loadClips();
   loadLinks();
 }
-
-function requireAuth(cb){
-  if(isGuest){toast('Sign in to use this feature','warn');return;}
-  if(curUser){cb();return;}
-  toast('Please sign in first','warn');
-  var _aw2=document.getElementById('authWall');if(_aw2){_aw2.classList.remove('gone');_aw2.style.display='';_aw2.style.pointerEvents='';}
+function requireAuth(cb) {
+  if (isGuest) {
+    toast("Sign in to use this feature", "warn");
+    return;
+  }
+  if (curUser) {
+    cb();
+    return;
+  }
+  toast("Please sign in first", "warn");
+  var _aw2 = document.getElementById("authWall");
+  if (_aw2) {
+    _aw2.classList.remove("gone");
+    _aw2.style.display = "";
+    _aw2.style.pointerEvents = "";
+  }
 }
-
-// ── LOGOUT ─────────────────────────────────────────────────────────────────
-async function doLogout(){
-  await fetch('/api/logout',{method:'POST'});
-  curUser=null;isGuest=false;clips=[];
-  document.getElementById('hdrAvIni').innerText='?';
-  document.querySelectorAll('#hdrAv img').forEach(e=>e.remove());
-  closeSett();
-  document.getElementById('authWall').classList.remove('gone');
-  document.getElementById('awErr').classList.add('hidden');
-  document.getElementById('awUser').value='';
-  document.getElementById('awPass').value='';
-  toast('Logged out','info');
+function doLogout() {
+  return __async(this, null, function* () {
+    yield fetch("/api/logout", { method: "POST" });
+    curUser = null;
+    isGuest = false;
+    clips = [];
+    document.getElementById("hdrAvIni").innerText = "?";
+    document.querySelectorAll("#hdrAv img").forEach((e) => e.remove());
+    closeSett();
+    document.getElementById("authWall").classList.remove("gone");
+    document.getElementById("awErr").classList.add("hidden");
+    document.getElementById("awUser").value = "";
+    document.getElementById("awPass").value = "";
+    toast("Logged out", "info");
+  });
 }
-
-// ── SETTINGS ───────────────────────────────────────────────────────────────
-function openSett(){
-  if(!curUser){document.getElementById('authWall').classList.remove('gone');return;}
-  document.getElementById('settPanel').classList.add('show');
-  document.getElementById('settUname').innerText=curUser;
-  document.getElementById('settAvIni').innerText=curUser[0].toUpperCase();
-  document.getElementById('settSrvUrl').innerText=window.location.origin;
-  fetch('/api/me').then(r=>r.json()).then(d=>{
-    const dp=d.default_privacy||'public';
-    document.querySelectorAll('[name="defPriv"]').forEach(r=>{r.checked=(r.value===dp);});
-    if(d.avatar){
-      document.getElementById('settAvImg').src=d.avatar;
-      document.getElementById('settAvImg').classList.remove('hidden');
-      document.getElementById('settAvIni').classList.add('hidden');
+function openSett() {
+  if (!curUser) {
+    document.getElementById("authWall").classList.remove("gone");
+    return;
+  }
+  document.getElementById("settPanel").classList.add("show");
+  document.getElementById("settUname").innerText = curUser;
+  document.getElementById("settAvIni").innerText = curUser[0].toUpperCase();
+  document.getElementById("settSrvUrl").innerText = window.location.origin;
+  fetch("/api/me").then((r) => r.json()).then((d) => {
+    const dp = d.default_privacy || "public";
+    document.querySelectorAll('[name="defPriv"]').forEach((r) => {
+      r.checked = r.value === dp;
+    });
+    if (d.avatar) {
+      document.getElementById("settAvImg").src = d.avatar;
+      document.getElementById("settAvImg").classList.remove("hidden");
+      document.getElementById("settAvIni").classList.add("hidden");
     }
   });
   loadStorageStats();
 }
-function closeSett(){document.getElementById('settPanel').classList.remove('show');}
-document.getElementById('settPanel').onclick=function(e){if(e.target===this)closeSett();}
-
-async function uploadAvatar(file){
-  if(!file)return;
-  const fd=new FormData();fd.append('avatar',file);
-  const r=await fetch('/api/avatar',{method:'POST',body:fd});
-  const d=await r.json();
-  if(d.status==='ok'){
-    setUser(curUser,d.avatar);
-    toast('Avatar updated! 🎉','success');
-    refreshFiles();
+function closeSett() {
+  document.getElementById("settPanel").classList.remove("show");
+}
+document.getElementById("settPanel").onclick = function(e) {
+  if (e.target === this) closeSett();
+};
+function uploadAvatar(file) {
+  return __async(this, null, function* () {
+    if (!file) return;
+    const fd = new FormData();
+    fd.append("avatar", file);
+    const r = yield fetch("/api/avatar", { method: "POST", body: fd });
+    const d = yield r.json();
+    if (d.status === "ok") {
+      setUser(curUser, d.avatar);
+      toast("Avatar updated! \u{1F389}", "success");
+      refreshFiles();
+    }
+  });
+}
+function saveDefPriv() {
+  return __async(this, null, function* () {
+    var _a;
+    const v = ((_a = document.querySelector('[name="defPriv"]:checked')) == null ? void 0 : _a.value) || "public";
+    yield fetch("/api/set_default_privacy", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ privacy: v }) });
+    toast("Default privacy saved: " + v, "success");
+  });
+}
+function goTab(tab) {
+  curTab = tab;
+  ["files", "clipboard", "links"].forEach((t) => {
+    const pg = document.getElementById("pg-" + t);
+    if (pg) pg.classList.toggle("on", t === tab);
+    const b = document.getElementById("bn-" + t);
+    if (b) b.classList.toggle("on", t === tab);
+  });
+  const isF = tab === "files";
+  document.getElementById("srchWrap").style.display = isF ? "block" : "none";
+  document.getElementById("bcWrap").style.display = isF ? "block" : "none";
+  document.getElementById("stWrap").style.display = isF ? "flex" : "none";
+  document.getElementById("pgTitle").style.display = isF ? "none" : "block";
+  document.getElementById("pgTitle").innerText = { clipboard: "\u{1F4CB} Clipboard", links: "\u{1F517} Links" }[tab] || "";
+  if (tab === "files") refreshFiles();
+  if (tab === "clipboard") {
+    loadClips();
+    renderClips();
+  }
+  if (tab === "links") {
+    loadLinks();
+    renderLinks();
   }
 }
-
-async function saveDefPriv(){
-  const v=document.querySelector('[name="defPriv"]:checked')?.value||'public';
-  await fetch('/api/set_default_privacy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({privacy:v})});
-  toast('Default privacy saved: '+v,'success');
-}
-
-// ── TABS ───────────────────────────────────────────────────────────────────
-function goTab(tab){
-  curTab=tab;
-  ['files','clipboard','links'].forEach(t=>{
-    const pg=document.getElementById('pg-'+t);if(pg)pg.classList.toggle('on',t===tab);
-    const b=document.getElementById('bn-'+t);if(b)b.classList.toggle('on',t===tab);
+function refreshFiles() {
+  const q = document.getElementById("srchI").value;
+  const s = document.getElementById("sortSel").value;
+  fetch("/api/files?path=".concat(encodeURIComponent(curPath), "&search=").concat(encodeURIComponent(q), "&sort=").concat(s)).then((r) => r.json()).then((d) => {
+    renderGrid(d.items);
+    document.getElementById("stUsed").innerText = d.usage + " used";
+    renderBC();
+  }).catch(() => {
   });
-  const isF=tab==='files';
-  document.getElementById('srchWrap').style.display=isF?'block':'none';
-  document.getElementById('bcWrap').style.display=isF?'block':'none';
-  document.getElementById('stWrap').style.display=isF?'flex':'none';
-  document.getElementById('pgTitle').style.display=isF?'none':'block';
-  document.getElementById('pgTitle').innerText={clipboard:'📋 Clipboard',links:'🔗 Links'}[tab]||'';
-  if(tab==='files')refreshFiles();
-  if(tab==='clipboard'){loadClips();renderClips();}
-  if(tab==='links'){loadLinks();renderLinks();}
 }
-
-// ── FILES ──────────────────────────────────────────────────────────────────
-function refreshFiles(){
-  const q=document.getElementById('srchI').value;
-  const s=document.getElementById('sortSel').value;
-  fetch(`/api/files?path=${encodeURIComponent(curPath)}&search=${encodeURIComponent(q)}&sort=${s}`)
-    .then(r=>r.json()).then(d=>{renderGrid(d.items);document.getElementById('stUsed').innerText=d.usage+' used';renderBC();}).catch(()=>{});
-}
-setInterval(()=>{if(curTab==='files')refreshFiles();},8000);
-
-function renderGrid(items){
-  const g=document.getElementById('fileGrid');
-  if(!items.length){
-    g.innerHTML=`<div class="text-center py-16 opacity-30">
-      <i class="fa-solid fa-folder-open text-6xl block mb-3"></i>
-      <p class="font-black text-sm">${curPath?'Empty folder':'No files yet'}</p>
-      <p class="text-xs mt-1">${curPath?'':'Upload files to get started'}</p>
-    </div>`;
+setInterval(() => {
+  if (curTab === "files") refreshFiles();
+}, 8e3);
+function renderGrid(items) {
+  const g = document.getElementById("fileGrid");
+  if (!items.length) {
+    g.innerHTML = '<div class="text-center py-16 opacity-30">\n      <i class="fa-solid fa-folder-open text-6xl block mb-3"></i>\n      <p class="font-black text-sm">'.concat(curPath ? "Empty folder" : "No files yet", '</p>\n      <p class="text-xs mt-1">').concat(curPath ? "" : "Upload files to get started", "</p>\n    </div>");
     return;
   }
-  const previewTypes=['image','video','audio','pdf','text','spreadsheet','svg'];
-  g.innerHTML=items.map(item=>{
-    const sel=selItems.has(item.name);
-    const p=ea(item.path),n=ea(item.name);
-    const canV=previewTypes.includes(item.type);
-
-    // Selection checkbox — always show ring in sel mode, filled when selected
-    const selRing=selMode
-      ?sel
-        ?`<div style="position:absolute;top:6px;left:6px;width:22px;height:22px;background:#3b82f6;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 2px 6px rgba(59,130,246,.5)"><i class="fa-solid fa-check" style="color:white;font-size:10px"></i></div>`
-        :`<div style="position:absolute;top:6px;left:6px;width:22px;height:22px;background:rgba(255,255,255,.9);border:2px solid #94a3b8;border-radius:50%;z-index:2"></div>`
-      :(sel?`<div style="position:absolute;top:6px;left:6px;width:22px;height:22px;background:#3b82f6;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:2"><i class="fa-solid fa-check" style="color:white;font-size:10px"></i></div>`:'');
-
-    // Thumbnail
+  const previewTypes = ["image", "video", "audio", "pdf", "text", "spreadsheet", "svg"];
+  g.innerHTML = items.map((item) => {
+    const sel = selItems.has(item.name);
+    const p = ea(item.path), n = ea(item.name);
+    const canV = previewTypes.includes(item.type);
+    const selRing = selMode ? sel ? '<div style="position:absolute;top:6px;left:6px;width:22px;height:22px;background:#3b82f6;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 2px 6px rgba(59,130,246,.5)"><i class="fa-solid fa-check" style="color:white;font-size:10px"></i></div>' : '<div style="position:absolute;top:6px;left:6px;width:22px;height:22px;background:rgba(255,255,255,.9);border:2px solid #94a3b8;border-radius:50%;z-index:2"></div>' : sel ? '<div style="position:absolute;top:6px;left:6px;width:22px;height:22px;background:#3b82f6;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:2"><i class="fa-solid fa-check" style="color:white;font-size:10px"></i></div>' : "";
     let thumbHtml;
-    if((item.type==='image'||item.type==='svg')&&item.path){
-      thumbHtml=`<div class="fthumb ${item.bg}" style="background:none"><img src="/file/${item.path}" loading="lazy" onerror="this.parentElement.className='fthumb ${item.bg}';this.outerHTML='<i class=\\'fa-solid ${item.icon} text-lg ${item.color}\\'></i>'"></div>`;
+    if ((item.type === "image" || item.type === "svg") && item.path) {
+      thumbHtml = '<div class="fthumb '.concat(item.bg, '" style="background:none"><img src="/file/').concat(item.path, '" loading="lazy" onerror="this.parentElement.className=\'fthumb ').concat(item.bg, "';this.outerHTML='<i class=\\'fa-solid ").concat(item.icon, " text-lg ").concat(item.color, "\\'></i>'\"></div>");
     } else {
-      thumbHtml=`<div class="fthumb ${item.bg}"><i class="fa-solid ${item.icon} text-lg ${item.color}"></i></div>`;
+      thumbHtml = '<div class="fthumb '.concat(item.bg, '"><i class="fa-solid ').concat(item.icon, " text-lg ").concat(item.color, '"></i></div>');
     }
-
-    // Owner avatar
-    let ownerAv='';
-    if(item.owner_avatar){
-      ownerAv=`<img src="${item.owner_avatar}" class="oav" title="${esc(item.owner||'')}">`;
-    } else if(item.owner){
-      ownerAv=`<span class="oav flex items-center justify-center text-[8px] font-black text-white" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">${item.owner[0].toUpperCase()}</span>`;
+    let ownerAv = "";
+    if (item.owner_avatar) {
+      ownerAv = '<img src="'.concat(item.owner_avatar, '" class="oav" title="').concat(esc(item.owner || ""), '">');
+    } else if (item.owner) {
+      ownerAv = '<span class="oav flex items-center justify-center text-[8px] font-black text-white" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">'.concat(item.owner[0].toUpperCase(), "</span>");
     }
-
-    // Visibility badge — always shown, clickable to set access if owner
-    const visCls={'public':'badge-pub','private':'badge-priv','selected':'badge-sel'}[item.visibility]||'badge-pub';
-    const visLbl={'public':'🌍','private':'🔒','selected':'👥'}[item.visibility]||'🌍';
-    const isOwner=(curUser&&curUser===item.owner)||(!item.owner&&curUser);
-    const visBadge=isOwner
-      ?`<span class="${visCls}" onclick="event.stopPropagation();openPermM('${p}','${esc(item.name)}','${item.visibility||'public'}','${esc(item.owner||'')}');" style="cursor:pointer" title="Change access">${visLbl}</span>`
-      :`<span class="${visCls}">${visLbl}</span>`;
-    const starBadge=starredPaths.has(item.path)?'<span style="font-size:11px">⭐</span>':'';
-
-    return `<div class="fc${sel?' sel':''}"
-      onclick="fcClick('${n}','${p}','${item.type}',${item.is_folder})"
-      oncontextmenu="showCtx(event,'${n}','${p}','${item.type}',${item.is_folder},'${item.visibility||'public'}','${item.owner||''}')"
-      ontouchstart="lpStart(event,'${n}','${p}','${item.type}',${item.is_folder},'${item.visibility||'public'}','${item.owner||''}')"
-      ontouchend="lpEnd()" ontouchmove="lpEnd()"
-      style="${selMode&&!sel?'opacity:.7':''}">
-      ${selRing}
-      ${thumbHtml}
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-1.5 mb-0.5 flex-wrap">
-          <p class="font-black text-sm truncate dark:text-slate-100 max-w-[130px]">${esc(item.name)}</p>
-          ${visBadge}${starBadge}
-        </div>
-        <div class="flex items-center gap-2 text-[10px] text-slate-400 font-mono flex-wrap">
-          <span>${item.size}</span>
-          <span>${new Date(item.date*1000).toLocaleDateString()}</span>
-          ${item.owner?`<span style="color:#60a5fa;font-weight:800">@${esc(item.owner)}</span>`:''}
-        </div>
-      </div>
-      <div class="flex items-center gap-1.5 shrink-0">
-        ${ownerAv}
-        ${item.is_folder
-          ?`<button onclick="event.stopPropagation();openDir('${p}')" class="w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-500 flex items-center justify-center active:scale-90 text-xs"><i class="fa-solid fa-chevron-right"></i></button>`
-          :canV?`<button onclick="event.stopPropagation();openViewer('${p}','${esc(item.name)}','${item.type}')" class="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center active:scale-90 text-xs"><i class="fa-solid fa-${(item.type==='video'||item.type==='audio')?'play':'eye'}"></i></button>`:''
-        }
-        <button onclick="event.stopPropagation();showCtx(event,'${n}','${p}','${item.type}',${item.is_folder},'${item.visibility||'public'}','${item.owner||''}')" class="w-8 h-8 rounded-full text-slate-400 flex items-center justify-center active:scale-90 text-xs"><i class="fa-solid fa-ellipsis-vertical"></i></button>
-      </div>
-    </div>`;
-  }).join('');
-  // TV / keyboard: make all file cards focusable and navigable
-  document.querySelectorAll('#fileGrid .fc').forEach(el=>{
-    el.setAttribute('tabindex','0');
-    el.addEventListener('keydown',function(ev){
-      if(ev.key==='Enter'){this.click();}
-      if(ev.key===' '){ev.preventDefault();this.click();}
+    const visCls = { "public": "badge-pub", "private": "badge-priv", "selected": "badge-sel" }[item.visibility] || "badge-pub";
+    const visLbl = { "public": "\u{1F30D}", "private": "\u{1F512}", "selected": "\u{1F465}" }[item.visibility] || "\u{1F30D}";
+    const isOwner = curUser && curUser === item.owner || !item.owner && curUser;
+    const visBadge = isOwner ? '<span class="'.concat(visCls, '" onclick="event.stopPropagation();openPermM(\'').concat(p, "','").concat(esc(item.name), "','").concat(item.visibility || "public", "','").concat(esc(item.owner || ""), '\');" style="cursor:pointer" title="Change access">').concat(visLbl, "</span>") : '<span class="'.concat(visCls, '">').concat(visLbl, "</span>");
+    const starBadge = starredPaths.has(item.path) ? '<span style="font-size:11px">\u2B50</span>' : "";
+    return '<div class="fc'.concat(sel ? " sel" : "", '"\n      onclick="fcClick(\'').concat(n, "','").concat(p, "','").concat(item.type, "',").concat(item.is_folder, ')"\n      oncontextmenu="showCtx(event,\'').concat(n, "','").concat(p, "','").concat(item.type, "',").concat(item.is_folder, ",'").concat(item.visibility || "public", "','").concat(item.owner || "", "')\"\n      ontouchstart=\"lpStart(event,'").concat(n, "','").concat(p, "','").concat(item.type, "',").concat(item.is_folder, ",'").concat(item.visibility || "public", "','").concat(item.owner || "", '\')"\n      ontouchend="lpEnd()" ontouchmove="lpEnd()"\n      style="').concat(selMode && !sel ? "opacity:.7" : "", '">\n      ').concat(selRing, "\n      ").concat(thumbHtml, '\n      <div class="flex-1 min-w-0">\n        <div class="flex items-center gap-1.5 mb-0.5 flex-wrap">\n          <p class="font-black text-sm truncate dark:text-slate-100 max-w-[130px]">').concat(esc(item.name), "</p>\n          ").concat(visBadge).concat(starBadge, '\n        </div>\n        <div class="flex items-center gap-2 text-[10px] text-slate-400 font-mono flex-wrap">\n          <span>').concat(item.size, "</span>\n          <span>").concat(new Date(item.date * 1e3).toLocaleDateString(), "</span>\n          ").concat(item.owner ? '<span style="color:#60a5fa;font-weight:800">@'.concat(esc(item.owner), "</span>") : "", '\n        </div>\n      </div>\n      <div class="flex items-center gap-1.5 shrink-0">\n        ').concat(ownerAv, "\n        ").concat(item.is_folder ? "<button onclick=\"event.stopPropagation();openDir('".concat(p, '\')" class="w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-500 flex items-center justify-center active:scale-90 text-xs"><i class="fa-solid fa-chevron-right"></i></button>') : canV ? "<button onclick=\"event.stopPropagation();openViewer('".concat(p, "','").concat(esc(item.name), "','").concat(item.type, '\')" class="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center active:scale-90 text-xs"><i class="fa-solid fa-').concat(item.type === "video" || item.type === "audio" ? "play" : "eye", '"></i></button>') : "", "\n        <button onclick=\"event.stopPropagation();showCtx(event,'").concat(n, "','").concat(p, "','").concat(item.type, "',").concat(item.is_folder, ",'").concat(item.visibility || "public", "','").concat(item.owner || "", '\')" class="w-8 h-8 rounded-full text-slate-400 flex items-center justify-center active:scale-90 text-xs"><i class="fa-solid fa-ellipsis-vertical"></i></button>\n      </div>\n    </div>');
+  }).join("");
+  document.querySelectorAll("#fileGrid .fc").forEach((el) => {
+    el.setAttribute("tabindex", "0");
+    el.addEventListener("keydown", function(ev) {
+      if (ev.key === "Enter") {
+        this.click();
+      }
+      if (ev.key === " ") {
+        ev.preventDefault();
+        this.click();
+      }
     });
   });
-  // Auto-focus first card on TV
-  if(typeof window._tvAutoFocus==='function') window._tvAutoFocus();
+  if (typeof window._tvAutoFocus === "function") window._tvAutoFocus();
 }
-
-// ── CONTEXT MENU ───────────────────────────────────────────────────────────
-let ctxData={};
-function showCtx(e,name,path,type,isF,vis,owner){
-  e.preventDefault();e.stopPropagation();
-  ctxData={name,path,type,isF,vis,owner};
-  const isOwner=curUser&&(curUser===owner||(owner===''&&curUser));
-  const isAuth=!!curUser;
-  const previewable=['image','video','audio','pdf','text','spreadsheet','svg'].includes(type);
-  const isImg=['image','svg'].includes(type);
-  const items=[
-    isF?null:{icon:'fa-eye',label:'Preview',color:'text-blue-500',show:previewable,fn:`openViewer('${path}','${name}','${type}')`},
-    {icon:'fa-circle-info',label:'Info',color:'text-sky-500',show:true,fn:`showFileInfo('${path}')`},
-    {icon:'fa-download',label:'Download',color:'text-green-500',show:true,fn:`dlItem('${path}',${isF})`},
-    {icon:'fa-share-nodes',label:'Share Link',color:'text-purple-500',show:isAuth&&!isGuest&&!isF,fn:`openShareLink('${path}','${name}')`},
-    {icon:'fa-star',label:'Favourite',color:'text-amber-400',show:isAuth&&!isGuest,fn:`toggleStar('${path}')`},
-    {icon:'fa-message',label:'Notes',color:'text-teal-500',show:isAuth&&!isGuest&&!isF,fn:`openNotes('${path}','${name}')`},
-    {icon:'fa-pen-to-square',label:'Edit Text',color:'text-cyan-500',show:isAuth&&!isGuest&&['text','json','xml','csv','md','html','log'].includes(type),fn:`openEditor('${path}','${name}')`},
-    {icon:'fa-copy',label:'Copy',color:'text-cyan-500',show:isAuth&&!isGuest,fn:`quickAct('copy','${name}','${path}')`},
-    {icon:'fa-scissors',label:'Move/Cut',color:'text-blue-400',show:isAuth&&!isGuest,fn:`quickAct('move','${name}','${path}')`},
-    {icon:'fa-clone',label:'Duplicate',color:'text-indigo-400',show:isAuth&&!isGuest&&!isF,fn:`duplicateFile('${path}')`},
-    {icon:'fa-file-zipper',label:'Zip',color:'text-amber-500',show:isAuth&&!isGuest,fn:`quickZip('${name}','${path}')`},
-    {icon:'fa-box-open',label:'Unzip',color:'text-orange-500',show:isAuth&&!isGuest&&type==='zip',fn:`quickUnzip('${name}','${path}')`},
-    {icon:'fa-pen',label:'Rename',color:'text-purple-500',show:(isOwner||(!owner&&isAuth))&&!isGuest,fn:`renameItem('${name}','${path}')`},
-    {icon:'fa-lock',label:'Set Access',color:'text-indigo-500',show:(isOwner||(!owner&&isAuth))&&!isGuest,fn:`openPermM('${path}','${name}','${vis}','${owner}')`},
-    {icon:'fa-trash',label:'Delete',color:'text-red-500',show:(isOwner||(!owner&&isAuth))&&!isGuest,fn:`deleteItem('${name}','${path}',${isF})`},
-  ].filter(i=>i&&i.show);
-
-  const ctx=document.getElementById('ctx');
-  ctx.innerHTML=items.map(i=>`<div class="ctx-item" onclick="closeCtx();${i.fn}"><i class="fa-solid ${i.icon} ${i.color} w-5 text-center text-sm"></i><span class="dark:text-white text-sm">${i.label}</span></div>`).join('');
-  
-  // Position
-  const vw=window.innerWidth,vh=window.innerHeight;
-  let x=e.clientX||vw/2, y=e.clientY||vh/2;
-  ctx.style.display='block';
-  const cw=ctx.offsetWidth,ch=ctx.offsetHeight;
-  if(x+cw>vw)x=vw-cw-8;
-  if(y+ch>vh)y=vh-ch-8;
-  if(x<8)x=8;if(y<8)y=8;
-  ctx.style.left=x+'px';ctx.style.top=y+'px';
-  setTimeout(()=>document.addEventListener('click',closeCtx,{once:true}),10);
+let ctxData = {};
+function showCtx(e, name, path, type, isF, vis, owner) {
+  e.preventDefault();
+  e.stopPropagation();
+  ctxData = { name, path, type, isF, vis, owner };
+  const isOwner = curUser && (curUser === owner || owner === "" && curUser);
+  const isAuth = !!curUser;
+  const previewable = ["image", "video", "audio", "pdf", "text", "spreadsheet", "svg"].includes(type);
+  const isImg = ["image", "svg"].includes(type);
+  const items = [
+    isF ? null : { icon: "fa-eye", label: "Preview", color: "text-blue-500", show: previewable, fn: "openViewer('".concat(path, "','").concat(name, "','").concat(type, "')") },
+    { icon: "fa-circle-info", label: "Info", color: "text-sky-500", show: true, fn: "showFileInfo('".concat(path, "')") },
+    { icon: "fa-download", label: "Download", color: "text-green-500", show: true, fn: "dlItem('".concat(path, "',").concat(isF, ")") },
+    { icon: "fa-share-nodes", label: "Share Link", color: "text-purple-500", show: isAuth && !isGuest && !isF, fn: "openShareLink('".concat(path, "','").concat(name, "')") },
+    { icon: "fa-star", label: "Favourite", color: "text-amber-400", show: isAuth && !isGuest, fn: "toggleStar('".concat(path, "')") },
+    { icon: "fa-message", label: "Notes", color: "text-teal-500", show: isAuth && !isGuest && !isF, fn: "openNotes('".concat(path, "','").concat(name, "')") },
+    { icon: "fa-pen-to-square", label: "Edit Text", color: "text-cyan-500", show: isAuth && !isGuest && ["text", "json", "xml", "csv", "md", "html", "log"].includes(type), fn: "openEditor('".concat(path, "','").concat(name, "')") },
+    { icon: "fa-copy", label: "Copy", color: "text-cyan-500", show: isAuth && !isGuest, fn: "quickAct('copy','".concat(name, "','").concat(path, "')") },
+    { icon: "fa-scissors", label: "Move/Cut", color: "text-blue-400", show: isAuth && !isGuest, fn: "quickAct('move','".concat(name, "','").concat(path, "')") },
+    { icon: "fa-clone", label: "Duplicate", color: "text-indigo-400", show: isAuth && !isGuest && !isF, fn: "duplicateFile('".concat(path, "')") },
+    { icon: "fa-file-zipper", label: "Zip", color: "text-amber-500", show: isAuth && !isGuest, fn: "quickZip('".concat(name, "','").concat(path, "')") },
+    { icon: "fa-box-open", label: "Unzip", color: "text-orange-500", show: isAuth && !isGuest && type === "zip", fn: "quickUnzip('".concat(name, "','").concat(path, "')") },
+    { icon: "fa-pen", label: "Rename", color: "text-purple-500", show: (isOwner || !owner && isAuth) && !isGuest, fn: "renameItem('".concat(name, "','").concat(path, "')") },
+    { icon: "fa-lock", label: "Set Access", color: "text-indigo-500", show: (isOwner || !owner && isAuth) && !isGuest, fn: "openPermM('".concat(path, "','").concat(name, "','").concat(vis, "','").concat(owner, "')") },
+    { icon: "fa-trash", label: "Delete", color: "text-red-500", show: (isOwner || !owner && isAuth) && !isGuest, fn: "deleteItem('".concat(name, "','").concat(path, "',").concat(isF, ")") }
+  ].filter((i) => i && i.show);
+  const ctx = document.getElementById("ctx");
+  ctx.innerHTML = items.map((i) => '<div class="ctx-item" onclick="closeCtx();'.concat(i.fn, '"><i class="fa-solid ').concat(i.icon, " ").concat(i.color, ' w-5 text-center text-sm"></i><span class="dark:text-white text-sm">').concat(i.label, "</span></div>")).join("");
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let x = e.clientX || vw / 2, y = e.clientY || vh / 2;
+  ctx.style.display = "block";
+  const cw = ctx.offsetWidth, ch = ctx.offsetHeight;
+  if (x + cw > vw) x = vw - cw - 8;
+  if (y + ch > vh) y = vh - ch - 8;
+  if (x < 8) x = 8;
+  if (y < 8) y = 8;
+  ctx.style.left = x + "px";
+  ctx.style.top = y + "px";
+  setTimeout(() => document.addEventListener("click", closeCtx, { once: true }), 10);
 }
-function closeCtx(){document.getElementById('ctx').style.display='none';}
-
-// Long press → enters multi-select mode (context menu via ⋮ button)
-function lpStart(e,name,path,type,isF,vis,owner){
+function closeCtx() {
+  document.getElementById("ctx").style.display = "none";
+}
+function lpStart(e, name, path, type, isF, vis, owner) {
   lpEnd();
-  lpTimer=setTimeout(()=>{
-    // Vibrate feedback if supported
-    if(navigator.vibrate) navigator.vibrate(30);
-    // If already in selection mode, just toggle this item
-    if(selMode){ toggleSel(name); return; }
-    // Enter selection mode with this item selected
+  lpTimer = setTimeout(() => {
+    if (navigator.vibrate) navigator.vibrate(30);
+    if (selMode) {
+      toggleSel(name);
+      return;
+    }
     enterSelMode(name);
-  },450);
+  }, 450);
 }
-function lpEnd(){clearTimeout(lpTimer);}
-
-// ── FILE ACTIONS ───────────────────────────────────────────────────────────
-function fcClick(name,path,type,isF){
-  if(selMode){toggleSel(name);return;}
-  if(isF){openDir(path);return;}
-  const previewable=['image','video','audio','pdf','text','spreadsheet','svg'];
-  if(previewable.includes(type)) openViewer(path,name,type);
-  else dlItem(path,false);
+function lpEnd() {
+  clearTimeout(lpTimer);
 }
-
-function addToSel(name){selItems.add(name);updBulk();refreshFiles();}
-
-function openDir(path){
-  curPath=(path||'').replace(/\/+/g,'/').replace(/\/$/,'');
-  clearSel(); refreshFiles();
+function fcClick(name, path, type, isF) {
+  if (selMode) {
+    toggleSel(name);
+    return;
+  }
+  if (isF) {
+    openDir(path);
+    return;
+  }
+  const previewable = ["image", "video", "audio", "pdf", "text", "spreadsheet", "svg"];
+  if (previewable.includes(type)) openViewer(path, name, type);
+  else dlItem(path, false);
 }
-
-function renderBC(){
-  const bc=document.getElementById('bc');
-  if(!curPath){bc.innerHTML=`<button onclick="openDir('')" class="font-black flex items-center gap-1 text-blue-500"><i class="fa-solid fa-house-chimney"></i> Home</button>`;return;}
-  const parts=curPath.split('/').filter(Boolean);
-  let h=`<button onclick="openDir('')" class="font-black text-blue-500"><i class="fa-solid fa-house-chimney"></i></button>`;
-  let b='';
-  parts.forEach(p=>{
-    b+=(b?'/':'')+p;
-    const t=b;
-    h+=`<i class="fa-solid fa-chevron-right text-[9px] opacity-30 mx-1"></i><button onclick="openDir('${ea(t)}')" class="font-black text-blue-500">${esc(p)}</button>`;
+function addToSel(name) {
+  selItems.add(name);
+  updBulk();
+  refreshFiles();
+}
+function openDir(path) {
+  curPath = (path || "").replace(/\/+/g, "/").replace(/\/$/, "");
+  clearSel();
+  refreshFiles();
+}
+function renderBC() {
+  const bc = document.getElementById("bc");
+  if (!curPath) {
+    bc.innerHTML = '<button onclick="openDir(\'\')" class="font-black flex items-center gap-1 text-blue-500"><i class="fa-solid fa-house-chimney"></i> Home</button>';
+    return;
+  }
+  const parts = curPath.split("/").filter(Boolean);
+  let h = '<button onclick="openDir(\'\')" class="font-black text-blue-500"><i class="fa-solid fa-house-chimney"></i></button>';
+  let b = "";
+  parts.forEach((p) => {
+    b += (b ? "/" : "") + p;
+    const t = b;
+    h += '<i class="fa-solid fa-chevron-right text-[9px] opacity-30 mx-1"></i><button onclick="openDir(\''.concat(ea(t), '\')" class="font-black text-blue-500">').concat(esc(p), "</button>");
   });
-  bc.innerHTML=h;
+  bc.innerHTML = h;
 }
-
-function dlItem(p,isF){
-  if(isF){
-    const f=document.createElement('form');f.method='POST';f.action='/api/download_bulk';
-    [['path',curPath],['items',p]].forEach(([k,v])=>{const i=document.createElement('input');i.name=k;i.value=v;f.appendChild(i);});
-    document.body.appendChild(f);f.submit();document.body.removeChild(f);
+function dlItem(p, isF) {
+  if (isF) {
+    const f = document.createElement("form");
+    f.method = "POST";
+    f.action = "/api/download_bulk";
+    [["path", curPath], ["items", p]].forEach(([k, v]) => {
+      const i = document.createElement("input");
+      i.name = k;
+      i.value = v;
+      f.appendChild(i);
+    });
+    document.body.appendChild(f);
+    f.submit();
+    document.body.removeChild(f);
   } else {
-    window.location.href='/download/'+p;
+    window.location.href = "/download/" + p;
   }
 }
-
-function renameItem(name,path){
-  // Split into stem and extension
-  const dotIdx=name.lastIndexOf('.');
-  const stem=dotIdx>0?name.substring(0,dotIdx):name;
-  const ext=dotIdx>0?name.substring(dotIdx+1):'';
-
-  // Build custom modal
-  const ov=document.createElement('div');
-  ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:1200;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:20px';
-  ov.innerHTML=`<div class="dm-sheet" style="border-radius:20px;width:100%;max-width:400px;padding:22px;background:white">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <h3 style="font-weight:900;font-size:15px" class="dm-label">✏️ Rename</h3>
-      <button id="rnClose" style="width:30px;height:30px;border-radius:50%;background:#f1f5f9;border:none;cursor:pointer;font-size:14px;color:#64748b">✕</button>
-    </div>
-    <div style="margin-bottom:12px">
-      <label style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px">File Name</label>
-      <input id="rnStem" value="${stem.replace(/"/g,'&quot;')}" placeholder="File name..." class="dm-input"
-        style="width:100%;border:2px solid #3b82f6;border-radius:12px;padding:11px 14px;font-size:14px;outline:none;font-weight:700;box-sizing:border-box;background:#f8fafc">
-    </div>
-    <div style="margin-bottom:${ext?'10px':'16px'}">
-      <label style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px">Extension</label>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-weight:900;color:#64748b;font-size:14px">.</span>
-        <input id="rnExt" value="${ext.replace(/"/g,'&quot;')}" placeholder="ext" class="dm-input"
-          style="flex:1;border:2px solid #e2e8f0;border-radius:12px;padding:11px 14px;font-size:14px;outline:none;font-weight:700;box-sizing:border-box;background:#f8fafc;font-family:monospace"
-          oninput="rnExtWarn()">
-      </div>
-    </div>
-    <div id="rnWarn" class="hidden" style="margin-bottom:12px;padding:10px 14px;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:12px">
-      <p style="font-size:11px;font-weight:800;color:#b45309"><i class="fa-solid fa-triangle-exclamation" style="margin-right:5px"></i>Changing the extension may make the file unreadable.</p>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button id="rnCancel" style="flex:1;padding:13px;border-radius:12px;border:none;background:#f1f5f9;font-weight:800;cursor:pointer;font-size:14px;color:#64748b">Cancel</button>
-      <button id="rnOK" style="flex:1;padding:13px;border-radius:12px;border:none;background:#3b82f6;color:white;font-weight:800;cursor:pointer;font-size:14px">Rename</button>
-    </div>
-  </div>`;
+function renameItem(name, path) {
+  const dotIdx = name.lastIndexOf(".");
+  const stem = dotIdx > 0 ? name.substring(0, dotIdx) : name;
+  const ext = dotIdx > 0 ? name.substring(dotIdx + 1) : "";
+  const ov = document.createElement("div");
+  ov.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;z-index:1200;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:20px";
+  ov.innerHTML = '<div class="dm-sheet" style="border-radius:20px;width:100%;max-width:400px;padding:22px;background:white">\n    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">\n      <h3 style="font-weight:900;font-size:15px" class="dm-label">\u270F\uFE0F Rename</h3>\n      <button id="rnClose" style="width:30px;height:30px;border-radius:50%;background:#f1f5f9;border:none;cursor:pointer;font-size:14px;color:#64748b">\u2715</button>\n    </div>\n    <div style="margin-bottom:12px">\n      <label style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px">File Name</label>\n      <input id="rnStem" value="'.concat(stem.replace(/"/g, "&quot;"), '" placeholder="File name..." class="dm-input"\n        style="width:100%;border:2px solid #3b82f6;border-radius:12px;padding:11px 14px;font-size:14px;outline:none;font-weight:700;box-sizing:border-box;background:#f8fafc">\n    </div>\n    <div style="margin-bottom:').concat(ext ? "10px" : "16px", '">\n      <label style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px">Extension</label>\n      <div style="display:flex;align-items:center;gap:8px">\n        <span style="font-weight:900;color:#64748b;font-size:14px">.</span>\n        <input id="rnExt" value="').concat(ext.replace(/"/g, "&quot;"), '" placeholder="ext" class="dm-input"\n          style="flex:1;border:2px solid #e2e8f0;border-radius:12px;padding:11px 14px;font-size:14px;outline:none;font-weight:700;box-sizing:border-box;background:#f8fafc;font-family:monospace"\n          oninput="rnExtWarn()">\n      </div>\n    </div>\n    <div id="rnWarn" class="hidden" style="margin-bottom:12px;padding:10px 14px;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:12px">\n      <p style="font-size:11px;font-weight:800;color:#b45309"><i class="fa-solid fa-triangle-exclamation" style="margin-right:5px"></i>Changing the extension may make the file unreadable.</p>\n    </div>\n    <div style="display:flex;gap:8px">\n      <button id="rnCancel" style="flex:1;padding:13px;border-radius:12px;border:none;background:#f1f5f9;font-weight:800;cursor:pointer;font-size:14px;color:#64748b">Cancel</button>\n      <button id="rnOK" style="flex:1;padding:13px;border-radius:12px;border:none;background:#3b82f6;color:white;font-weight:800;cursor:pointer;font-size:14px">Rename</button>\n    </div>\n  </div>');
   document.body.appendChild(ov);
-
-  function rnExtWarn(){
-    const curExt=document.getElementById('rnExt').value.trim();
-    const warn=document.getElementById('rnWarn');
-    if(warn) warn.classList.toggle('hidden', curExt===ext);
+  function rnExtWarn() {
+    const curExt = document.getElementById("rnExt").value.trim();
+    const warn = document.getElementById("rnWarn");
+    if (warn) warn.classList.toggle("hidden", curExt === ext);
   }
-
-  function closeRn(){ov.remove();}
-  document.getElementById('rnClose').onclick=closeRn;
-  document.getElementById('rnCancel').onclick=closeRn;
-  ov.addEventListener('click',e=>{if(e.target===ov)closeRn();});
-
-  document.getElementById('rnOK').onclick=async()=>{
-    const newStem=document.getElementById('rnStem').value.trim();
-    const newExt=document.getElementById('rnExt').value.trim();
-    if(!newStem){toast('File name cannot be empty','warn');return;}
-    const newName=newExt?newStem+'.'+newExt:newStem;
-    if(newName===name){closeRn();return;}
-    await fetch('/api/rename',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,new_name:newName,folder:curPath})});
-    toast('Renamed ✅','success');refreshFiles();closeRn();
-  };
-
-  // Allow Enter to confirm
-  [document.getElementById('rnStem'),document.getElementById('rnExt')].forEach(inp=>{
-    inp?.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('rnOK').click();});
-  });
-  setTimeout(()=>{const s=document.getElementById('rnStem');if(s){s.focus();s.select();}},80);
-}
-
-function deleteItem(name,path,isF){
-  mConfirm('Delete','Delete "'+name+'"?',async()=>{
-    await fetch('/api/bulk',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',items:[name],path:curPath})});
-    toast('Deleted','success');refreshFiles();
-  });
-}
-
-function quickAct(action,name,path){
-  mPrompt(action==='copy'?'Copy to...':'Move to...','Destination path:','',async(dest)=>{
-    if(dest===null)return;
-    await fetch('/api/bulk',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,items:[name],path:curPath,extra:dest})});
-    toast('Done!','success');refreshFiles();
-  });
-}
-
-function quickZip(name,path){
-  mPrompt('Zip','Archive name:',name.replace(/\.[^.]*$/,'')+'.zip',async(n)=>{
-    if(!n)return;
-    await fetch('/api/bulk',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'zip',items:[name],path:curPath,extra:n})});
-    toast('Zipped!','success');refreshFiles();
-  });
-}
-
-function quickUnzip(name,path){
-  mConfirm('Unzip','Extract "'+name+'"?',async()=>{
-    await fetch('/api/bulk',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'unzip',items:[name],path:curPath})});
-    toast('Extracted!','success');refreshFiles();
-  });
-}
-
-
-
-// ── VIEWER ────────────────────────────────────────────────────────────────
-async function openViewer(path,name,type){
-  document.getElementById('vTitle').innerText=name;
-  document.getElementById('vType').innerText=type.toUpperCase();
-  document.getElementById('vDL').onclick=()=>window.location.href='/download/'+path;
-  // Show copy button only for text files
-  const vCopyBtn=document.getElementById('vCopy');
-  if(vCopyBtn){
-    const isText=(type==='text'||type==='json'||type==='csv');
-    vCopyBtn.classList.toggle('hidden',!isText);
-    vCopyBtn.onclick=async()=>{
-      try{const t=await fetch('/file/'+path).then(r=>r.text());safeCopy(t,'All text copied! ✅');}
-      catch(e){toast('Copy failed','error');}
-    };
+  function closeRn() {
+    ov.remove();
   }
-  const c=document.getElementById('vContent');
-  c.innerHTML=`<div class="flex items-center justify-center h-40"><i class="fa-solid fa-spinner fa-spin text-3xl text-slate-500"></i></div>`;
-  document.getElementById('viewer').classList.add('show');
-
-  // Show perm button if owner
-  const permBtn=document.getElementById('vPerm');
-  const permsR=await fetch('/api/file_perms?path='+encodeURIComponent(path));
-  const permsD=await permsR.json();
-  if(curUser&&curUser===permsD.owner){
-    permBtn.classList.remove('hidden');
-    permBtn.onclick=()=>openPermM(path,name,permsD.visibility||'public',permsD.owner);
-  } else permBtn.classList.add('hidden');
-
-  const url='/file/'+path;
-
-  if(type==='image'){
-    c.innerHTML=`<div style="display:flex;align-items:center;justify-content:center;padding:12px;min-height:200px;background:repeating-conic-gradient(#1a1a2e 0% 25%,#0d0d1a 0% 50%) 0 0/20px 20px">
-      <img src="${url}" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:10px"/>
-    </div>`;
-  } else if(type==='svg'){
-    const t=await fetch(url).then(r=>r.text());
-    c.innerHTML=`<div style="display:flex;justify-content:center;padding:20px;background:#f8fafc;min-height:200px">${t}</div>`;
-  } else if(type==='video'){
-    c.innerHTML=`<div style="background:#000;display:flex;flex-direction:column">
-      <video id="vidEl" src="${url}" controls playsinline style="width:100%;max-height:75vh"></video>
-      <div style="background:#111;padding:10px 12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        <span style="font-size:11px;font-weight:800;color:#94a3b8">Speed:</span>
-        ${[0.1,0.25,0.5,0.75,1,1.25,1.5,2,3,5].map(s=>`<button class="spd-btn${s===1?' on':''}" onclick="setSpdBtn(this,${s})">${s}x</button>`).join('')}
-      </div>
-    </div>`;
-  } else if(type==='audio'){
-    c.innerHTML=`<div style="padding:40px 20px;display:flex;flex-direction:column;align-items:center;gap:16px;background:linear-gradient(135deg,#1a1a2e,#16213e)">
-      <div style="width:80px;height:80px;background:linear-gradient(135deg,#f59e0b,#ea580c);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;color:white;box-shadow:0 8px 24px rgba(245,158,11,.4)">
-        <i class="fa-solid fa-music"></i>
-      </div>
-      <p style="font-weight:800;font-size:14px;color:white;text-align:center;max-width:280px">${esc(name)}</p>
-      <audio src="${url}" controls autoplay style="width:100%;max-width:340px"></audio>
-    </div>`;
-  } else if(type==='pdf'){
-    c.innerHTML=`<div>
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#1e293b;flex-wrap:wrap">
-        <button onclick="pPrev()" style="padding:6px 12px;background:#3b82f6;color:white;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-chevron-left"></i></button>
-        <span style="font-size:12px;font-family:monospace;color:white">Pg <span id="pPN">1</span>/<span id="pPC">?</span></span>
-        <button onclick="pNext()" style="padding:6px 12px;background:#3b82f6;color:white;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-chevron-right"></i></button>
-        <button onclick="pCopyTxt()" style="padding:6px 12px;background:#7c3aed;color:white;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-clipboard"></i></button>
-        <button onclick="pJumpPage()" style="padding:6px 12px;background:#0f172a;color:white;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-location-dot"></i> Go to</button>
-      </div>
-      <div style="display:flex;justify-content:center;padding:12px;overflow-x:auto;background:#1a1a2e">
-        <canvas id="pdfC" style="max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.4)"></canvas>
-      </div>
-    </div>`;
-    try{pdfDoc=await pdfjsLib.getDocument(url).promise;document.getElementById('pPC').innerText=pdfDoc.numPages;pdfPg=1;pRender(1);}
-    catch(e){c.innerHTML=`<p style="color:#ef4444;padding:20px">${e.message}</p>`;}
-  } else if(type==='spreadsheet'){
-    try{
-      const txt=await fetch(url).then(r=>r.text());
-      const ext=name.split('.').pop().toLowerCase();
-      if(ext==='csv'){
-        renderCSV(c,txt,name);
-      } else {
-        c.innerHTML=`<div style="padding:40px;text-align:center;color:#94a3b8"><i class="fa-solid fa-file-excel" style="font-size:48px;margin-bottom:12px;display:block;color:#16a34a"></i><p style="font-weight:700">Excel files can't be previewed<br>Download to open</p><br><a href="/download/${path}" style="background:#16a34a;color:white;padding:10px 20px;border-radius:12px;font-weight:700;text-decoration:none;display:inline-block">Download</a></div>`;
+  document.getElementById("rnClose").onclick = closeRn;
+  document.getElementById("rnCancel").onclick = closeRn;
+  ov.addEventListener("click", (e) => {
+    if (e.target === ov) closeRn();
+  });
+  document.getElementById("rnOK").onclick = () => __async(null, null, function* () {
+    const newStem = document.getElementById("rnStem").value.trim();
+    const newExt = document.getElementById("rnExt").value.trim();
+    if (!newStem) {
+      toast("File name cannot be empty", "warn");
+      return;
+    }
+    const newName = newExt ? newStem + "." + newExt : newStem;
+    if (newName === name) {
+      closeRn();
+      return;
+    }
+    yield fetch("/api/rename", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path, new_name: newName, folder: curPath }) });
+    toast("Renamed \u2705", "success");
+    refreshFiles();
+    closeRn();
+  });
+  [document.getElementById("rnStem"), document.getElementById("rnExt")].forEach((inp) => {
+    inp == null ? void 0 : inp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") document.getElementById("rnOK").click();
+    });
+  });
+  setTimeout(() => {
+    const s = document.getElementById("rnStem");
+    if (s) {
+      s.focus();
+      s.select();
+    }
+  }, 80);
+}
+function deleteItem(name, path, isF) {
+  mConfirm("Delete", 'Delete "' + name + '"?', () => __async(null, null, function* () {
+    yield fetch("/api/bulk", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "delete", items: [name], path: curPath }) });
+    toast("Deleted", "success");
+    refreshFiles();
+  }));
+}
+function quickAct(action, name, path) {
+  mPrompt(action === "copy" ? "Copy to..." : "Move to...", "Destination path:", "", (dest) => __async(null, null, function* () {
+    if (dest === null) return;
+    yield fetch("/api/bulk", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, items: [name], path: curPath, extra: dest }) });
+    toast("Done!", "success");
+    refreshFiles();
+  }));
+}
+function quickZip(name, path) {
+  mPrompt("Zip", "Archive name:", name.replace(/\.[^.]*$/, "") + ".zip", (n) => __async(null, null, function* () {
+    if (!n) return;
+    yield fetch("/api/bulk", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "zip", items: [name], path: curPath, extra: n }) });
+    toast("Zipped!", "success");
+    refreshFiles();
+  }));
+}
+function quickUnzip(name, path) {
+  mConfirm("Unzip", 'Extract "' + name + '"?', () => __async(null, null, function* () {
+    yield fetch("/api/bulk", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "unzip", items: [name], path: curPath }) });
+    toast("Extracted!", "success");
+    refreshFiles();
+  }));
+}
+function openViewer(path, name, type) {
+  return __async(this, null, function* () {
+    document.getElementById("vTitle").innerText = name;
+    document.getElementById("vType").innerText = type.toUpperCase();
+    document.getElementById("vDL").onclick = () => window.location.href = "/download/" + path;
+    const vCopyBtn = document.getElementById("vCopy");
+    if (vCopyBtn) {
+      const isText = type === "text" || type === "json" || type === "csv";
+      vCopyBtn.classList.toggle("hidden", !isText);
+      vCopyBtn.onclick = () => __async(null, null, function* () {
+        try {
+          const t = yield fetch("/file/" + path).then((r) => r.text());
+          safeCopy(t, "All text copied! \u2705");
+        } catch (e) {
+          toast("Copy failed", "error");
+        }
+      });
+    }
+    const c = document.getElementById("vContent");
+    c.innerHTML = '<div class="flex items-center justify-center h-40"><i class="fa-solid fa-spinner fa-spin text-3xl text-slate-500"></i></div>';
+    document.getElementById("viewer").classList.add("show");
+    const permBtn = document.getElementById("vPerm");
+    const permsR = yield fetch("/api/file_perms?path=" + encodeURIComponent(path));
+    const permsD = yield permsR.json();
+    if (curUser && curUser === permsD.owner) {
+      permBtn.classList.remove("hidden");
+      permBtn.onclick = () => openPermM(path, name, permsD.visibility || "public", permsD.owner);
+    } else permBtn.classList.add("hidden");
+    const url = "/file/" + path;
+    if (type === "image") {
+      c.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;padding:12px;min-height:200px;background:repeating-conic-gradient(#1a1a2e 0% 25%,#0d0d1a 0% 50%) 0 0/20px 20px">\n      <img src="'.concat(url, '" style="max-width:100%;max-height:85vh;object-fit:contain;border-radius:10px"/>\n    </div>');
+    } else if (type === "svg") {
+      const t = yield fetch(url).then((r) => r.text());
+      c.innerHTML = '<div style="display:flex;justify-content:center;padding:20px;background:#f8fafc;min-height:200px">'.concat(t, "</div>");
+    } else if (type === "video") {
+      c.innerHTML = '<div style="background:#000;display:flex;flex-direction:column">\n      <video id="vidEl" src="'.concat(url, '" controls playsinline style="width:100%;max-height:75vh"></video>\n      <div style="background:#111;padding:10px 12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">\n        <span style="font-size:11px;font-weight:800;color:#94a3b8">Speed:</span>\n        ').concat([0.1, 0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 5].map((s) => '<button class="spd-btn'.concat(s === 1 ? " on" : "", '" onclick="setSpdBtn(this,').concat(s, ')">').concat(s, "x</button>")).join(""), "\n      </div>\n    </div>");
+    } else if (type === "audio") {
+      c.innerHTML = '<div style="padding:40px 20px;display:flex;flex-direction:column;align-items:center;gap:16px;background:linear-gradient(135deg,#1a1a2e,#16213e)">\n      <div style="width:80px;height:80px;background:linear-gradient(135deg,#f59e0b,#ea580c);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;color:white;box-shadow:0 8px 24px rgba(245,158,11,.4)">\n        <i class="fa-solid fa-music"></i>\n      </div>\n      <p style="font-weight:800;font-size:14px;color:white;text-align:center;max-width:280px">'.concat(esc(name), '</p>\n      <audio src="').concat(url, '" controls autoplay style="width:100%;max-width:340px"></audio>\n    </div>');
+    } else if (type === "pdf") {
+      c.innerHTML = '<div>\n      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#1e293b;flex-wrap:wrap">\n        <button onclick="pPrev()" style="padding:6px 12px;background:#3b82f6;color:white;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-chevron-left"></i></button>\n        <span style="font-size:12px;font-family:monospace;color:white">Pg <span id="pPN">1</span>/<span id="pPC">?</span></span>\n        <button onclick="pNext()" style="padding:6px 12px;background:#3b82f6;color:white;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-chevron-right"></i></button>\n        <button onclick="pCopyTxt()" style="padding:6px 12px;background:#7c3aed;color:white;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-clipboard"></i></button>\n        <button onclick="pJumpPage()" style="padding:6px 12px;background:#0f172a;color:white;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-location-dot"></i> Go to</button>\n      </div>\n      <div style="display:flex;justify-content:center;padding:12px;overflow-x:auto;background:#1a1a2e">\n        <canvas id="pdfC" style="max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.4)"></canvas>\n      </div>\n    </div>';
+      try {
+        pdfDoc = yield pdfjsLib.getDocument(url).promise;
+        document.getElementById("pPC").innerText = pdfDoc.numPages;
+        pdfPg = 1;
+        pRender(1);
+      } catch (e) {
+        c.innerHTML = '<p style="color:#ef4444;padding:20px">'.concat(e.message, "</p>");
       }
-    }catch(e){c.innerHTML=`<p style="color:red;padding:16px">${e.message}</p>`;}
-  } else if(type==='text'){
-    try{
-      const txt=await fetch(url).then(r=>r.text());
-      const ext=name.split('.').pop().toLowerCase();
-      if(ext==='json'){
-        try{
-          const parsed=JSON.parse(txt);
-          const pretty=JSON.stringify(parsed,null,2);
-          const pre=document.createElement('pre');const code=document.createElement('code');
-          code.className='language-json';code.textContent=pretty;pre.appendChild(code);
-          c.innerHTML='';c.style.background='#282c34';c.appendChild(pre);hljs.highlightElement(code);
-          addViewerCopyBar(c,pretty);
-        }catch{renderTextFile(c,txt,name,ext);}
-      } else {
-        renderTextFile(c,txt,name,ext);
+    } else if (type === "spreadsheet") {
+      try {
+        const txt = yield fetch(url).then((r) => r.text());
+        const ext = name.split(".").pop().toLowerCase();
+        if (ext === "csv") {
+          renderCSV(c, txt, name);
+        } else {
+          c.innerHTML = '<div style="padding:40px;text-align:center;color:#94a3b8"><i class="fa-solid fa-file-excel" style="font-size:48px;margin-bottom:12px;display:block;color:#16a34a"></i><p style="font-weight:700">Excel files can\'t be previewed<br>Download to open</p><br><a href="/download/'.concat(path, '" style="background:#16a34a;color:white;padding:10px 20px;border-radius:12px;font-weight:700;text-decoration:none;display:inline-block">Download</a></div>');
+        }
+      } catch (e) {
+        c.innerHTML = '<p style="color:red;padding:16px">'.concat(e.message, "</p>");
       }
-    }catch(e){c.innerHTML=`<p style="color:red;padding:16px">${e.message}</p>`;}
-  } else {
-    c.innerHTML=`<div style="padding:50px 20px;text-align:center">
-      <i class="fa-solid fa-file" style="font-size:52px;color:#334155;margin-bottom:14px;display:block"></i>
-      <p style="color:#94a3b8;font-weight:700;margin-bottom:16px">No preview available</p>
-      <a href="/download/${path}" style="background:#16a34a;color:white;padding:12px 24px;border-radius:14px;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;gap:8px"><i class="fa-solid fa-download"></i>Download</a>
-    </div>`;
+    } else if (type === "text") {
+      try {
+        const txt = yield fetch(url).then((r) => r.text());
+        const ext = name.split(".").pop().toLowerCase();
+        if (ext === "json") {
+          try {
+            const parsed = JSON.parse(txt);
+            const pretty = JSON.stringify(parsed, null, 2);
+            const pre = document.createElement("pre");
+            const code = document.createElement("code");
+            code.className = "language-json";
+            code.textContent = pretty;
+            pre.appendChild(code);
+            c.innerHTML = "";
+            c.style.background = "#282c34";
+            c.appendChild(pre);
+            hljs.highlightElement(code);
+            addViewerCopyBar(c, pretty);
+          } catch (e) {
+            renderTextFile(c, txt, name, ext);
+          }
+        } else {
+          renderTextFile(c, txt, name, ext);
+        }
+      } catch (e) {
+        c.innerHTML = '<p style="color:red;padding:16px">'.concat(e.message, "</p>");
+      }
+    } else {
+      c.innerHTML = '<div style="padding:50px 20px;text-align:center">\n      <i class="fa-solid fa-file" style="font-size:52px;color:#334155;margin-bottom:14px;display:block"></i>\n      <p style="color:#94a3b8;font-weight:700;margin-bottom:16px">No preview available</p>\n      <a href="/download/'.concat(path, '" style="background:#16a34a;color:white;padding:12px 24px;border-radius:14px;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;gap:8px"><i class="fa-solid fa-download"></i>Download</a>\n    </div>');
+    }
+  });
+}
+function setSpdBtn(btn, spd) {
+  const v = document.getElementById("vidEl");
+  if (v) v.playbackRate = spd;
+  document.querySelectorAll(".spd-btn").forEach((b) => b.classList.remove("on"));
+  btn.classList.add("on");
+}
+function renderTextFile(c, txt, name, ext) {
+  c.style.background = "#282c34";
+  const pre = document.createElement("pre");
+  const code = document.createElement("code");
+  code.className = ext ? "language-".concat(ext) : "";
+  code.textContent = txt;
+  pre.style.margin = "0";
+  pre.appendChild(code);
+  c.innerHTML = "";
+  c.appendChild(pre);
+  try {
+    hljs.highlightElement(code);
+  } catch (e) {
   }
+  addViewerCopyBar(c, txt);
 }
-
-function setSpdBtn(btn,spd){
-  const v=document.getElementById('vidEl');if(v)v.playbackRate=spd;
-  document.querySelectorAll('.spd-btn').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on');
-}
-
-function renderTextFile(c,txt,name,ext){
-  c.style.background='#282c34';
-  const pre=document.createElement('pre');const code=document.createElement('code');
-  code.className=ext?`language-${ext}`:'';code.textContent=txt;pre.style.margin='0';pre.appendChild(code);
-  c.innerHTML='';c.appendChild(pre);
-  try{hljs.highlightElement(code);}catch(e){}
-  addViewerCopyBar(c,txt);
-}
-
-function addViewerCopyBar(c,text){
-  const bar=document.createElement('div');
-  bar.style.cssText='display:flex;gap:8px;padding:8px 12px;background:#1e293b;flex-wrap:wrap';
-  bar.innerHTML=`<button onclick="safeCopy(this.dataset.t)" data-t="${ea(text)}" style="padding:6px 14px;background:#3b82f6;color:white;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-copy mr-1"></i>Copy All</button>
-    <button onclick="saveToClip('${ea(text)}')" style="padding:6px 14px;background:#7c3aed;color:white;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-clipboard mr-1"></i>To Clipboard</button>`;
+function addViewerCopyBar(c, text) {
+  const bar = document.createElement("div");
+  bar.style.cssText = "display:flex;gap:8px;padding:8px 12px;background:#1e293b;flex-wrap:wrap";
+  bar.innerHTML = '<button onclick="safeCopy(this.dataset.t)" data-t="'.concat(ea(text), '" style="padding:6px 14px;background:#3b82f6;color:white;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-copy mr-1"></i>Copy All</button>\n    <button onclick="saveToClip(\'').concat(ea(text), '\')" style="padding:6px 14px;background:#7c3aed;color:white;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-clipboard mr-1"></i>To Clipboard</button>');
   c.appendChild(bar);
 }
-
-function renderCSV(c,txt,name){
-  c.style.background='white';
-  try{
-    const lines=txt.trim().split('\n');
-    if(!lines.length){c.innerHTML='<p style="padding:20px;color:#94a3b8">Empty CSV</p>';return;}
-    // Parse with quote support
-    function parseRow(line){
-      const cols=[];let cur='',inQ=false;
-      for(let i=0;i<line.length;i++){
-        const ch=line[i];
-        if(ch==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
-        else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
-        else cur+=ch;
+function renderCSV(c, txt, name) {
+  c.style.background = "white";
+  try {
+    let parseRow2 = function(line) {
+      const cols = [];
+      let cur = "", inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQ && line[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else inQ = !inQ;
+        } else if (ch === "," && !inQ) {
+          cols.push(cur.trim());
+          cur = "";
+        } else cur += ch;
       }
-      cols.push(cur.trim());return cols;
+      cols.push(cur.trim());
+      return cols;
+    };
+    var parseRow = parseRow2;
+    const lines = txt.trim().split("\n");
+    if (!lines.length) {
+      c.innerHTML = '<p style="padding:20px;color:#94a3b8">Empty CSV</p>';
+      return;
     }
-    const headers=parseRow(lines[0]);
-    const rows=lines.slice(1).filter(l=>l.trim()).map(parseRow);
-    const totalRows=rows.length,totalCols=headers.length;
-    let html=`<div class="csv-toolbar">
-      <span class="csv-stat">${totalRows} rows · ${totalCols} cols</span>
-      <button class="csv-sbtn" onclick="safeCopy(document.getElementById('csvRaw').value)"><i class="fa-solid fa-copy mr-1"></i>Copy CSV</button>
-      <button class="csv-sbtn" onclick="csvFilter()"><i class="fa-solid fa-filter mr-1"></i>Filter</button>
-      <input id="csvFI" type="text" placeholder="Filter rows..." oninput="csvFilterApply(this.value)" style="padding:4px 10px;border-radius:8px;border:none;font-size:11px;background:rgba(255,255,255,.15);color:white;outline:none;flex:1;min-width:0" class="hidden">
-      <textarea id="csvRaw" style="display:none">${esc(txt)}</textarea>
-    </div>
-    <div class="csv-wrap">
-      <table><thead><tr>
-        <th>#</th>
-        ${headers.map(h=>`<th title="${esc(h)}">${esc(h)}</th>`).join('')}
-      </tr></thead>
-      <tbody id="csvBody">
-        ${rows.map((r,i)=>`<tr><td>${i+1}</td>${headers.map((_,ci)=>`<td title="${esc(r[ci]||'')}">${esc(r[ci]||'')}</td>`).join('')}</tr>`).join('')}
-      </tbody>
-    </table></div>`;
-    c.innerHTML=html;
-  }catch(e){c.innerHTML=`<p style="padding:16px;color:red">${e.message}</p>`;}
+    const headers = parseRow2(lines[0]);
+    const rows = lines.slice(1).filter((l) => l.trim()).map(parseRow2);
+    const totalRows = rows.length, totalCols = headers.length;
+    let html = '<div class="csv-toolbar">\n      <span class="csv-stat">'.concat(totalRows, " rows \xB7 ").concat(totalCols, ' cols</span>\n      <button class="csv-sbtn" onclick="safeCopy(document.getElementById(\'csvRaw\').value)"><i class="fa-solid fa-copy mr-1"></i>Copy CSV</button>\n      <button class="csv-sbtn" onclick="csvFilter()"><i class="fa-solid fa-filter mr-1"></i>Filter</button>\n      <input id="csvFI" type="text" placeholder="Filter rows..." oninput="csvFilterApply(this.value)" style="padding:4px 10px;border-radius:8px;border:none;font-size:11px;background:rgba(255,255,255,.15);color:white;outline:none;flex:1;min-width:0" class="hidden">\n      <textarea id="csvRaw" style="display:none">').concat(esc(txt), '</textarea>\n    </div>\n    <div class="csv-wrap">\n      <table><thead><tr>\n        <th>#</th>\n        ').concat(headers.map((h) => '<th title="'.concat(esc(h), '">').concat(esc(h), "</th>")).join(""), '\n      </tr></thead>\n      <tbody id="csvBody">\n        ').concat(rows.map((r, i) => "<tr><td>".concat(i + 1, "</td>").concat(headers.map((_, ci) => '<td title="'.concat(esc(r[ci] || ""), '">').concat(esc(r[ci] || ""), "</td>")).join(""), "</tr>")).join(""), "\n      </tbody>\n    </table></div>");
+    c.innerHTML = html;
+  } catch (e) {
+    c.innerHTML = '<p style="padding:16px;color:red">'.concat(e.message, "</p>");
+  }
 }
-
-function csvFilter(){document.getElementById('csvFI')?.classList.toggle('hidden');}
-function csvFilterApply(q){
-  const q2=q.toLowerCase();
-  document.querySelectorAll('#csvBody tr').forEach(tr=>{
-    const txt=tr.innerText.toLowerCase();
-    tr.style.display=(!q2||txt.includes(q2))?'':'none';
+function csvFilter() {
+  var _a;
+  (_a = document.getElementById("csvFI")) == null ? void 0 : _a.classList.toggle("hidden");
+}
+function csvFilterApply(q) {
+  const q2 = q.toLowerCase();
+  document.querySelectorAll("#csvBody tr").forEach((tr) => {
+    const txt = tr.innerText.toLowerCase();
+    tr.style.display = !q2 || txt.includes(q2) ? "" : "none";
   });
 }
-
-function closeViewer(){
-  document.getElementById('viewer').classList.remove('show');
-  document.querySelectorAll('#vContent video,#vContent audio').forEach(m=>{try{m.pause();}catch(e){}});
-  document.getElementById('vContent').style.background='#1a1a2e';
-  const vCopyBtn=document.getElementById('vCopy');
-  if(vCopyBtn) vCopyBtn.classList.add('hidden');
+function closeViewer() {
+  document.getElementById("viewer").classList.remove("show");
+  document.querySelectorAll("#vContent video,#vContent audio").forEach((m) => {
+    try {
+      m.pause();
+    } catch (e) {
+    }
+  });
+  document.getElementById("vContent").style.background = "#1a1a2e";
+  const vCopyBtn = document.getElementById("vCopy");
+  if (vCopyBtn) vCopyBtn.classList.add("hidden");
 }
-
-// PDF helpers
-async function pRender(n){
-  if(!pdfDoc)return;
-  const page=await pdfDoc.getPage(n);
-  const canvas=document.getElementById('pdfC');if(!canvas)return;
-  const scale=Math.min(1.8,(canvas.parentElement.clientWidth-24)/page.getViewport({scale:1}).width);
-  const vp=page.getViewport({scale});canvas.width=vp.width;canvas.height=vp.height;
-  await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
-  if(document.getElementById('pPN'))document.getElementById('pPN').innerText=n;
+function pRender(n) {
+  return __async(this, null, function* () {
+    if (!pdfDoc) return;
+    const page = yield pdfDoc.getPage(n);
+    const canvas = document.getElementById("pdfC");
+    if (!canvas) return;
+    const scale = Math.min(1.8, (canvas.parentElement.clientWidth - 24) / page.getViewport({ scale: 1 }).width);
+    const vp = page.getViewport({ scale });
+    canvas.width = vp.width;
+    canvas.height = vp.height;
+    yield page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
+    if (document.getElementById("pPN")) document.getElementById("pPN").innerText = n;
+  });
 }
-function pPrev(){if(pdfPg>1){pdfPg--;pRender(pdfPg);}}
-function pNext(){if(pdfDoc&&pdfPg<pdfDoc.numPages){pdfPg++;pRender(pdfPg);}}
-function pJumpPage(){mPrompt('Go to page','Page number (1-'+pdfDoc?.numPages+'):','',n=>{const pg=parseInt(n);if(pg>=1&&pg<=pdfDoc.numPages){pdfPg=pg;pRender(pg);}});}
-async function pCopyTxt(){
-  if(!pdfDoc)return;let t='';
-  for(let i=1;i<=pdfDoc.numPages;i++){const pg=await pdfDoc.getPage(i);const tc=await pg.getTextContent();t+=tc.items.map(x=>x.str).join(' ')+'\n';}
-  safeCopy(t);
+function pPrev() {
+  if (pdfPg > 1) {
+    pdfPg--;
+    pRender(pdfPg);
+  }
 }
-
-// ── SELECTION MODE ──────────────────────────────────────────────────────────
-// selMode=true → long-press entered select mode; tap = toggle
+function pNext() {
+  if (pdfDoc && pdfPg < pdfDoc.numPages) {
+    pdfPg++;
+    pRender(pdfPg);
+  }
+}
+function pJumpPage() {
+  mPrompt("Go to page", "Page number (1-" + (pdfDoc == null ? void 0 : pdfDoc.numPages) + "):", "", (n) => {
+    const pg = parseInt(n);
+    if (pg >= 1 && pg <= pdfDoc.numPages) {
+      pdfPg = pg;
+      pRender(pg);
+    }
+  });
+}
+function pCopyTxt() {
+  return __async(this, null, function* () {
+    if (!pdfDoc) return;
+    let t = "";
+    for (let i = 1; i <= pdfDoc.numPages; i++) {
+      const pg = yield pdfDoc.getPage(i);
+      const tc = yield pg.getTextContent();
+      t += tc.items.map((x) => x.str).join(" ") + "\n";
+    }
+    safeCopy(t);
+  });
+}
 let selMode = false;
-
-function enterSelMode(name){
+function enterSelMode(name) {
   selMode = true;
   selItems.add(name);
   updBulk();
   refreshFiles();
-  toast('Selection mode — tap more to select','info');
+  toast("Selection mode \u2014 tap more to select", "info");
 }
-
-function toggleSel(name){
-  if(selItems.has(name)) selItems.delete(name);
+function toggleSel(name) {
+  if (selItems.has(name)) selItems.delete(name);
   else selItems.add(name);
-  if(selItems.size === 0) selMode = false; // auto-exit when none left
+  if (selItems.size === 0) selMode = false;
   updBulk();
   refreshFiles();
 }
-
-function updBulk(){
+function updBulk() {
   const cnt = selItems.size;
-  document.getElementById('selCnt').innerText = cnt;
-  document.getElementById('bulk').classList.toggle('show', cnt > 0);
-  // Select All / Unselect All button label in bulk bar
-  const allCards = document.querySelectorAll('#fileGrid .fc');
+  document.getElementById("selCnt").innerText = cnt;
+  document.getElementById("bulk").classList.toggle("show", cnt > 0);
+  const allCards = document.querySelectorAll("#fileGrid .fc");
   const allSel = allCards.length > 0 && cnt >= allCards.length;
-  const lbl = document.getElementById('selAllLbl');
-  const btn = document.getElementById('selAllBtn');
-  if(lbl) lbl.innerText = allSel ? 'None' : 'All';
-  if(btn) btn.style.color = allSel ? '#f87171' : '#34d399';
-  // Sync "All" label in hint bar too
-  const barAllBtn = document.getElementById('selBarAllBtn');
-  if(barAllBtn) barAllBtn.innerText = allSel ? 'None' : 'All';
-  // Show/hide the hint bar
-  const bar = document.getElementById('selModeBar');
-  if(bar) bar.classList.toggle('hidden', !selMode && cnt === 0);
-  // Sync the Select tile button
-  const selBtn = document.getElementById('selModeBtn');
-  if(selBtn){
-    const ic = selBtn.querySelector('i'), sp = selBtn.querySelector('span');
-    if(selMode || cnt > 0){
-      selBtn.className = 'at bg-blue-600 text-white';
-      if(ic) ic.className = 'fa-solid fa-xmark text-2xl';
-      if(sp) sp.innerText = 'Done';
+  const lbl = document.getElementById("selAllLbl");
+  const btn = document.getElementById("selAllBtn");
+  if (lbl) lbl.innerText = allSel ? "None" : "All";
+  if (btn) btn.style.color = allSel ? "#f87171" : "#34d399";
+  const barAllBtn = document.getElementById("selBarAllBtn");
+  if (barAllBtn) barAllBtn.innerText = allSel ? "None" : "All";
+  const bar = document.getElementById("selModeBar");
+  if (bar) bar.classList.toggle("hidden", !selMode && cnt === 0);
+  const selBtn = document.getElementById("selModeBtn");
+  if (selBtn) {
+    const ic = selBtn.querySelector("i"), sp = selBtn.querySelector("span");
+    if (selMode || cnt > 0) {
+      selBtn.className = "at bg-blue-600 text-white";
+      if (ic) ic.className = "fa-solid fa-xmark text-2xl";
+      if (sp) sp.innerText = "Done";
     } else {
-      selBtn.className = 'at bg-slate-50 dark:bg-slate-800 text-slate-500';
-      if(ic) ic.className = 'fa-solid fa-check-square text-2xl';
-      if(sp) sp.innerText = 'Select';
+      selBtn.className = "at bg-slate-50 dark:bg-slate-800 text-slate-500";
+      if (ic) ic.className = "fa-solid fa-check-square text-2xl";
+      if (sp) sp.innerText = "Select";
     }
   }
 }
-
-function clearSel(){
+function clearSel() {
   selItems.clear();
   selMode = false;
   updBulk();
   refreshFiles();
 }
-
-function toggleSelectAll(){
-  const allCards = document.querySelectorAll('#fileGrid .fc');
+function toggleSelectAll() {
+  const allCards = document.querySelectorAll("#fileGrid .fc");
   const allSel = selItems.size >= allCards.length && allCards.length > 0;
-  if(allSel){
+  if (allSel) {
     selItems.clear();
     selMode = false;
   } else {
-    allCards.forEach(el=>{
-      const m = el.getAttribute('onclick')?.match(/fcClick\('([^']+)'/);
-      if(m) selItems.add(decodeURIComponent(m[1]));
+    allCards.forEach((el) => {
+      var _a;
+      const m = (_a = el.getAttribute("onclick")) == null ? void 0 : _a.match(/fcClick\('([^']+)'/);
+      if (m) selItems.add(decodeURIComponent(m[1]));
     });
     selMode = true;
   }
   updBulk();
   refreshFiles();
 }
-
-// backward compat
-function selectAll(){ toggleSelectAll(); }
-
-// "Select" tile button — enter sel mode manually
-function toggleSelModeBtn(){
-  if(selMode){ clearSel(); }
-  else {
-    selMode=true;
+function selectAll() {
+  toggleSelectAll();
+}
+function toggleSelModeBtn() {
+  if (selMode) {
+    clearSel();
+  } else {
+    selMode = true;
     updBulk();
     refreshFiles();
-    toast('Long-press a file to start selecting','info');
+    toast("Long-press a file to start selecting", "info");
   }
 }
-
-
-// ── UPLOAD ─────────────────────────────────────────────────────────────────
-function newFolder(){mPrompt('New Folder','Folder name:','',n=>{if(n)fetch('/api/folder',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,path:curPath})}).then(()=>{toast('Folder created','success');refreshFiles();});});}
-
-function triggerFolderUpload(){
-  // Create a fresh input each time to avoid browser caching issues
-  const fi=document.createElement('input');
-  fi.type='file';fi.webkitdirectory=true;fi.multiple=true;
-  fi.style.display='none';
-  fi.onchange=function(){if(this.files.length)startUpload(this.files);document.body.removeChild(fi);};
+function newFolder() {
+  mPrompt("New Folder", "Folder name:", "", (n) => {
+    if (n) fetch("/api/folder", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: n, path: curPath }) }).then(() => {
+      toast("Folder created", "success");
+      refreshFiles();
+    });
+  });
+}
+function triggerFolderUpload() {
+  const fi = document.createElement("input");
+  fi.type = "file";
+  fi.webkitdirectory = true;
+  fi.multiple = true;
+  fi.style.display = "none";
+  fi.onchange = function() {
+    if (this.files.length) startUpload(this.files);
+    document.body.removeChild(fi);
+  };
   document.body.appendChild(fi);
   fi.click();
 }
-
-function dragOv(e){e.preventDefault();if(curTab==='files')document.body.classList.add('dragging');}
-function dragLv(e){e.preventDefault();if(!e.relatedTarget)document.body.classList.remove('dragging');}
-function drop(e){e.preventDefault();document.body.classList.remove('dragging');if(window._guestMode){toast('Guests cannot upload files','warn');return;}if(e.dataTransfer.files.length&&curTab==='files')startUpload(e.dataTransfer.files);}
-
-function startUpload(files){
-  if(!files.length)return;
-  const dash=document.getElementById('upDash');dash.classList.add('show');
-  const fd=new FormData();fd.append('path',curPath);
-  for(const f of files){fd.append('files[]',f);fd.append('paths[]',f.webkitRelativePath||f.name);}
-  upStart=Date.now();
-  const xhr=new XMLHttpRequest();xhr.open('POST','/api/upload',true);
-  xhr.upload.onprogress=e=>{
-    if(e.lengthComputable){
-      const p=(e.loaded/e.total)*100;
-      document.getElementById('upPct').innerText=Math.round(p)+'%';
-      document.getElementById('upBar').style.width=p+'%';
-      document.getElementById('upFN').innerText=files[0].name+(files.length>1?` +${files.length-1}`:'');
-      const el=(Date.now()-upStart)/1000;
-      const sp=(e.loaded/1024/1024)/el;
-      const rm=(e.total-e.loaded)/(e.loaded/el);
-      document.getElementById('upSpd').innerText=sp.toFixed(1)+' MB/s';
-      document.getElementById('upEta').innerText='ETA '+(isFinite(rm)?Math.round(rm)+'s':'—');
+function dragOv(e) {
+  e.preventDefault();
+  if (curTab === "files") document.body.classList.add("dragging");
+}
+function dragLv(e) {
+  e.preventDefault();
+  if (!e.relatedTarget) document.body.classList.remove("dragging");
+}
+function drop(e) {
+  e.preventDefault();
+  document.body.classList.remove("dragging");
+  if (window._guestMode) {
+    toast("Guests cannot upload files", "warn");
+    return;
+  }
+  if (e.dataTransfer.files.length && curTab === "files") startUpload(e.dataTransfer.files);
+}
+function startUpload(files) {
+  if (!files.length) return;
+  const dash = document.getElementById("upDash");
+  dash.classList.add("show");
+  const fd = new FormData();
+  fd.append("path", curPath);
+  for (const f of files) {
+    fd.append("files[]", f);
+    fd.append("paths[]", f.webkitRelativePath || f.name);
+  }
+  upStart = Date.now();
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST", "/api/upload", true);
+  xhr.upload.onprogress = (e) => {
+    if (e.lengthComputable) {
+      const p = e.loaded / e.total * 100;
+      document.getElementById("upPct").innerText = Math.round(p) + "%";
+      document.getElementById("upBar").style.width = p + "%";
+      document.getElementById("upFN").innerText = files[0].name + (files.length > 1 ? " +".concat(files.length - 1) : "");
+      const el = (Date.now() - upStart) / 1e3;
+      const sp = e.loaded / 1024 / 1024 / el;
+      const rm = (e.total - e.loaded) / (e.loaded / el);
+      document.getElementById("upSpd").innerText = sp.toFixed(1) + " MB/s";
+      document.getElementById("upEta").innerText = "ETA " + (isFinite(rm) ? Math.round(rm) + "s" : "\u2014");
     }
   };
-  xhr.onload=()=>{dash.classList.remove('show');toast('Upload complete! ✅','success');refreshFiles();};
-  xhr.onerror=()=>{dash.classList.remove('show');toast('Upload failed','error');};
+  xhr.onload = () => {
+    dash.classList.remove("show");
+    toast("Upload complete! \u2705", "success");
+    refreshFiles();
+  };
+  xhr.onerror = () => {
+    dash.classList.remove("show");
+    toast("Upload failed", "error");
+  };
   xhr.send(fd);
 }
-
-// ── BULK ───────────────────────────────────────────────────────────────────
-function bulkZip(){if(!selItems.size)return;mPrompt('Zip Archive','Name:','archive.zip',n=>{if(n)sndBulk('zip',n);});}
-function bulkAct(a){
-  if(!selItems.size)return;
-  if(a==='delete')mConfirm('Delete',`Delete ${selItems.size} item(s)?`,()=>sndBulk(a));
-  else if(a==='move'||a==='copy')mPrompt(a==='move'?'Move to':'Copy to','Destination path:','',dest=>{if(dest!==null)sndBulk(a,dest);});
+function bulkZip() {
+  if (!selItems.size) return;
+  mPrompt("Zip Archive", "Name:", "archive.zip", (n) => {
+    if (n) sndBulk("zip", n);
+  });
+}
+function bulkAct(a) {
+  if (!selItems.size) return;
+  if (a === "delete") mConfirm("Delete", "Delete ".concat(selItems.size, " item(s)?"), () => sndBulk(a));
+  else if (a === "move" || a === "copy") mPrompt(a === "move" ? "Move to" : "Copy to", "Destination path:", "", (dest) => {
+    if (dest !== null) sndBulk(a, dest);
+  });
   else sndBulk(a);
 }
-function bulkRename(){
-  if(selItems.size!==1){toast('Select exactly 1 item to rename','warn');return;}
-  const name=Array.from(selItems)[0];
-  renameItem(name,curPath?curPath+'/'+name:name);
+function bulkRename() {
+  if (selItems.size !== 1) {
+    toast("Select exactly 1 item to rename", "warn");
+    return;
+  }
+  const name = Array.from(selItems)[0];
+  renameItem(name, curPath ? curPath + "/" + name : name);
 }
-function sndBulk(a,x=null){
-  fetch('/api/bulk',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:a,items:Array.from(selItems),path:curPath,extra:x})})
-    .then(()=>{toast('Done!','success');clearSel();});
-}
-function bulkDL(){
-  if(!selItems.size)return;
-  const f=document.createElement('form');f.method='POST';f.action='/api/download_bulk';
-  const p=document.createElement('input');p.name='path';p.value=curPath;f.appendChild(p);
-  selItems.forEach(i=>{const inp=document.createElement('input');inp.name='items';inp.value=i;f.appendChild(inp);});
-  document.body.appendChild(f);f.submit();document.body.removeChild(f);clearSel();
-}
-
-// ── QR ─────────────────────────────────────────────────────────────────────
-function showQR(){
-  document.getElementById('qrM').style.display='flex';document.getElementById('qrc').innerHTML='';
-  const u=window.location.origin;document.getElementById('qrUrl').innerText=u;
-  new QRCode(document.getElementById('qrc'),{text:u,width:180,height:180});
-}
-
-// ── PERMISSION MODAL ──────────────────────────────────────────────────────
-let permFilePath=null,permOwner=null;
-function openPermM(path,name,vis,owner){
-  if(!curUser){toast('Sign in to manage access','warn');return;}
-  permFilePath=path;permOwner=owner||curUser;
-  document.getElementById('permFN').innerText=name;
-  // Determine current vis and allowed users
-  const curVis=vis||'public';
-  document.querySelectorAll('[name="pVis"]').forEach(r=>r.checked=(r.value===curVis));
-  togglePermUsers();
-  // Load current allowed users from server
-  fetch(`/api/get_perm?path=${encodeURIComponent(path)}`).then(r=>r.json()).then(d=>{
-    const allowed=d.allowed_users||[];
-    const ul=document.getElementById('permUserList');
-    ul.innerHTML=allUsers.filter(u=>u!==permOwner).map(u=>`<label class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
-      <input type="checkbox" name="pUser" value="${esc(u)}" ${allowed.includes(u)?'checked':''} class="accent-blue-500 w-4 h-4">
-      <div class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-black">${u[0].toUpperCase()}</div>
-      <span class="font-bold text-sm dark:text-white">${esc(u)}</span>
-    </label>`).join('')||'<p class="text-xs text-slate-400 p-2">No other users registered</p>';
-  }).catch(()=>{
-    const ul=document.getElementById('permUserList');
-    ul.innerHTML=allUsers.filter(u=>u!==permOwner).map(u=>`<label class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
-      <input type="checkbox" name="pUser" value="${esc(u)}" class="accent-blue-500 w-4 h-4">
-      <div class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-black">${u[0].toUpperCase()}</div>
-      <span class="font-bold text-sm dark:text-white">${esc(u)}</span>
-    </label>`).join('')||'<p class="text-xs text-slate-400 p-2">No other users registered</p>';
+function sndBulk(a, x = null) {
+  fetch("/api/bulk", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: a, items: Array.from(selItems), path: curPath, extra: x }) }).then(() => {
+    toast("Done!", "success");
+    clearSel();
   });
-  document.getElementById('permM').classList.add('show');
 }
-function closePermM(){document.getElementById('permM').classList.remove('show');permFilePath=null;}
-document.querySelectorAll('[name="pVis"]').forEach(r=>r.addEventListener('change',togglePermUsers));
-function togglePermUsers(){
-  const v=document.querySelector('[name="pVis"]:checked')?.value;
-  document.getElementById('permUsers').classList.toggle('hidden',v!=='selected');
+function bulkDL() {
+  if (!selItems.size) return;
+  const f = document.createElement("form");
+  f.method = "POST";
+  f.action = "/api/download_bulk";
+  const p = document.createElement("input");
+  p.name = "path";
+  p.value = curPath;
+  f.appendChild(p);
+  selItems.forEach((i) => {
+    const inp = document.createElement("input");
+    inp.name = "items";
+    inp.value = i;
+    f.appendChild(inp);
+  });
+  document.body.appendChild(f);
+  f.submit();
+  document.body.removeChild(f);
+  clearSel();
 }
-async function savePerm(){
-  if(!permFilePath)return;
-  const vis=document.querySelector('[name="pVis"]:checked')?.value||'public';
-  const allowed=Array.from(document.querySelectorAll('[name="pUser"]:checked')).map(i=>i.value);
-  const r=await fetch('/api/set_perm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:permFilePath,visibility:vis,allowed_users:allowed,owner:permOwner})});
-  const d=await r.json();
-  if(d.status==='ok'){toast('Access updated ✅','success');closePermM();refreshFiles();}
-  else toast(d.error||'Failed to save','error');
+function showQR() {
+  document.getElementById("qrM").style.display = "flex";
+  document.getElementById("qrc").innerHTML = "";
+  const u = window.location.origin;
+  document.getElementById("qrUrl").innerText = u;
+  new QRCode(document.getElementById("qrc"), { text: u, width: 180, height: 180 });
 }
-
-// ── CLIPBOARD ──────────────────────────────────────────────────────────────
-function loadClips(){
-  if(!curUser)return;
-  fetch('/api/clipboards').then(r=>r.json()).then(d=>{clips=d;if(curTab==='clipboard')renderClips();}).catch(()=>{});
+let permFilePath = null, permOwner = null;
+function openPermM(path, name, vis, owner) {
+  if (!curUser) {
+    toast("Sign in to manage access", "warn");
+    return;
+  }
+  permFilePath = path;
+  permOwner = owner || curUser;
+  document.getElementById("permFN").innerText = name;
+  const curVis = vis || "public";
+  document.querySelectorAll('[name="pVis"]').forEach((r) => r.checked = r.value === curVis);
+  togglePermUsers();
+  fetch("/api/get_perm?path=".concat(encodeURIComponent(path))).then((r) => r.json()).then((d) => {
+    const allowed = d.allowed_users || [];
+    const ul = document.getElementById("permUserList");
+    ul.innerHTML = allUsers.filter((u) => u !== permOwner).map((u) => '<label class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">\n      <input type="checkbox" name="pUser" value="'.concat(esc(u), '" ').concat(allowed.includes(u) ? "checked" : "", ' class="accent-blue-500 w-4 h-4">\n      <div class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-black">').concat(u[0].toUpperCase(), '</div>\n      <span class="font-bold text-sm dark:text-white">').concat(esc(u), "</span>\n    </label>")).join("") || '<p class="text-xs text-slate-400 p-2">No other users registered</p>';
+  }).catch(() => {
+    const ul = document.getElementById("permUserList");
+    ul.innerHTML = allUsers.filter((u) => u !== permOwner).map((u) => '<label class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">\n      <input type="checkbox" name="pUser" value="'.concat(esc(u), '" class="accent-blue-500 w-4 h-4">\n      <div class="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-black">').concat(u[0].toUpperCase(), '</div>\n      <span class="font-bold text-sm dark:text-white">').concat(esc(u), "</span>\n    </label>")).join("") || '<p class="text-xs text-slate-400 p-2">No other users registered</p>';
+  });
+  document.getElementById("permM").classList.add("show");
 }
-function saveClipsAPI(){return fetch('/api/clipboards',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(clips)});}
-function renderClips(){
-  const g=document.getElementById('clipGrid');
-  if(!curUser){g.innerHTML=`<div class="text-center py-16 opacity-30"><i class="fa-solid fa-lock text-5xl block mb-3"></i><p class="font-black text-sm">Sign in to use Clipboard</p></div>`;return;}
-  if(!clips.length){g.innerHTML=`<div class="text-center py-16 opacity-30"><i class="fa-solid fa-clipboard text-5xl block mb-3"></i><p class="font-black text-sm">No clipboards yet</p></div>`;return;}
-  g.innerHTML=clips.map((cl,i)=>{
-    const ch=(cl.text||'').length,ln=(cl.text||'').split('\n').length;
-    const vis=cl.visibility||'private';
-    const visLabel={'public':'🌍 Public','private':'🔒 Private','selected':'👥 Selected'}[vis]||'🔒 Private';
-    const visClr={'public':'#16a34a','private':'#dc2626','selected':'#d97706'}[vis]||'#dc2626';
-    return `<div class="cc">
-      <div class="dm-foot" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #e2e8f0;background:#f8fafc">
-        <div style="width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,#60a5fa,#a78bfa);flex-shrink:0"></div>
-        <input value="${esc(cl.title||'Clipboard')}" placeholder="Name..."
-          style="flex:1;background:transparent;font-weight:800;font-size:12px;outline:none;border:none;min-width:0" class="dm-label"
-          onchange="clips[${i}].title=this.value;saveClipsAPI()">
-        <span style="font-size:9px;color:#94a3b8;font-family:monospace;flex-shrink:0">${ch}c·${ln}l</span>
-        <button onclick="openClipPermM(${i})" style="font-size:9px;padding:3px 7px;border-radius:8px;border:1.5px solid ${visClr};color:${visClr};background:transparent;cursor:pointer;font-weight:800;flex-shrink:0">${visLabel}</button>
-      </div>
-      <textarea id="ct${i}" class="dm-sheet" style="width:100%;background:white;padding:10px 12px;font-size:12px;font-family:monospace;outline:none;border:none;resize:vertical;min-height:90px;border-radius:0" placeholder="Paste or type..." oninput="autoSv(${i})">${esc(cl.text||'')}</textarea>
-      <div class="dm-foot" style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px;border-top:1px solid #e2e8f0;background:#f8fafc">
-        <button onclick="cpClip(${i})" style="font-size:10px;padding:6px 10px;background:#dbeafe;color:#2563eb;border-radius:9px;font-weight:800;border:none;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="fa-solid fa-copy"></i>Copy</button>
-        <button onclick="svClipFile(${i})" style="font-size:10px;padding:6px 10px;background:#dcfce7;color:#16a34a;border-radius:9px;font-weight:800;border:none;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="fa-solid fa-floppy-disk"></i>Save</button>
-        <button onclick="dlClip(${i})" style="font-size:10px;padding:6px 10px;background:#e0e7ff;color:#4338ca;border-radius:9px;font-weight:800;border:none;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="fa-solid fa-download"></i>DL</button>
-        <button onclick="delClip(${i})" style="font-size:10px;padding:6px 10px;background:#fee2e2;color:#dc2626;border-radius:9px;font-weight:800;border:none;cursor:pointer;margin-left:auto"><i class="fa-solid fa-trash"></i></button>
-      </div>
-    </div>`;
-  }).join('');
+function closePermM() {
+  document.getElementById("permM").classList.remove("show");
+  permFilePath = null;
 }
-
-let svTmr={};
-function autoSv(i){clearTimeout(svTmr[i]);svTmr[i]=setTimeout(()=>{const t=document.getElementById('ct'+i);if(t){clips[i].text=t.value;clips[i].updated=Date.now();saveClipsAPI();}},800);}
-function createClip(){clips.push({title:'Clip '+(clips.length+1),text:'',created:Date.now()});saveClipsAPI().then(()=>renderClips());}
-function delClip(i){clips.splice(i,1);saveClipsAPI().then(()=>renderClips());}
-function cpClip(i){
-  safeCopy(clips[i]?.text || '');
+document.querySelectorAll('[name="pVis"]').forEach((r) => r.addEventListener("change", togglePermUsers));
+function togglePermUsers() {
+  var _a;
+  const v = (_a = document.querySelector('[name="pVis"]:checked')) == null ? void 0 : _a.value;
+  document.getElementById("permUsers").classList.toggle("hidden", v !== "selected");
 }
-function cpClipFallback(text){
-  const ta=document.createElement('textarea');
-  ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
-  document.body.appendChild(ta); ta.focus(); ta.select();
-  try{document.execCommand('copy');toast('Copied! ✅','success');}
-  catch(e){toast('Copy failed — try long-press','warn');}
+function savePerm() {
+  return __async(this, null, function* () {
+    var _a;
+    if (!permFilePath) return;
+    const vis = ((_a = document.querySelector('[name="pVis"]:checked')) == null ? void 0 : _a.value) || "public";
+    const allowed = Array.from(document.querySelectorAll('[name="pUser"]:checked')).map((i) => i.value);
+    const r = yield fetch("/api/set_perm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: permFilePath, visibility: vis, allowed_users: allowed, owner: permOwner }) });
+    const d = yield r.json();
+    if (d.status === "ok") {
+      toast("Access updated \u2705", "success");
+      closePermM();
+      refreshFiles();
+    } else toast(d.error || "Failed to save", "error");
+  });
+}
+function loadClips() {
+  if (!curUser) return;
+  fetch("/api/clipboards").then((r) => r.json()).then((d) => {
+    clips = d;
+    if (curTab === "clipboard") renderClips();
+  }).catch(() => {
+  });
+}
+function saveClipsAPI() {
+  return fetch("/api/clipboards", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(clips) });
+}
+function renderClips() {
+  const g = document.getElementById("clipGrid");
+  if (!curUser) {
+    g.innerHTML = '<div class="text-center py-16 opacity-30"><i class="fa-solid fa-lock text-5xl block mb-3"></i><p class="font-black text-sm">Sign in to use Clipboard</p></div>';
+    return;
+  }
+  if (!clips.length) {
+    g.innerHTML = '<div class="text-center py-16 opacity-30"><i class="fa-solid fa-clipboard text-5xl block mb-3"></i><p class="font-black text-sm">No clipboards yet</p></div>';
+    return;
+  }
+  g.innerHTML = clips.map((cl, i) => {
+    const ch = (cl.text || "").length, ln = (cl.text || "").split("\n").length;
+    const vis = cl.visibility || "private";
+    const visLabel = { "public": "\u{1F30D} Public", "private": "\u{1F512} Private", "selected": "\u{1F465} Selected" }[vis] || "\u{1F512} Private";
+    const visClr = { "public": "#16a34a", "private": "#dc2626", "selected": "#d97706" }[vis] || "#dc2626";
+    return '<div class="cc">\n      <div class="dm-foot" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #e2e8f0;background:#f8fafc">\n        <div style="width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,#60a5fa,#a78bfa);flex-shrink:0"></div>\n        <input value="'.concat(esc(cl.title || "Clipboard"), '" placeholder="Name..."\n          style="flex:1;background:transparent;font-weight:800;font-size:12px;outline:none;border:none;min-width:0" class="dm-label"\n          onchange="clips[').concat(i, '].title=this.value;saveClipsAPI()">\n        <span style="font-size:9px;color:#94a3b8;font-family:monospace;flex-shrink:0">').concat(ch, "c\xB7").concat(ln, 'l</span>\n        <button onclick="openClipPermM(').concat(i, ')" style="font-size:9px;padding:3px 7px;border-radius:8px;border:1.5px solid ').concat(visClr, ";color:").concat(visClr, ';background:transparent;cursor:pointer;font-weight:800;flex-shrink:0">').concat(visLabel, '</button>\n      </div>\n      <textarea id="ct').concat(i, '" class="dm-sheet" style="width:100%;background:white;padding:10px 12px;font-size:12px;font-family:monospace;outline:none;border:none;resize:vertical;min-height:90px;border-radius:0" placeholder="Paste or type..." oninput="autoSv(').concat(i, ')">').concat(esc(cl.text || ""), '</textarea>\n      <div class="dm-foot" style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px;border-top:1px solid #e2e8f0;background:#f8fafc">\n        <button onclick="cpClip(').concat(i, ')" style="font-size:10px;padding:6px 10px;background:#dbeafe;color:#2563eb;border-radius:9px;font-weight:800;border:none;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="fa-solid fa-copy"></i>Copy</button>\n        <button onclick="svClipFile(').concat(i, ')" style="font-size:10px;padding:6px 10px;background:#dcfce7;color:#16a34a;border-radius:9px;font-weight:800;border:none;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="fa-solid fa-floppy-disk"></i>Save</button>\n        <button onclick="dlClip(').concat(i, ')" style="font-size:10px;padding:6px 10px;background:#e0e7ff;color:#4338ca;border-radius:9px;font-weight:800;border:none;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="fa-solid fa-download"></i>DL</button>\n        <button onclick="delClip(').concat(i, ')" style="font-size:10px;padding:6px 10px;background:#fee2e2;color:#dc2626;border-radius:9px;font-weight:800;border:none;cursor:pointer;margin-left:auto"><i class="fa-solid fa-trash"></i></button>\n      </div>\n    </div>');
+  }).join("");
+}
+let svTmr = {};
+function autoSv(i) {
+  clearTimeout(svTmr[i]);
+  svTmr[i] = setTimeout(() => {
+    const t = document.getElementById("ct" + i);
+    if (t) {
+      clips[i].text = t.value;
+      clips[i].updated = Date.now();
+      saveClipsAPI();
+    }
+  }, 800);
+}
+function createClip() {
+  clips.push({ title: "Clip " + (clips.length + 1), text: "", created: Date.now() });
+  saveClipsAPI().then(() => renderClips());
+}
+function delClip(i) {
+  clips.splice(i, 1);
+  saveClipsAPI().then(() => renderClips());
+}
+function cpClip(i) {
+  var _a;
+  safeCopy(((_a = clips[i]) == null ? void 0 : _a.text) || "");
+}
+function cpClipFallback(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand("copy");
+    toast("Copied! \u2705", "success");
+  } catch (e) {
+    toast("Copy failed \u2014 try long-press", "warn");
+  }
   document.body.removeChild(ta);
 }
-function safeCopy(text,msg='Copied! ✅'){
-  if(navigator.clipboard && window.isSecureContext){
-    navigator.clipboard.writeText(text).then(()=>toast(msg,'success')).catch(()=>cpClipFallback(text));
+function safeCopy(text, msg = "Copied! \u2705") {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => toast(msg, "success")).catch(() => cpClipFallback(text));
   } else {
     cpClipFallback(text);
   }
 }
-function dlClip(i){
-  const cl=clips[i];
-  // Add UTF-8 BOM (\xEF\xBB\xBF) so every text editor opens it correctly
-  const bom=new Uint8Array([0xEF,0xBB,0xBF]);
-  const enc=new TextEncoder().encode(cl.text||'');
-  const merged=new Uint8Array(bom.length+enc.length);
-  merged.set(bom,0); merged.set(enc,bom.length);
-  const b=new Blob([merged],{type:'text/plain;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(cl.title||'clip').replace(/[/\\:*?"<>|]/g,'_')+'.txt';a.click();
+function dlClip(i) {
+  const cl = clips[i];
+  const bom = new Uint8Array([239, 187, 191]);
+  const enc = new TextEncoder().encode(cl.text || "");
+  const merged = new Uint8Array(bom.length + enc.length);
+  merged.set(bom, 0);
+  merged.set(enc, bom.length);
+  const b = new Blob([merged], { type: "text/plain;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(b);
+  a.download = (cl.title || "clip").replace(/[/\\:*?"<>|]/g, "_") + ".txt";
+  a.click();
 }
-function svClipFile(i){
-  mPrompt('Save as File','Filename:','snippet.txt',fn=>{
-    if(!fn)return;
-    fetch('/api/clipboard_to_file',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:clips[i].text||'',filename:fn,path:curPath})})
-      .then(r=>r.json()).then(d=>{if(d.status==='ok'){toast('Saved! ✅','success');goTab('files');}else toast('Error','error');});
+function svClipFile(i) {
+  mPrompt("Save as File", "Filename:", "snippet.txt", (fn) => {
+    if (!fn) return;
+    fetch("/api/clipboard_to_file", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: clips[i].text || "", filename: fn, path: curPath }) }).then((r) => r.json()).then((d) => {
+      if (d.status === "ok") {
+        toast("Saved! \u2705", "success");
+        goTab("files");
+      } else toast("Error", "error");
+    });
   });
 }
-function saveToClip(text){
-  if(!curUser){toast('Sign in to use clipboard','warn');return;}
-  clips.push({title:'From viewer',text,created:Date.now(),visibility:'private',allowed_users:[]});
-  saveClipsAPI().then(()=>toast('Saved to Clipboard!','success'));
+function saveToClip(text) {
+  if (!curUser) {
+    toast("Sign in to use clipboard", "warn");
+    return;
+  }
+  clips.push({ title: "From viewer", text, created: Date.now(), visibility: "private", allowed_users: [] });
+  saveClipsAPI().then(() => toast("Saved to Clipboard!", "success"));
 }
-
-// ── CHANGE PASSWORD ────────────────────────────────────────────────────────
-async function changePassword(){
-  const oldPw=document.getElementById('settOldPw')?.value||'';
-  const newPw=document.getElementById('settNewPw')?.value||'';
-  if(!oldPw||!newPw){toast('Fill both password fields','warn');return;}
-  if(newPw.length<4){toast('New password must be 4+ chars','warn');return;}
-  const r=await fetch('/api/change_password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_password:oldPw,new_password:newPw})});
-  const d=await r.json();
-  if(d.status==='ok'){
-    toast('Password updated! ✅','success');
-    document.getElementById('settOldPw').value='';
-    document.getElementById('settNewPw').value='';
-  } else toast(d.error||'Failed','error');
+function changePassword() {
+  return __async(this, null, function* () {
+    var _a, _b;
+    const oldPw = ((_a = document.getElementById("settOldPw")) == null ? void 0 : _a.value) || "";
+    const newPw = ((_b = document.getElementById("settNewPw")) == null ? void 0 : _b.value) || "";
+    if (!oldPw || !newPw) {
+      toast("Fill both password fields", "warn");
+      return;
+    }
+    if (newPw.length < 4) {
+      toast("New password must be 4+ chars", "warn");
+      return;
+    }
+    const r = yield fetch("/api/change_password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ old_password: oldPw, new_password: newPw }) });
+    const d = yield r.json();
+    if (d.status === "ok") {
+      toast("Password updated! \u2705", "success");
+      document.getElementById("settOldPw").value = "";
+      document.getElementById("settNewPw").value = "";
+    } else toast(d.error || "Failed", "error");
+  });
 }
-
-// ── CLIPBOARD PERMISSION ───────────────────────────────────────────────────
-let clipPermIdx=null;
-function openClipPermM(i){
-  clipPermIdx=i;
-  const cl=clips[i];
-  const vis=cl.visibility||'private';
-  const allowed=cl.allowed_users||[];
-  const div=document.createElement('div');
-  div.id='clipPermOv';
-  div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:1100;background:rgba(0,0,0,.92);display:flex;align-items:flex-end;justify-content:center';
-  div.innerHTML=`<div class="dm-sheet" style="border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:20px;max-height:80vh;overflow-y:auto;background:white">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <h3 style="font-weight:900;font-size:15px" class="dm-label">🔐 Clipboard Access</h3>
-      <button onclick="document.getElementById('clipPermOv').remove()" class="dm-xbtn" style="width:30px;height:30px;border-radius:50%;background:#f1f5f9;border:none;cursor:pointer;font-size:14px">✕</button>
-    </div>
-    <p style="font-size:11px;color:#94a3b8;margin-bottom:14px">${esc(cl.title||'Clipboard')}</p>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
-      ${[{v:'public',e:'🌍',l:'Public',d:'Anyone on network',c:'#16a34a',bg:'#f0fdf4'},
-         {v:'private',e:'🔒',l:'Private',d:'Only you',c:'#dc2626',bg:'#fef2f2'},
-         {v:'selected',e:'👥',l:'Selected Users',d:'You choose who',c:'#d97706',bg:'#fffbeb'}].map(o=>
-        `<label style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:${o.bg};cursor:pointer;border:2px solid ${vis===o.v?o.c:'transparent'}">
-          <input type="radio" name="cpVis" value="${o.v}" ${vis===o.v?'checked':''} onchange="cpToggleUsers()" style="accent-color:${o.c};width:16px;height:16px;flex-shrink:0">
-          <div><p style="font-weight:900;font-size:13px;color:${o.c}">${o.e} ${o.l}</p><p style="font-size:11px;color:${o.c}99">${o.d}</p></div>
-        </label>`).join('')}
-    </div>
-    <div id="cpUserList" style="${vis==='selected'?'':'display:none'}margin-bottom:14px">
-      <p style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:8px">Select users:</p>
-      <div style="display:flex;flex-direction:column;gap:8px;max-height:160px;overflow-y:auto;padding:4px">
-        ${allUsers.filter(u=>u!==curUser).map(u=>`<label class="dm-row" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:9px 12px;border-radius:10px;background:#f8fafc">
-          <input type="checkbox" name="cpUser" value="${esc(u)}" ${allowed.includes(u)?'checked':''} style="accent-color:#3b82f6;width:16px;height:16px">
-          <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:white">${u[0].toUpperCase()}</div>
-          <span style="font-weight:700;font-size:13px" class="dm-label">${esc(u)}</span>
-        </label>`).join('')||'<p style="font-size:12px;color:#94a3b8;padding:8px">No other users registered</p>'}
-      </div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button onclick="document.getElementById('clipPermOv').remove()" class="dm-cancel" style="flex:1;padding:12px;border-radius:12px;border:none;background:#f1f5f9;font-weight:800;cursor:pointer">Cancel</button>
-      <button onclick="saveClipPerm()" style="flex:1;padding:12px;border-radius:12px;border:none;background:#3b82f6;color:white;font-weight:800;cursor:pointer">Save</button>
-    </div>
-  </div>`;
+let clipPermIdx = null;
+function openClipPermM(i) {
+  clipPermIdx = i;
+  const cl = clips[i];
+  const vis = cl.visibility || "private";
+  const allowed = cl.allowed_users || [];
+  const div = document.createElement("div");
+  div.id = "clipPermOv";
+  div.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;z-index:1100;background:rgba(0,0,0,.92);display:flex;align-items:flex-end;justify-content:center";
+  div.innerHTML = '<div class="dm-sheet" style="border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:20px;max-height:80vh;overflow-y:auto;background:white">\n    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">\n      <h3 style="font-weight:900;font-size:15px" class="dm-label">\u{1F510} Clipboard Access</h3>\n      <button onclick="document.getElementById(\'clipPermOv\').remove()" class="dm-xbtn" style="width:30px;height:30px;border-radius:50%;background:#f1f5f9;border:none;cursor:pointer;font-size:14px">\u2715</button>\n    </div>\n    <p style="font-size:11px;color:#94a3b8;margin-bottom:14px">'.concat(esc(cl.title || "Clipboard"), '</p>\n    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">\n      ').concat([
+    { v: "public", e: "\u{1F30D}", l: "Public", d: "Anyone on network", c: "#16a34a", bg: "#f0fdf4" },
+    { v: "private", e: "\u{1F512}", l: "Private", d: "Only you", c: "#dc2626", bg: "#fef2f2" },
+    { v: "selected", e: "\u{1F465}", l: "Selected Users", d: "You choose who", c: "#d97706", bg: "#fffbeb" }
+  ].map((o) => '<label style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:'.concat(o.bg, ";cursor:pointer;border:2px solid ").concat(vis === o.v ? o.c : "transparent", '">\n          <input type="radio" name="cpVis" value="').concat(o.v, '" ').concat(vis === o.v ? "checked" : "", ' onchange="cpToggleUsers()" style="accent-color:').concat(o.c, ';width:16px;height:16px;flex-shrink:0">\n          <div><p style="font-weight:900;font-size:13px;color:').concat(o.c, '">').concat(o.e, " ").concat(o.l, '</p><p style="font-size:11px;color:').concat(o.c, '99">').concat(o.d, "</p></div>\n        </label>")).join(""), '\n    </div>\n    <div id="cpUserList" style="').concat(vis === "selected" ? "" : "display:none", 'margin-bottom:14px">\n      <p style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:8px">Select users:</p>\n      <div style="display:flex;flex-direction:column;gap:8px;max-height:160px;overflow-y:auto;padding:4px">\n        ').concat(allUsers.filter((u) => u !== curUser).map((u) => '<label class="dm-row" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:9px 12px;border-radius:10px;background:#f8fafc">\n          <input type="checkbox" name="cpUser" value="'.concat(esc(u), '" ').concat(allowed.includes(u) ? "checked" : "", ' style="accent-color:#3b82f6;width:16px;height:16px">\n          <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:white">').concat(u[0].toUpperCase(), '</div>\n          <span style="font-weight:700;font-size:13px" class="dm-label">').concat(esc(u), "</span>\n        </label>")).join("") || '<p style="font-size:12px;color:#94a3b8;padding:8px">No other users registered</p>', '\n      </div>\n    </div>\n    <div style="display:flex;gap:8px">\n      <button onclick="document.getElementById(\'clipPermOv\').remove()" class="dm-cancel" style="flex:1;padding:12px;border-radius:12px;border:none;background:#f1f5f9;font-weight:800;cursor:pointer">Cancel</button>\n      <button onclick="saveClipPerm()" style="flex:1;padding:12px;border-radius:12px;border:none;background:#3b82f6;color:white;font-weight:800;cursor:pointer">Save</button>\n    </div>\n  </div>');
   document.body.appendChild(div);
-  div.addEventListener('click',e=>{if(e.target===div)div.remove();});
+  div.addEventListener("click", (e) => {
+    if (e.target === div) div.remove();
+  });
 }
-function cpToggleUsers(){
-  const v=document.querySelector('[name="cpVis"]:checked')?.value;
-  const el=document.getElementById('cpUserList');
-  if(el)el.style.display=(v==='selected')?'block':'none';
+function cpToggleUsers() {
+  var _a;
+  const v = (_a = document.querySelector('[name="cpVis"]:checked')) == null ? void 0 : _a.value;
+  const el = document.getElementById("cpUserList");
+  if (el) el.style.display = v === "selected" ? "block" : "none";
 }
-async function saveClipPerm(){
-  if(clipPermIdx===null)return;
-  const vis=document.querySelector('[name="cpVis"]:checked')?.value||'private';
-  const allowed=Array.from(document.querySelectorAll('[name="cpUser"]:checked')).map(i=>i.value);
-  clips[clipPermIdx].visibility=vis;
-  clips[clipPermIdx].allowed_users=allowed;
-  await saveClipsAPI();
-  toast('Access updated','success');
-  document.getElementById('clipPermOv')?.remove();
-  renderClips();
+function saveClipPerm() {
+  return __async(this, null, function* () {
+    var _a, _b;
+    if (clipPermIdx === null) return;
+    const vis = ((_a = document.querySelector('[name="cpVis"]:checked')) == null ? void 0 : _a.value) || "private";
+    const allowed = Array.from(document.querySelectorAll('[name="cpUser"]:checked')).map((i) => i.value);
+    clips[clipPermIdx].visibility = vis;
+    clips[clipPermIdx].allowed_users = allowed;
+    yield saveClipsAPI();
+    toast("Access updated", "success");
+    (_b = document.getElementById("clipPermOv")) == null ? void 0 : _b.remove();
+    renderClips();
+  });
 }
-
-// ── LINKS ──────────────────────────────────────────────────────────────────
-function loadLinks(){
-  if(!curUser)return;
-  fetch('/api/links').then(r=>r.json()).then(d=>{links=d;if(curTab==='links')renderLinks();}).catch(()=>{});
+function loadLinks() {
+  if (!curUser) return;
+  fetch("/api/links").then((r) => r.json()).then((d) => {
+    links = d;
+    if (curTab === "links") renderLinks();
+  }).catch(() => {
+  });
 }
-function saveLinksAPI(){return fetch('/api/links',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(links)});}
-
-function renderLinks(){
-  const g=document.getElementById('linkGrid');
-  if(!g)return;
-  if(!curUser){g.innerHTML='<div class="text-center py-16 opacity-30"><i class="fa-solid fa-lock text-5xl block mb-3"></i><p class="font-black text-sm dark:text-white">Sign in to use Links</p></div>';return;}
-  if(!links.length){g.innerHTML='<div class="text-center py-16 opacity-30"><i class="fa-solid fa-link text-5xl block mb-3"></i><p class="font-black text-sm dark:text-white">No links yet</p><p class="text-xs mt-1">Tap + to add your first link</p></div>';return;}
-  g.innerHTML=links.map((lk,i)=>{
-    let domain='';
-    try{domain=new URL(lk.url||'https://x').hostname;}catch(e){}
-    const vis=lk.visibility||'public';
-    const vcls={'public':'badge-pub','private':'badge-priv','selected':'badge-sel'}[vis]||'badge-pub';
-    const vlbl={'public':'🌍','private':'🔒','selected':'👥'}[vis]||'🌍';
-    const safeUrl=esc(lk.url||'');
-    const safeName=esc(lk.name||'Link');
-    const safeDesc=lk.description?esc(lk.description):'';
-    const urlJson=JSON.stringify(lk.url||'');
-    return `<div class="lk-card">
-      <div style="display:flex;align-items:center;gap:12px;padding:14px;cursor:pointer" onclick="lkOpen(${i})">
-        <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
-          <img src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32" style="width:22px;height:22px" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\\'fa-solid fa-link\\' style=\\'color:white;font-size:16px\\'></i>'">
-        </div>
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
-            <p class="lk-title">${safeName}</p>
-            <span class="${vcls}" style="flex-shrink:0;font-size:9px">${vlbl}</span>
-          </div>
-          ${safeDesc?`<p class="lk-desc" style="margin-bottom:2px">${safeDesc}</p>`:''}
-          <p style="font-size:10px;color:#3b82f6;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${safeUrl}</p>
-        </div>
-        <i class="fa-solid fa-arrow-up-right-from-square" style="color:#94a3b8;font-size:13px;flex-shrink:0"></i>
-      </div>
-      <div class="lk-foot">
-        <button onclick="event.stopPropagation();editLink(${i})" style="font-size:10px;padding:5px 10px;background:#e0e7ff;color:#4338ca;border-radius:9px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-pen"></i> Edit</button>
-        <button onclick="event.stopPropagation();lkCopy(${i})" style="font-size:10px;padding:5px 10px;background:#dbeafe;color:#2563eb;border-radius:9px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-copy"></i> Copy</button>
-        <button onclick="event.stopPropagation();openLinkPerm(${i})" style="font-size:10px;padding:5px 10px;background:#ede9fe;color:#7c3aed;border-radius:9px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-lock"></i> Access</button>
-        <button onclick="event.stopPropagation();delLink(${i})" style="font-size:10px;padding:5px 10px;background:#fee2e2;color:#dc2626;border-radius:9px;font-weight:800;border:none;cursor:pointer;margin-left:auto"><i class="fa-solid fa-trash"></i></button>
-      </div>
-    </div>`;
-  }).join('');
+function saveLinksAPI() {
+  return fetch("/api/links", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(links) });
 }
-// Helpers called from link card onclick (avoid inline quote escaping issues)
-function lkOpen(i){if(links[i])window.open(links[i].url||'','_blank');}
-function lkCopy(i){if(links[i])safeCopy(links[i].url||'','URL copied! 🔗');}
-
-function createLink(){showLinkEditor(-1,{name:'',url:'',description:''});}
-function editLink(i){showLinkEditor(i,links[i]);}
-
-function showLinkEditor(idx,lk){
-  const isNew=idx===-1;
-  const div=document.createElement('div');
-  div.id='linkEdOv';
-  div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:1100;background:rgba(0,0,0,.92);display:flex;align-items:flex-end;justify-content:center';
-  div.innerHTML=`<div class="dm-sheet" style="border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:20px;background:white">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <h3 style="font-weight:900;font-size:15px" class="dm-label">${isNew?'➕ Add Link':'✏️ Edit Link'}</h3>
-      <button onclick="document.getElementById('linkEdOv').remove()" class="dm-xbtn" style="width:30px;height:30px;border-radius:50%;background:#f1f5f9;border:none;cursor:pointer;color:#64748b">✕</button>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
-      <div>
-        <label style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">NAME *</label>
-        <input id="leName" value="${esc(lk.name||'')}" placeholder="My Link" class="dm-input" style="width:100%;border:1.5px solid #e2e8f0;border-radius:12px;padding:11px 14px;font-size:14px;outline:none;font-weight:700;box-sizing:border-box;background:#f8fafc">
-      </div>
-      <div>
-        <label style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">URL *</label>
-        <input id="leUrl" value="${esc(lk.url||'')}" placeholder="https://example.com" type="url" class="dm-input" style="width:100%;border:1.5px solid #e2e8f0;border-radius:12px;padding:11px 14px;font-size:13px;outline:none;font-weight:700;font-family:monospace;box-sizing:border-box;background:#f8fafc">
-      </div>
-      <div>
-        <label style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">DESCRIPTION <span style="text-transform:none;font-weight:400">(optional)</span></label>
-        <input id="leDesc" value="${esc(lk.description||'')}" placeholder="What is this link?" class="dm-input" style="width:100%;border:1.5px solid #e2e8f0;border-radius:12px;padding:11px 14px;font-size:14px;outline:none;font-weight:700;box-sizing:border-box;background:#f8fafc">
-      </div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button onclick="document.getElementById('linkEdOv').remove()" class="dm-cancel" style="flex:1;padding:13px;border-radius:12px;border:none;background:#f1f5f9;font-weight:800;cursor:pointer;font-size:14px">Cancel</button>
-      <button onclick="saveLinkEditor(${idx})" style="flex:1;padding:13px;border-radius:12px;border:none;background:#3b82f6;color:white;font-weight:800;cursor:pointer;font-size:14px">${isNew?'Add Link':'Save Changes'}</button>
-    </div>
-  </div>`;
+function renderLinks() {
+  const g = document.getElementById("linkGrid");
+  if (!g) return;
+  if (!curUser) {
+    g.innerHTML = '<div class="text-center py-16 opacity-30"><i class="fa-solid fa-lock text-5xl block mb-3"></i><p class="font-black text-sm dark:text-white">Sign in to use Links</p></div>';
+    return;
+  }
+  if (!links.length) {
+    g.innerHTML = '<div class="text-center py-16 opacity-30"><i class="fa-solid fa-link text-5xl block mb-3"></i><p class="font-black text-sm dark:text-white">No links yet</p><p class="text-xs mt-1">Tap + to add your first link</p></div>';
+    return;
+  }
+  g.innerHTML = links.map((lk, i) => {
+    let domain = "";
+    try {
+      domain = new URL(lk.url || "https://x").hostname;
+    } catch (e) {
+    }
+    const vis = lk.visibility || "public";
+    const vcls = { "public": "badge-pub", "private": "badge-priv", "selected": "badge-sel" }[vis] || "badge-pub";
+    const vlbl = { "public": "\u{1F30D}", "private": "\u{1F512}", "selected": "\u{1F465}" }[vis] || "\u{1F30D}";
+    const safeUrl = esc(lk.url || "");
+    const safeName = esc(lk.name || "Link");
+    const safeDesc = lk.description ? esc(lk.description) : "";
+    const urlJson = JSON.stringify(lk.url || "");
+    return '<div class="lk-card">\n      <div style="display:flex;align-items:center;gap:12px;padding:14px;cursor:pointer" onclick="lkOpen('.concat(i, ')">\n        <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">\n          <img src="https://www.google.com/s2/favicons?domain=').concat(encodeURIComponent(domain), '&sz=32" style="width:22px;height:22px" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<i class=\\\'fa-solid fa-link\\\' style=\\\'color:white;font-size:16px\\\'></i>\'">\n        </div>\n        <div style="flex:1;min-width:0">\n          <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">\n            <p class="lk-title">').concat(safeName, '</p>\n            <span class="').concat(vcls, '" style="flex-shrink:0;font-size:9px">').concat(vlbl, "</span>\n          </div>\n          ").concat(safeDesc ? '<p class="lk-desc" style="margin-bottom:2px">'.concat(safeDesc, "</p>") : "", '\n          <p style="font-size:10px;color:#3b82f6;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">').concat(safeUrl, '</p>\n        </div>\n        <i class="fa-solid fa-arrow-up-right-from-square" style="color:#94a3b8;font-size:13px;flex-shrink:0"></i>\n      </div>\n      <div class="lk-foot">\n        <button onclick="event.stopPropagation();editLink(').concat(i, ')" style="font-size:10px;padding:5px 10px;background:#e0e7ff;color:#4338ca;border-radius:9px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-pen"></i> Edit</button>\n        <button onclick="event.stopPropagation();lkCopy(').concat(i, ')" style="font-size:10px;padding:5px 10px;background:#dbeafe;color:#2563eb;border-radius:9px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-copy"></i> Copy</button>\n        <button onclick="event.stopPropagation();openLinkPerm(').concat(i, ')" style="font-size:10px;padding:5px 10px;background:#ede9fe;color:#7c3aed;border-radius:9px;font-weight:800;border:none;cursor:pointer"><i class="fa-solid fa-lock"></i> Access</button>\n        <button onclick="event.stopPropagation();delLink(').concat(i, ')" style="font-size:10px;padding:5px 10px;background:#fee2e2;color:#dc2626;border-radius:9px;font-weight:800;border:none;cursor:pointer;margin-left:auto"><i class="fa-solid fa-trash"></i></button>\n      </div>\n    </div>');
+  }).join("");
+}
+function lkOpen(i) {
+  if (links[i]) window.open(links[i].url || "", "_blank");
+}
+function lkCopy(i) {
+  if (links[i]) safeCopy(links[i].url || "", "URL copied! \u{1F517}");
+}
+function createLink() {
+  showLinkEditor(-1, { name: "", url: "", description: "" });
+}
+function editLink(i) {
+  showLinkEditor(i, links[i]);
+}
+function showLinkEditor(idx, lk) {
+  const isNew = idx === -1;
+  const div = document.createElement("div");
+  div.id = "linkEdOv";
+  div.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;z-index:1100;background:rgba(0,0,0,.92);display:flex;align-items:flex-end;justify-content:center";
+  div.innerHTML = '<div class="dm-sheet" style="border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:20px;background:white">\n    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">\n      <h3 style="font-weight:900;font-size:15px" class="dm-label">'.concat(isNew ? "\u2795 Add Link" : "\u270F\uFE0F Edit Link", '</h3>\n      <button onclick="document.getElementById(\'linkEdOv\').remove()" class="dm-xbtn" style="width:30px;height:30px;border-radius:50%;background:#f1f5f9;border:none;cursor:pointer;color:#64748b">\u2715</button>\n    </div>\n    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">\n      <div>\n        <label style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">NAME *</label>\n        <input id="leName" value="').concat(esc(lk.name || ""), '" placeholder="My Link" class="dm-input" style="width:100%;border:1.5px solid #e2e8f0;border-radius:12px;padding:11px 14px;font-size:14px;outline:none;font-weight:700;box-sizing:border-box;background:#f8fafc">\n      </div>\n      <div>\n        <label style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">URL *</label>\n        <input id="leUrl" value="').concat(esc(lk.url || ""), '" placeholder="https://example.com" type="url" class="dm-input" style="width:100%;border:1.5px solid #e2e8f0;border-radius:12px;padding:11px 14px;font-size:13px;outline:none;font-weight:700;font-family:monospace;box-sizing:border-box;background:#f8fafc">\n      </div>\n      <div>\n        <label style="font-size:10px;font-weight:900;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">DESCRIPTION <span style="text-transform:none;font-weight:400">(optional)</span></label>\n        <input id="leDesc" value="').concat(esc(lk.description || ""), '" placeholder="What is this link?" class="dm-input" style="width:100%;border:1.5px solid #e2e8f0;border-radius:12px;padding:11px 14px;font-size:14px;outline:none;font-weight:700;box-sizing:border-box;background:#f8fafc">\n      </div>\n    </div>\n    <div style="display:flex;gap:8px">\n      <button onclick="document.getElementById(\'linkEdOv\').remove()" class="dm-cancel" style="flex:1;padding:13px;border-radius:12px;border:none;background:#f1f5f9;font-weight:800;cursor:pointer;font-size:14px">Cancel</button>\n      <button onclick="saveLinkEditor(').concat(idx, ')" style="flex:1;padding:13px;border-radius:12px;border:none;background:#3b82f6;color:white;font-weight:800;cursor:pointer;font-size:14px">').concat(isNew ? "Add Link" : "Save Changes", "</button>\n    </div>\n  </div>");
   document.body.appendChild(div);
-  div.addEventListener('click',e=>{if(e.target===div)div.remove();});
-  setTimeout(()=>document.getElementById('leName')?.focus(),80);
+  div.addEventListener("click", (e) => {
+    if (e.target === div) div.remove();
+  });
+  setTimeout(() => {
+    var _a;
+    return (_a = document.getElementById("leName")) == null ? void 0 : _a.focus();
+  }, 80);
 }
-
-async function saveLinkEditor(idx){
-  const name=(document.getElementById('leName')?.value||'').trim();
-  const url=(document.getElementById('leUrl')?.value||'').trim();
-  const desc=(document.getElementById('leDesc')?.value||'').trim();
-  if(!name){toast('Name is required','warn');return;}
-  if(!url){toast('URL is required','warn');return;}
-  const entry={name,url,description:desc,created:Date.now(),visibility:idx===-1?'public':(links[idx]?.visibility||'public'),allowed_users:idx===-1?[]:(links[idx]?.allowed_users||[])};
-  if(idx===-1){links.push(entry);}else{links[idx]=entry;}
-  await saveLinksAPI();
-  toast(idx===-1?'Link added! 🔗':'Link updated!','success');
-  document.getElementById('linkEdOv')?.remove();
-  renderLinks();
-}
-
-async function delLink(i){
-  mConfirm('Delete Link','Remove this link?',async()=>{
-    links.splice(i,1);
-    await saveLinksAPI();
+function saveLinkEditor(idx) {
+  return __async(this, null, function* () {
+    var _a, _b, _c, _d, _e, _f;
+    const name = (((_a = document.getElementById("leName")) == null ? void 0 : _a.value) || "").trim();
+    const url = (((_b = document.getElementById("leUrl")) == null ? void 0 : _b.value) || "").trim();
+    const desc = (((_c = document.getElementById("leDesc")) == null ? void 0 : _c.value) || "").trim();
+    if (!name) {
+      toast("Name is required", "warn");
+      return;
+    }
+    if (!url) {
+      toast("URL is required", "warn");
+      return;
+    }
+    const entry = { name, url, description: desc, created: Date.now(), visibility: idx === -1 ? "public" : ((_d = links[idx]) == null ? void 0 : _d.visibility) || "public", allowed_users: idx === -1 ? [] : ((_e = links[idx]) == null ? void 0 : _e.allowed_users) || [] };
+    if (idx === -1) {
+      links.push(entry);
+    } else {
+      links[idx] = entry;
+    }
+    yield saveLinksAPI();
+    toast(idx === -1 ? "Link added! \u{1F517}" : "Link updated!", "success");
+    (_f = document.getElementById("linkEdOv")) == null ? void 0 : _f.remove();
     renderLinks();
   });
 }
-
-// ── LINK PERMISSIONS ───────────────────────────────────────────────────────
-function openLinkPerm(i){
-  const lk=links[i];
-  const vis=lk.visibility||'public';
-  const allowed=lk.allowed_users||[];
-  const div=document.createElement('div');
-  div.id='linkPermOv';
-  div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:1100;background:rgba(0,0,0,.92);display:flex;align-items:flex-end;justify-content:center';
-  div.innerHTML=`<div class="dm-sheet" style="border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:20px;max-height:80vh;overflow-y:auto;background:white">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-      <h3 style="font-weight:900;font-size:15px" class="dm-label">🔐 Link Access</h3>
-      <button onclick="document.getElementById('linkPermOv').remove()" class="dm-xbtn" style="width:30px;height:30px;border-radius:50%;background:#f1f5f9;border:none;cursor:pointer">✕</button>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;margin-bottom:16px;background:#f8fafc" class="dm-row">
-      <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <i class="fa-solid fa-link" style="color:white;font-size:13px"></i>
-      </div>
-      <p style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1" class="dm-label">${esc(lk.name||'Link')}</p>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
-      ${[
-        {v:'public',e:'🌍',l:'Public',d:'Anyone can see this link',c:'#16a34a',bg:'#f0fdf4'},
-        {v:'private',e:'🔒',l:'Private — Only Me',d:'Hidden from other users',c:'#dc2626',bg:'#fef2f2'},
-        {v:'selected',e:'👥',l:'Selected Users',d:'Choose exactly who can see it',c:'#d97706',bg:'#fffbeb'}
-      ].map(o=>`<label style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:${o.bg};cursor:pointer;border:2px solid ${vis===o.v?o.c:'transparent'}">
-        <input type="radio" name="lpVis" value="${o.v}" ${vis===o.v?'checked':''} onchange="lpToggleUsers()" style="accent-color:${o.c};width:16px;height:16px;flex-shrink:0">
-        <div><p style="font-weight:900;font-size:13px;color:${o.c}">${o.e} ${o.l}</p><p style="font-size:11px;color:${o.c}99">${o.d}</p></div>
-      </label>`).join('')}
-    </div>
-    <div id="lpUserList" style="display:${vis==='selected'?'block':'none'};margin-bottom:16px">
-      <p style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Who can see this link:</p>
-      <div style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto">
-        ${allUsers.filter(u=>u!==curUser).map(u=>`<label class="dm-row" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:9px 12px;border-radius:10px;background:#f8fafc">
-          <input type="checkbox" name="lpUser" value="${esc(u)}" ${allowed.includes(u)?'checked':''} style="accent-color:#3b82f6;width:16px;height:16px">
-          <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:white">${u[0].toUpperCase()}</div>
-          <span style="font-weight:700;font-size:13px" class="dm-label">${esc(u)}</span>
-        </label>`).join('')||'<p style="font-size:12px;color:#94a3b8;padding:8px">No other users registered</p>'}
-      </div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button onclick="document.getElementById('linkPermOv').remove()" class="dm-cancel" style="flex:1;padding:13px;border-radius:12px;border:none;background:#f1f5f9;font-weight:800;cursor:pointer;font-size:14px">Cancel</button>
-      <button onclick="saveLinkPerm(${i})" style="flex:1;padding:13px;border-radius:12px;border:none;background:#3b82f6;color:white;font-weight:800;cursor:pointer;font-size:14px">Save Access</button>
-    </div>
-  </div>`;
+function delLink(i) {
+  return __async(this, null, function* () {
+    mConfirm("Delete Link", "Remove this link?", () => __async(null, null, function* () {
+      links.splice(i, 1);
+      yield saveLinksAPI();
+      renderLinks();
+    }));
+  });
+}
+function openLinkPerm(i) {
+  const lk = links[i];
+  const vis = lk.visibility || "public";
+  const allowed = lk.allowed_users || [];
+  const div = document.createElement("div");
+  div.id = "linkPermOv";
+  div.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;z-index:1100;background:rgba(0,0,0,.92);display:flex;align-items:flex-end;justify-content:center";
+  div.innerHTML = '<div class="dm-sheet" style="border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:20px;max-height:80vh;overflow-y:auto;background:white">\n    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">\n      <h3 style="font-weight:900;font-size:15px" class="dm-label">\u{1F510} Link Access</h3>\n      <button onclick="document.getElementById(\'linkPermOv\').remove()" class="dm-xbtn" style="width:30px;height:30px;border-radius:50%;background:#f1f5f9;border:none;cursor:pointer">\u2715</button>\n    </div>\n    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;margin-bottom:16px;background:#f8fafc" class="dm-row">\n      <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;flex-shrink:0">\n        <i class="fa-solid fa-link" style="color:white;font-size:13px"></i>\n      </div>\n      <p style="font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1" class="dm-label">'.concat(esc(lk.name || "Link"), '</p>\n    </div>\n    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">\n      ').concat([
+    { v: "public", e: "\u{1F30D}", l: "Public", d: "Anyone can see this link", c: "#16a34a", bg: "#f0fdf4" },
+    { v: "private", e: "\u{1F512}", l: "Private \u2014 Only Me", d: "Hidden from other users", c: "#dc2626", bg: "#fef2f2" },
+    { v: "selected", e: "\u{1F465}", l: "Selected Users", d: "Choose exactly who can see it", c: "#d97706", bg: "#fffbeb" }
+  ].map((o) => '<label style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:'.concat(o.bg, ";cursor:pointer;border:2px solid ").concat(vis === o.v ? o.c : "transparent", '">\n        <input type="radio" name="lpVis" value="').concat(o.v, '" ').concat(vis === o.v ? "checked" : "", ' onchange="lpToggleUsers()" style="accent-color:').concat(o.c, ';width:16px;height:16px;flex-shrink:0">\n        <div><p style="font-weight:900;font-size:13px;color:').concat(o.c, '">').concat(o.e, " ").concat(o.l, '</p><p style="font-size:11px;color:').concat(o.c, '99">').concat(o.d, "</p></div>\n      </label>")).join(""), '\n    </div>\n    <div id="lpUserList" style="display:').concat(vis === "selected" ? "block" : "none", ';margin-bottom:16px">\n      <p style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Who can see this link:</p>\n      <div style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto">\n        ').concat(allUsers.filter((u) => u !== curUser).map((u) => '<label class="dm-row" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:9px 12px;border-radius:10px;background:#f8fafc">\n          <input type="checkbox" name="lpUser" value="'.concat(esc(u), '" ').concat(allowed.includes(u) ? "checked" : "", ' style="accent-color:#3b82f6;width:16px;height:16px">\n          <div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:white">').concat(u[0].toUpperCase(), '</div>\n          <span style="font-weight:700;font-size:13px" class="dm-label">').concat(esc(u), "</span>\n        </label>")).join("") || '<p style="font-size:12px;color:#94a3b8;padding:8px">No other users registered</p>', '\n      </div>\n    </div>\n    <div style="display:flex;gap:8px">\n      <button onclick="document.getElementById(\'linkPermOv\').remove()" class="dm-cancel" style="flex:1;padding:13px;border-radius:12px;border:none;background:#f1f5f9;font-weight:800;cursor:pointer;font-size:14px">Cancel</button>\n      <button onclick="saveLinkPerm(').concat(i, ')" style="flex:1;padding:13px;border-radius:12px;border:none;background:#3b82f6;color:white;font-weight:800;cursor:pointer;font-size:14px">Save Access</button>\n    </div>\n  </div>');
   document.body.appendChild(div);
-  div.addEventListener('click',e=>{if(e.target===div)div.remove();});
+  div.addEventListener("click", (e) => {
+    if (e.target === div) div.remove();
+  });
 }
-function lpToggleUsers(){
-  const v=document.querySelector('[name="lpVis"]:checked')?.value;
-  document.getElementById('lpUserList').style.display=v==='selected'?'block':'none';
+function lpToggleUsers() {
+  var _a;
+  const v = (_a = document.querySelector('[name="lpVis"]:checked')) == null ? void 0 : _a.value;
+  document.getElementById("lpUserList").style.display = v === "selected" ? "block" : "none";
 }
-async function saveLinkPerm(i){
-  const vis=document.querySelector('[name="lpVis"]:checked')?.value||'public';
-  const allowed=Array.from(document.querySelectorAll('[name="lpUser"]:checked')).map(x=>x.value);
-  links[i]={...links[i],visibility:vis,allowed_users:allowed};
-  await saveLinksAPI();
-  toast('Link access updated ✅','success');
-  document.getElementById('linkPermOv')?.remove();
-  renderLinks();
+function saveLinkPerm(i) {
+  return __async(this, null, function* () {
+    var _a, _b;
+    const vis = ((_a = document.querySelector('[name="lpVis"]:checked')) == null ? void 0 : _a.value) || "public";
+    const allowed = Array.from(document.querySelectorAll('[name="lpUser"]:checked')).map((x) => x.value);
+    links[i] = __spreadProps(__spreadValues({}, links[i]), { visibility: vis, allowed_users: allowed });
+    yield saveLinksAPI();
+    toast("Link access updated \u2705", "success");
+    (_b = document.getElementById("linkPermOv")) == null ? void 0 : _b.remove();
+    renderLinks();
+  });
 }
-
-// ── DELETE ACCOUNT ─────────────────────────────────────────────────────────
-async function confirmDeleteAccount(){
-  const pw=document.getElementById('delAccPw').value;
-  const err=document.getElementById('delAccErr');
-  if(!pw){err.innerText='Password required';err.classList.remove('hidden');return;}
-  err.classList.add('hidden');
-  // Disable button while deleting
-  const btn=document.querySelector('#delAccForm button:last-child');
-  if(btn){btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner fa-spin mr-1"></i>Deleting...';}
-  const r=await fetch('/api/delete_account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
-  const d=await r.json();
-  if(d.status==='ok'){
-    const summary=d.deleted_files>0?` Removed ${d.deleted_files} file(s) and ${d.deleted_folders||0} folder(s).`:'';
-    toast('Account deleted. Goodbye! 👋'+summary,'info');
-    // Clear all local state
-    curUser=null;isGuest=false;clips=[];links=[];starredPaths=new Set();
-    document.getElementById('hdrAvIni').innerText='?';
-    document.querySelectorAll('#hdrAv img').forEach(e=>e.remove());
-    // Reset settings panel
-    document.getElementById('delAccForm').classList.add('hidden');
-    document.getElementById('delAccBtn').classList.remove('hidden');
-    document.getElementById('delAccPw').value='';
-    if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-skull"></i> Delete Everything';}
-    // Close settings, show login
-    document.getElementById('settPanel').classList.remove('show');
-    setTimeout(()=>{
-      var _aw=document.getElementById('authWall');if(_aw){_aw.classList.remove('gone');_aw.style.display='';_aw.style.pointerEvents='';}
-      document.getElementById('awErr').classList.add('hidden');
-      document.getElementById('awUser').value='';
-      document.getElementById('awPass').value='';
-      refreshFiles();
-    },1500);
-  } else {
-    err.innerText=d.error||'Failed';err.classList.remove('hidden');
-    if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-skull"></i> Delete Everything';}
-  }
-}
-
-// ── TV / KEYBOARD NAVIGATION ────────────────────────────────────────────────
-// Full remote-control support: D-pad navigates ALL focusable UI elements
-(function(){
-  // All focusable selectors in priority order
-  const FOCUSABLE='button:not([disabled]),.fc,.at,.bn,.fpItem,.ctx-item,input:not([type=hidden]),select,textarea,[tabindex]:not([tabindex="-1"])';
-
-  function getAllFocusable(){
-    return Array.from(document.querySelectorAll(FOCUSABLE)).filter(el=>{
-      const s=getComputedStyle(el);
-      return s.display!=='none'&&s.visibility!=='hidden'&&el.offsetParent!==null;
-    });
-  }
-
-  // Enter/Space on non-button focusable elements
-  document.addEventListener('keydown',function(e){
-    const active=document.activeElement;
-    const tag=active?.tagName;
-
-    // Escape closes any open overlay
-    if(e.key==='Escape'){
-      document.querySelectorAll('.ov.show').forEach(o=>o.classList.remove('show'));
-      const settP=document.getElementById('settPanel');
-      if(settP?.classList.contains('show'))settP.classList.remove('show');
-      document.getElementById('ctx').style.display='none';
+function confirmDeleteAccount() {
+  return __async(this, null, function* () {
+    const pw = document.getElementById("delAccPw").value;
+    const err = document.getElementById("delAccErr");
+    if (!pw) {
+      err.innerText = "Password required";
+      err.classList.remove("hidden");
       return;
     }
-
-    // Enter triggers click on focused elements that aren't native buttons
-    if(e.key==='Enter'&&active&&tag!=='BUTTON'&&tag!=='A'&&tag!=='INPUT'&&tag!=='SELECT'&&tag!=='TEXTAREA'){
+    err.classList.add("hidden");
+    const btn = document.querySelector("#delAccForm button:last-child");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Deleting...';
+    }
+    const r = yield fetch("/api/delete_account", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw }) });
+    const d = yield r.json();
+    if (d.status === "ok") {
+      const summary = d.deleted_files > 0 ? " Removed ".concat(d.deleted_files, " file(s) and ").concat(d.deleted_folders || 0, " folder(s).") : "";
+      toast("Account deleted. Goodbye! \u{1F44B}" + summary, "info");
+      curUser = null;
+      isGuest = false;
+      clips = [];
+      links = [];
+      starredPaths = /* @__PURE__ */ new Set();
+      document.getElementById("hdrAvIni").innerText = "?";
+      document.querySelectorAll("#hdrAv img").forEach((e) => e.remove());
+      document.getElementById("delAccForm").classList.add("hidden");
+      document.getElementById("delAccBtn").classList.remove("hidden");
+      document.getElementById("delAccPw").value = "";
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-skull"></i> Delete Everything';
+      }
+      document.getElementById("settPanel").classList.remove("show");
+      setTimeout(() => {
+        var _aw = document.getElementById("authWall");
+        if (_aw) {
+          _aw.classList.remove("gone");
+          _aw.style.display = "";
+          _aw.style.pointerEvents = "";
+        }
+        document.getElementById("awErr").classList.add("hidden");
+        document.getElementById("awUser").value = "";
+        document.getElementById("awPass").value = "";
+        refreshFiles();
+      }, 1500);
+    } else {
+      err.innerText = d.error || "Failed";
+      err.classList.remove("hidden");
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-skull"></i> Delete Everything';
+      }
+    }
+  });
+}
+(function() {
+  const FOCUSABLE = 'button:not([disabled]),.fc,.at,.bn,.fpItem,.ctx-item,input:not([type=hidden]),select,textarea,[tabindex]:not([tabindex="-1"])';
+  function getAllFocusable() {
+    return Array.from(document.querySelectorAll(FOCUSABLE)).filter((el) => {
+      const s = getComputedStyle(el);
+      return s.display !== "none" && s.visibility !== "hidden" && el.offsetParent !== null;
+    });
+  }
+  document.addEventListener("keydown", function(e) {
+    var _a, _b, _c, _d, _e, _f;
+    const active = document.activeElement;
+    const tag = active == null ? void 0 : active.tagName;
+    if (e.key === "Escape") {
+      document.querySelectorAll(".ov.show").forEach((o) => o.classList.remove("show"));
+      const settP = document.getElementById("settPanel");
+      if (settP == null ? void 0 : settP.classList.contains("show")) settP.classList.remove("show");
+      document.getElementById("ctx").style.display = "none";
+      return;
+    }
+    if (e.key === "Enter" && active && tag !== "BUTTON" && tag !== "A" && tag !== "INPUT" && tag !== "SELECT" && tag !== "TEXTAREA") {
       e.preventDefault();
       active.click();
       return;
     }
-
-    // Arrow key navigation
-    if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))return;
-
-    // Special: arrow keys in file grid
-    const cards=Array.from(document.querySelectorAll('#fileGrid .fc'));
-    if(cards.length&&(document.activeElement?.closest('#fileGrid')||!document.activeElement||document.activeElement===document.body)){
+    if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) return;
+    const cards = Array.from(document.querySelectorAll("#fileGrid .fc"));
+    if (cards.length && (((_a = document.activeElement) == null ? void 0 : _a.closest("#fileGrid")) || !document.activeElement || document.activeElement === document.body)) {
       e.preventDefault();
-      const idx=cards.indexOf(document.activeElement);
-      if(idx===-1){cards[0]?.focus();return;}
-      const next=e.key==='ArrowDown'||e.key==='ArrowRight'?idx+1:idx-1;
-      cards[Math.max(0,Math.min(cards.length-1,next))]?.focus();
+      const idx2 = cards.indexOf(document.activeElement);
+      if (idx2 === -1) {
+        (_b = cards[0]) == null ? void 0 : _b.focus();
+        return;
+      }
+      const next2 = e.key === "ArrowDown" || e.key === "ArrowRight" ? idx2 + 1 : idx2 - 1;
+      (_c = cards[Math.max(0, Math.min(cards.length - 1, next2))]) == null ? void 0 : _c.focus();
       return;
     }
-
-    // Arrow keys in bottom nav
-    const bnBtns=Array.from(document.querySelectorAll('#bnav .bn'));
-    if(bnBtns.includes(document.activeElement)){
+    const bnBtns = Array.from(document.querySelectorAll("#bnav .bn"));
+    if (bnBtns.includes(document.activeElement)) {
       e.preventDefault();
-      const idx=bnBtns.indexOf(document.activeElement);
-      const next=e.key==='ArrowRight'||e.key==='ArrowDown'?idx+1:idx-1;
-      bnBtns[Math.max(0,Math.min(bnBtns.length-1,next))]?.focus();
+      const idx2 = bnBtns.indexOf(document.activeElement);
+      const next2 = e.key === "ArrowRight" || e.key === "ArrowDown" ? idx2 + 1 : idx2 - 1;
+      (_d = bnBtns[Math.max(0, Math.min(bnBtns.length - 1, next2))]) == null ? void 0 : _d.focus();
       return;
     }
-
-    // Generic: move focus among all visible focusable elements
     e.preventDefault();
-    const all=getAllFocusable();
-    if(!all.length)return;
-    const idx=all.indexOf(document.activeElement);
-    if(idx===-1){all[0]?.focus();return;}
-    const goNext=e.key==='ArrowDown'||e.key==='ArrowRight';
-    const next=goNext?idx+1:idx-1;
-    all[Math.max(0,Math.min(all.length-1,next))]?.focus();
+    const all = getAllFocusable();
+    if (!all.length) return;
+    const idx = all.indexOf(document.activeElement);
+    if (idx === -1) {
+      (_e = all[0]) == null ? void 0 : _e.focus();
+      return;
+    }
+    const goNext = e.key === "ArrowDown" || e.key === "ArrowRight";
+    const next = goNext ? idx + 1 : idx - 1;
+    (_f = all[Math.max(0, Math.min(all.length - 1, next))]) == null ? void 0 : _f.focus();
   });
-
-  // Auto-focus first file card when files load (TV convenience)
-  window._tvAutoFocus=function(){
-    if(window.innerWidth>=900){
-      setTimeout(()=>{
-        const first=document.querySelector('#fileGrid .fc');
-        if(first&&document.activeElement===document.body)first.focus();
-      },150);
+  window._tvAutoFocus = function() {
+    if (window.innerWidth >= 900) {
+      setTimeout(() => {
+        const first = document.querySelector("#fileGrid .fc");
+        if (first && document.activeElement === document.body) first.focus();
+      }, 150);
     }
   };
 })();
-
-let notesPath='';
-function openNotes(path,name){
-  notesPath=path;
-  document.getElementById('notesFN').innerText=name;
-  document.getElementById('notesM').style.display='flex';
+let notesPath = "";
+function openNotes(path, name) {
+  notesPath = path;
+  document.getElementById("notesFN").innerText = name;
+  document.getElementById("notesM").style.display = "flex";
   loadNotes();
 }
-function closeNotes(){document.getElementById('notesM').style.display='none';notesPath='';}
-async function loadNotes(){
-  const r=await fetch(`/api/notes?path=${encodeURIComponent(notesPath)}`);
-  const d=await r.json();
-  const lst=document.getElementById('notesList');
-  if(!d.length){lst.innerHTML='<p style="font-size:12px;color:#94a3b8;text-align:center;padding:16px">No notes yet. Be the first!</p>';return;}
-  lst.innerHTML=d.map((n,i)=>`<div style="background:#f8fafc;border-radius:12px;padding:10px 14px;margin-bottom:8px" class="dark:bg-slate-800">
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-      <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:white">${(n.user||'?')[0].toUpperCase()}</div>
-      <span style="font-size:11px;font-weight:800;color:#64748b">${esc(n.user||'?')}</span>
-      <span style="font-size:10px;color:#cbd5e1;margin-left:auto">${new Date(n.ts*1000).toLocaleString()}</span>
-      ${n.user===curUser?`<button onclick="deleteNote(${i})" style="width:20px;height:20px;border-radius:50%;background:#fee2e2;border:none;cursor:pointer;font-size:9px;color:#ef4444">✕</button>`:''}
-    </div>
-    <p style="font-size:13px;color:#334155;line-height:1.4" class="dm-label">${esc(n.text||'')}</p>
-  </div>`).join('');
+function closeNotes() {
+  document.getElementById("notesM").style.display = "none";
+  notesPath = "";
 }
-async function addNote(){
-  const inp=document.getElementById('notesInput');
-  const text=inp.value.trim();if(!text)return;
-  await fetch('/api/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:notesPath,text})});
-  inp.value='';loadNotes();toast('Note added!','success');
+function loadNotes() {
+  return __async(this, null, function* () {
+    const r = yield fetch("/api/notes?path=".concat(encodeURIComponent(notesPath)));
+    const d = yield r.json();
+    const lst = document.getElementById("notesList");
+    if (!d.length) {
+      lst.innerHTML = '<p style="font-size:12px;color:#94a3b8;text-align:center;padding:16px">No notes yet. Be the first!</p>';
+      return;
+    }
+    lst.innerHTML = d.map((n, i) => '<div style="background:#f8fafc;border-radius:12px;padding:10px 14px;margin-bottom:8px" class="dark:bg-slate-800">\n    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">\n      <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:white">'.concat((n.user || "?")[0].toUpperCase(), '</div>\n      <span style="font-size:11px;font-weight:800;color:#64748b">').concat(esc(n.user || "?"), '</span>\n      <span style="font-size:10px;color:#cbd5e1;margin-left:auto">').concat(new Date(n.ts * 1e3).toLocaleString(), "</span>\n      ").concat(n.user === curUser ? '<button onclick="deleteNote('.concat(i, ')" style="width:20px;height:20px;border-radius:50%;background:#fee2e2;border:none;cursor:pointer;font-size:9px;color:#ef4444">\u2715</button>') : "", '\n    </div>\n    <p style="font-size:13px;color:#334155;line-height:1.4" class="dm-label">').concat(esc(n.text || ""), "</p>\n  </div>")).join("");
+  });
 }
-async function deleteNote(idx){
-  await fetch('/api/notes/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:notesPath,idx})});
-  loadNotes();
+function addNote() {
+  return __async(this, null, function* () {
+    const inp = document.getElementById("notesInput");
+    const text = inp.value.trim();
+    if (!text) return;
+    yield fetch("/api/notes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: notesPath, text }) });
+    inp.value = "";
+    loadNotes();
+    toast("Note added!", "success");
+  });
 }
-
-// ── FEATURE 2: Star / Favourites ───────────────────────────────────────────
-let starredPaths=new Set();
-async function loadStars(){
-  if(!curUser)return;
-  const r=await fetch('/api/stars');const d=await r.json();
-  starredPaths=new Set(d);
+function deleteNote(idx) {
+  return __async(this, null, function* () {
+    yield fetch("/api/notes/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: notesPath, idx }) });
+    loadNotes();
+  });
 }
-async function toggleStar(path){
-  if(!curUser){toast('Sign in to star files','warn');return;}
-  const r=await fetch('/api/star',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path})});
-  const d=await r.json();
-  if(d.starred){starredPaths.add(path);toast('⭐ Added to favourites','success');}
-  else{starredPaths.delete(path);toast('Removed from favourites','info');}
-  refreshFiles();
+let starredPaths = /* @__PURE__ */ new Set();
+function loadStars() {
+  return __async(this, null, function* () {
+    if (!curUser) return;
+    const r = yield fetch("/api/stars");
+    const d = yield r.json();
+    starredPaths = new Set(d);
+  });
 }
-
-// ── FEATURE 4: Duplicate File ──────────────────────────────────────────────
-async function duplicateFile(path){
-  const r=await fetch('/api/duplicate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path})});
-  const d=await r.json();
-  if(d.status==='ok'){toast('Duplicated as '+d.new_name+' ✅','success');refreshFiles();}
-  else toast(d.error||'Failed','error');
+function toggleStar(path) {
+  return __async(this, null, function* () {
+    if (!curUser) {
+      toast("Sign in to star files", "warn");
+      return;
+    }
+    const r = yield fetch("/api/star", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path }) });
+    const d = yield r.json();
+    if (d.starred) {
+      starredPaths.add(path);
+      toast("\u2B50 Added to favourites", "success");
+    } else {
+      starredPaths.delete(path);
+      toast("Removed from favourites", "info");
+    }
+    refreshFiles();
+  });
 }
-
-// ── FEATURE 5: Bulk Set Access ─────────────────────────────────────────────
-function bulkSetAccess(){
-  if(!selItems.size){toast('Select files first','warn');return;}
-  const items=Array.from(selItems);
-  const div=document.createElement('div');
-  div.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:1200;background:rgba(0,0,0,.92);display:flex;align-items:flex-end;justify-content:center';
-  div.innerHTML=`<div class="dm-sheet" style="border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:20px;background:white">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <h3 style="font-weight:900;font-size:15px" class="dm-label">🔐 Set Access for ${items.length} items</h3>
-      <button onclick="this.closest('.dm-sheet').remove()" class="dm-xbtn" style="width:30px;height:30px;border-radius:50%;background:#f1f5f9;border:none;cursor:pointer">✕</button>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
-      ${[{v:'public',e:'🌍',l:'Public',c:'#16a34a',bg:'#f0fdf4'},
-         {v:'private',e:'🔒',l:'Private — Only Me',c:'#dc2626',bg:'#fef2f2'},
-         {v:'selected',e:'👥',l:'Selected Users',c:'#d97706',bg:'#fffbeb'}].map(o=>
-        `<label style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:${o.bg};cursor:pointer">
-          <input type="radio" name="baVis" value="${o.v}" ${o.v==='public'?'checked':''} style="accent-color:${o.c};width:16px;height:16px">
-          <p style="font-weight:900;font-size:13px;color:${o.c}">${o.e} ${o.l}</p>
-        </label>`).join('')}
-    </div>
-    <button onclick="applyBulkAccess(${JSON.stringify(items)},this)" style="width:100%;padding:14px;background:#3b82f6;color:white;border-radius:12px;font-weight:800;border:none;cursor:pointer;font-size:14px">Apply to All ${items.length} Files</button>
-  </div>`;
-  document.body.appendChild(div);
-  div.addEventListener('click',e=>{if(e.target===div)div.remove();});
+function duplicateFile(path) {
+  return __async(this, null, function* () {
+    const r = yield fetch("/api/duplicate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path }) });
+    const d = yield r.json();
+    if (d.status === "ok") {
+      toast("Duplicated as " + d.new_name + " \u2705", "success");
+      refreshFiles();
+    } else toast(d.error || "Failed", "error");
+  });
 }
-async function applyBulkAccess(items,btn){
-  const vis=document.querySelector('[name="baVis"]:checked')?.value||'public';
-  btn.innerText='Saving...';btn.disabled=true;
-  const r=await fetch('/api/bulk_access',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items,visibility:vis,allowed_users:[]})});
-  const d=await r.json();
-  if(d.status==='ok'){toast(`Access updated for ${d.updated} files ✅`,'success');clearSel();btn.closest('div[style]').remove();}
-  else{toast(d.error||'Failed','error');btn.disabled=false;btn.innerText='Apply';}
-}
-
-// ── FEATURE 6: File Info / Metadata ────────────────────────────────────────
-async function showFileInfo(path){
-  const r=await fetch(`/api/file_info?path=${encodeURIComponent(path)}`);
-  const d=await r.json();
-  if(d.error){toast(d.error,'error');return;}
-  const body=document.getElementById('fileInfoBody');
-  const rows=[
-    ['📄 Name',d.name],['📁 Path',d.path],['💾 Size',d.size],
-    ['📋 Type',d.mime],['👤 Owner',d.owner||'—'],
-    ['🔐 Access',{public:'🌍 Public',private:'🔒 Private',selected:'👥 Selected'}[d.visibility]||d.visibility],
-    ['⭐ Starred',d.starred?'Yes':'No'],['💬 Notes',d.note_count+' note(s)'],
-    ['📅 Modified',new Date(d.modified*1000).toLocaleString()],
-    ['📅 Created',new Date(d.created*1000).toLocaleString()],
-  ];
-  body.innerHTML=rows.map(([k,v])=>`<div class="dm-row" style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9;border-radius:0">
-    <span style="font-size:11px;font-weight:800;color:#94a3b8;min-width:90px;flex-shrink:0">${k}</span>
-    <span style="font-size:12px;font-weight:700;color:#334155;word-break:break-all" class="dm-label">${esc(String(v||'—'))}</span>
-  </div>`).join('');
-  if(d.allowed_users&&d.allowed_users.length){
-    body.innerHTML+=`<div style="padding:10px 0"><p style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:6px">👥 Allowed Users</p><div style="display:flex;flex-wrap:wrap;gap:6px">${d.allowed_users.map(u=>`<span style="padding:4px 10px;background:#eff6ff;color:#2563eb;border-radius:20px;font-size:11px;font-weight:800">${esc(u)}</span>`).join('')}</div></div>`;
+function bulkSetAccess() {
+  if (!selItems.size) {
+    toast("Select files first", "warn");
+    return;
   }
-  document.getElementById('fileInfoM').style.display='flex';
+  const items = Array.from(selItems);
+  const div = document.createElement("div");
+  div.style.cssText = "position:fixed;top:0;left:0;right:0;bottom:0;z-index:1200;background:rgba(0,0,0,.92);display:flex;align-items:flex-end;justify-content:center";
+  div.innerHTML = '<div class="dm-sheet" style="border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:20px;background:white">\n    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">\n      <h3 style="font-weight:900;font-size:15px" class="dm-label">\u{1F510} Set Access for '.concat(items.length, ' items</h3>\n      <button onclick="this.closest(\'.dm-sheet\').remove()" class="dm-xbtn" style="width:30px;height:30px;border-radius:50%;background:#f1f5f9;border:none;cursor:pointer">\u2715</button>\n    </div>\n    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">\n      ').concat([
+    { v: "public", e: "\u{1F30D}", l: "Public", c: "#16a34a", bg: "#f0fdf4" },
+    { v: "private", e: "\u{1F512}", l: "Private \u2014 Only Me", c: "#dc2626", bg: "#fef2f2" },
+    { v: "selected", e: "\u{1F465}", l: "Selected Users", c: "#d97706", bg: "#fffbeb" }
+  ].map((o) => '<label style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:'.concat(o.bg, ';cursor:pointer">\n          <input type="radio" name="baVis" value="').concat(o.v, '" ').concat(o.v === "public" ? "checked" : "", ' style="accent-color:').concat(o.c, ';width:16px;height:16px">\n          <p style="font-weight:900;font-size:13px;color:').concat(o.c, '">').concat(o.e, " ").concat(o.l, "</p>\n        </label>")).join(""), '\n    </div>\n    <button onclick="applyBulkAccess(').concat(JSON.stringify(items), ',this)" style="width:100%;padding:14px;background:#3b82f6;color:white;border-radius:12px;font-weight:800;border:none;cursor:pointer;font-size:14px">Apply to All ').concat(items.length, " Files</button>\n  </div>");
+  document.body.appendChild(div);
+  div.addEventListener("click", (e) => {
+    if (e.target === div) div.remove();
+  });
 }
-
-// ── FEATURE 7: Share Link ──────────────────────────────────────────────────
-let shareFilePath='', shareExpiry=24;
-function openShareLink(path,name){
-  shareFilePath=path;
-  document.getElementById('shareLinkFN').innerText=name;
-  document.getElementById('shareLinkResult').style.display='none';
-  document.getElementById('shareLinkM').style.display='flex';
+function applyBulkAccess(items, btn) {
+  return __async(this, null, function* () {
+    var _a;
+    const vis = ((_a = document.querySelector('[name="baVis"]:checked')) == null ? void 0 : _a.value) || "public";
+    btn.innerText = "Saving...";
+    btn.disabled = true;
+    const r = yield fetch("/api/bulk_access", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items, visibility: vis, allowed_users: [] }) });
+    const d = yield r.json();
+    if (d.status === "ok") {
+      toast("Access updated for ".concat(d.updated, " files \u2705"), "success");
+      clearSel();
+      btn.closest("div[style]").remove();
+    } else {
+      toast(d.error || "Failed", "error");
+      btn.disabled = false;
+      btn.innerText = "Apply";
+    }
+  });
 }
-function setExpiry(h){
-  shareExpiry=h;
-  document.querySelectorAll('.exbtn').forEach(b=>{b.style.borderColor='#e2e8f0';b.style.background='white';b.style.color='';});
-  event.target.style.borderColor='#3b82f6';event.target.style.background='#eff6ff';event.target.style.color='#2563eb';
+function showFileInfo(path) {
+  return __async(this, null, function* () {
+    const r = yield fetch("/api/file_info?path=".concat(encodeURIComponent(path)));
+    const d = yield r.json();
+    if (d.error) {
+      toast(d.error, "error");
+      return;
+    }
+    const body = document.getElementById("fileInfoBody");
+    const rows = [
+      ["\u{1F4C4} Name", d.name],
+      ["\u{1F4C1} Path", d.path],
+      ["\u{1F4BE} Size", d.size],
+      ["\u{1F4CB} Type", d.mime],
+      ["\u{1F464} Owner", d.owner || "\u2014"],
+      ["\u{1F510} Access", { public: "\u{1F30D} Public", private: "\u{1F512} Private", selected: "\u{1F465} Selected" }[d.visibility] || d.visibility],
+      ["\u2B50 Starred", d.starred ? "Yes" : "No"],
+      ["\u{1F4AC} Notes", d.note_count + " note(s)"],
+      ["\u{1F4C5} Modified", new Date(d.modified * 1e3).toLocaleString()],
+      ["\u{1F4C5} Created", new Date(d.created * 1e3).toLocaleString()]
+    ];
+    body.innerHTML = rows.map(([k, v]) => '<div class="dm-row" style="display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9;border-radius:0">\n    <span style="font-size:11px;font-weight:800;color:#94a3b8;min-width:90px;flex-shrink:0">'.concat(k, '</span>\n    <span style="font-size:12px;font-weight:700;color:#334155;word-break:break-all" class="dm-label">').concat(esc(String(v || "\u2014")), "</span>\n  </div>")).join("");
+    if (d.allowed_users && d.allowed_users.length) {
+      body.innerHTML += '<div style="padding:10px 0"><p style="font-size:11px;font-weight:800;color:#94a3b8;margin-bottom:6px">\u{1F465} Allowed Users</p><div style="display:flex;flex-wrap:wrap;gap:6px">'.concat(d.allowed_users.map((u) => '<span style="padding:4px 10px;background:#eff6ff;color:#2563eb;border-radius:20px;font-size:11px;font-weight:800">'.concat(esc(u), "</span>")).join(""), "</div></div>");
+    }
+    document.getElementById("fileInfoM").style.display = "flex";
+  });
 }
-async function createShareLink(){
-  const r=await fetch('/api/share_link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:shareFilePath,expires_hours:shareExpiry})});
-  const d=await r.json();
-  if(d.status==='ok'){
-    const url=window.location.origin+d.url;
-    document.getElementById('shareLinkUrl').value=url;
-    document.getElementById('shareLinkResult').style.display='block';
-    toast('Share link created! ✅','success');
-  } else toast(d.error||'Failed','error');
+let shareFilePath = "", shareExpiry = 24;
+function openShareLink(path, name) {
+  shareFilePath = path;
+  document.getElementById("shareLinkFN").innerText = name;
+  document.getElementById("shareLinkResult").style.display = "none";
+  document.getElementById("shareLinkM").style.display = "flex";
 }
-function copyShareLink(){
-  const url=document.getElementById('shareLinkUrl').value;
-  safeCopy(url,'Link copied! 🔗');
+function setExpiry(h) {
+  shareExpiry = h;
+  document.querySelectorAll(".exbtn").forEach((b) => {
+    b.style.borderColor = "#e2e8f0";
+    b.style.background = "white";
+    b.style.color = "";
+  });
+  event.target.style.borderColor = "#3b82f6";
+  event.target.style.background = "#eff6ff";
+  event.target.style.color = "#2563eb";
 }
-
-// ── FEATURE 8: Text File Editor ────────────────────────────────────────────
-let editorPath='';
-async function openEditor(path,name){
-  editorPath=path;
-  document.getElementById('editorFN').innerText=name;
-  document.getElementById('editorTA').value='Loading...';
-  document.getElementById('editorM').style.display='flex';
-  const r=await fetch(`/api/file_content?path=${encodeURIComponent(path)}`);
-  const d=await r.json();
-  if(d.error){toast(d.error,'error');closeEditor();return;}
-  document.getElementById('editorTA').value=d.content||'';
+function createShareLink() {
+  return __async(this, null, function* () {
+    const r = yield fetch("/api/share_link", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: shareFilePath, expires_hours: shareExpiry }) });
+    const d = yield r.json();
+    if (d.status === "ok") {
+      const url = window.location.origin + d.url;
+      document.getElementById("shareLinkUrl").value = url;
+      document.getElementById("shareLinkResult").style.display = "block";
+      toast("Share link created! \u2705", "success");
+    } else toast(d.error || "Failed", "error");
+  });
 }
-function closeEditor(){document.getElementById('editorM').style.display='none';editorPath='';}
-async function saveEditorFile(){
-  const content=document.getElementById('editorTA').value;
-  const r=await fetch('/api/file_save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:editorPath,content})});
-  const d=await r.json();
-  if(d.status==='ok'){toast('File saved! ✅','success');}
-  else toast(d.error||'Save failed','error');
+function copyShareLink() {
+  const url = document.getElementById("shareLinkUrl").value;
+  safeCopy(url, "Link copied! \u{1F517}");
 }
-
-// ── FEATURE 9: Storage Stats in Settings ──────────────────────────────────
-async function loadStorageStats(){
-  const el=document.getElementById('settStorageDetail');
-  if(!el)return;
-  const r=await fetch('/api/storage_stats');const d=await r.json();
-  if(d.error)return;
-  el.innerHTML=`<div style="margin-top:8px">
-    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-      <span style="font-size:11px;font-weight:800;color:#64748b">Your files</span>
-      <span style="font-size:11px;font-weight:900;color:#3b82f6">${d.your_size} (${d.your_files} files)</span>
-    </div>
-    <div style="display:flex;justify-content:space-between">
-      <span style="font-size:11px;font-weight:800;color:#64748b">Total on server</span>
-      <span style="font-size:11px;font-weight:900;color:#64748b">${d.total_size}</span>
-    </div>
-    <div style="margin-top:8px;background:#f1f5f9;border-radius:6px;height:6px;overflow:hidden">
-      <div style="height:6px;border-radius:6px;background:linear-gradient(90deg,#3b82f6,#8b5cf6);width:${Math.min(100,Math.round(d.your_size_bytes/Math.max(1,d.total_size_bytes||1)*100))}%"></div>
-    </div>
-  </div>`;
+let editorPath = "";
+function openEditor(path, name) {
+  return __async(this, null, function* () {
+    editorPath = path;
+    document.getElementById("editorFN").innerText = name;
+    document.getElementById("editorTA").value = "Loading...";
+    document.getElementById("editorM").style.display = "flex";
+    const r = yield fetch("/api/file_content?path=".concat(encodeURIComponent(path)));
+    const d = yield r.json();
+    if (d.error) {
+      toast(d.error, "error");
+      closeEditor();
+      return;
+    }
+    document.getElementById("editorTA").value = d.content || "";
+  });
 }
-
-// ── FEATURE 10: Starred Files in Settings ─────────────────────────────────
-// Stars are loaded into starredPaths at init; refreshFiles uses them to show ⭐
-// openSett also loads storage stats
+function closeEditor() {
+  document.getElementById("editorM").style.display = "none";
+  editorPath = "";
+}
+function saveEditorFile() {
+  return __async(this, null, function* () {
+    const content = document.getElementById("editorTA").value;
+    const r = yield fetch("/api/file_save", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: editorPath, content }) });
+    const d = yield r.json();
+    if (d.status === "ok") {
+      toast("File saved! \u2705", "success");
+    } else toast(d.error || "Save failed", "error");
+  });
+}
+function loadStorageStats() {
+  return __async(this, null, function* () {
+    const el = document.getElementById("settStorageDetail");
+    if (!el) return;
+    const r = yield fetch("/api/storage_stats");
+    const d = yield r.json();
+    if (d.error) return;
+    el.innerHTML = '<div style="margin-top:8px">\n    <div style="display:flex;justify-content:space-between;margin-bottom:4px">\n      <span style="font-size:11px;font-weight:800;color:#64748b">Your files</span>\n      <span style="font-size:11px;font-weight:900;color:#3b82f6">'.concat(d.your_size, " (").concat(d.your_files, ' files)</span>\n    </div>\n    <div style="display:flex;justify-content:space-between">\n      <span style="font-size:11px;font-weight:800;color:#64748b">Total on server</span>\n      <span style="font-size:11px;font-weight:900;color:#64748b">').concat(d.total_size, '</span>\n    </div>\n    <div style="margin-top:8px;background:#f1f5f9;border-radius:6px;height:6px;overflow:hidden">\n      <div style="height:6px;border-radius:6px;background:linear-gradient(90deg,#3b82f6,#8b5cf6);width:').concat(Math.min(100, Math.round(d.your_size_bytes / Math.max(1, d.total_size_bytes || 1) * 100)), '%"></div>\n    </div>\n  </div>');
+  });
+}
 const _origOpenSett = openSett;
-
 </script>
 </body>
 </html>

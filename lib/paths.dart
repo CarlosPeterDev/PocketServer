@@ -10,6 +10,7 @@ class AppPaths {
   final Directory defaultStorage; // shared files root
 
   File get configFile => File(p.join(dataDir.path, 'config.json'));
+  File get settingsFile => File(p.join(dataDir.path, 'settings.json'));
   Directory get certDir => Directory(p.join(dataDir.path, 'tls'));
 
 
