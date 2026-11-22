@@ -55,6 +55,18 @@ html = html.replace("let fpTarget='upload', fpServPath='', fpServItems=[], fpMul
 html = html.replace(' Consider using the Converter instead.', '')
 html = cut(html, '/* Compressor */', '.fb.on{', label='css compressor')
 
+
+# --- PocketServer additions ---
+PATCHES = [
+    ('  // Prevent drag-drop upload\n  window._guestMode=true;\n}\n',
+     '  // Prevent drag-drop upload\n  window._guestMode=true;\n  showGuestSignIn();\n}\nfunction showGuestSignIn(){\n  if(document.getElementById(\'guestSignIn\'))return;\n  var b=document.createElement(\'button\');b.id=\'guestSignIn\';\n  b.innerHTML=\'<i class="fa-solid fa-right-to-bracket"></i> Sign in\';\n  b.style.cssText=\'position:fixed;top:12px;right:12px;z-index:650;background:#6366f1;color:#fff;border:0;border-radius:999px;padding:9px 16px;font-weight:700;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer\';\n  b.onclick=function(){var aw=document.getElementById(\'authWall\');if(aw){aw.classList.remove(\'gone\');aw.style.display=\'\';aw.style.pointerEvents=\'\';}};\n  document.body.appendChild(b);\n}\n'),
+    ('function setUser(username, avatarB64){\n  curUser=username;isGuest=false;',
+     'function setUser(username, avatarB64){\n  if(window._guestMode){location.reload();return;}\n  curUser=username;isGuest=false;'),
+]
+for _a, _b in PATCHES:
+    assert html.count(_a) == 1, _a[:40]
+    html = html.replace(_a, _b)
+
 # fail loudly if anything removed is still referenced
 bad = [w for w in ('openFP', 'fpModal', 'cvFile', 'cmpFile', 'runConv', 'runCompress', 'sendToConverter',
                    'sendToCompressor', 'imgToPdfQuick', 'pg-converter', 'pg-compressor', 'vCV') if w in html]

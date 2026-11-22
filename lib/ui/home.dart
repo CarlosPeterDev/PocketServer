@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart' as p;
+import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -37,6 +39,9 @@ class _HomePageState extends State<HomePage> {
       if (mounted) setState(() => st = s);
     });
     _load();
+    if (Platform.isAndroid) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => Future<void>.delayed(const Duration(milliseconds: 600), _maybeAskBattery));
+    }
   }
 
   Future<void> _load() async {
@@ -196,19 +201,45 @@ class _HomePageState extends State<HomePage> {
     if (mounted) setState(() {});
   }
 
-  Future<void> _batteryHelp() async {
+  /// On every launch (until fixed or dismissed for good): ask the user to set battery to Unrestricted.
+  Future<void> _maybeAskBattery() async {
+    if (!Platform.isAndroid || !mounted) return;
+    try {
+      if (await Permission.ignoreBatteryOptimizations.isGranted) return;
+    } catch (_) {}
+    final marker = File(p.join(widget.paths.dataDir.path, 'no_battery_prompt'));
+    if (marker.existsSync()) return;
+    await _batteryHelp(marker: marker);
+  }
+
+  Future<void> _batteryHelp({File? marker}) async {
     await showDialog<void>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Keep servers alive'),
-        content: const Text(
-          'PocketServer runs as a foreground service with a notification, which is the Google-approved way to '
-          'stay active. Some phones (Xiaomi, Huawei, Samsung, Oppo...) still stop apps to save battery. '
-          'Open the battery settings and set PocketServer to "Unrestricted" / "Not optimized", and also lock it in '
-          'the recent-apps list if your phone has that option.',
+        icon: const Icon(Icons.battery_charging_full, size: 36),
+        title: const Text('Set battery to "Unrestricted"'),
+        content: const SingleChildScrollView(
+          child: Text(
+            'Why: PocketServer shares your files from this phone, so it has to keep running when the screen is '
+            'off or the app is in the background. With the default battery setting, Android may stop it after a '
+            'while to save power, and your FTP, WebDAV and web connections (and any transfer in progress) would '
+            'stop working.\n\n'
+            'What to do: tap "Open battery settings", choose PocketServer, then pick "Unrestricted" '
+            '(on some phones: "No restrictions" or "Don\'t optimize"). You can change this back at any time.',
+          ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Close')),
+          if (marker != null)
+            TextButton(
+              onPressed: () {
+                try {
+                  marker.writeAsStringSync('1');
+                } catch (_) {}
+                Navigator.pop(c);
+              },
+              child: const Text("Don't ask again"),
+            ),
+          TextButton(onPressed: () => Navigator.pop(c), child: const Text('Later')),
           FilledButton(
             onPressed: () async {
               Navigator.pop(c);
@@ -327,8 +358,7 @@ class _HomePageState extends State<HomePage> {
   Widget _hubCard(WebHubConfig w, ColorScheme scheme) {
     final s = st.web[w.id];
     final running = s?.running ?? false;
-    final scheme0 = w.https ? 'https' : 'http';
-    final url = '$scheme0://$_ip:${w.port}';
+    final url = 'http://$_ip:${w.port}';
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
@@ -351,11 +381,11 @@ class _HomePageState extends State<HomePage> {
             if (running) ...[
               TextButton.icon(onPressed: () => _qr(url), icon: const Icon(Icons.qr_code, size: 16), label: const Text('QR')),
               TextButton.icon(
-                  onPressed: () => launchUrl(Uri.parse('$scheme0://localhost:${w.port}'), mode: LaunchMode.externalApplication),
+                  onPressed: () => launchUrl(Uri.parse('http://localhost:${w.port}'), mode: LaunchMode.externalApplication),
                   icon: const Icon(Icons.open_in_browser, size: 16),
                   label: const Text('Open')),
               TextButton.icon(
-                  onPressed: () => launchUrl(Uri.parse('$scheme0://localhost:${w.port}/tv'), mode: LaunchMode.externalApplication),
+                  onPressed: () => launchUrl(Uri.parse('http://localhost:${w.port}/tv'), mode: LaunchMode.externalApplication),
                   icon: const Icon(Icons.tv, size: 16),
                   label: const Text('TV mode')),
             ],

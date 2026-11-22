@@ -134,8 +134,7 @@ class ServerHost {
     try {
       final root = _dirOf(c.folderId);
       await Directory(root).create(recursive: true);
-      final ctx = c.https ? await _tls.context() : null;
-      final w = WebServer(ShareStore(root), c.port, id: c.id, tls: ctx);
+      final w = WebServer(ShareStore(root), c.port, id: c.id);
       await w.start();
       _web[id] = w;
       _webErr.remove(id);

@@ -929,6 +929,15 @@ function guestMode(){
   document.getElementById('bulk')?.style.setProperty('display','none','important');
   // Prevent drag-drop upload
   window._guestMode=true;
+  showGuestSignIn();
+}
+function showGuestSignIn(){
+  if(document.getElementById('guestSignIn'))return;
+  var b=document.createElement('button');b.id='guestSignIn';
+  b.innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Sign in';
+  b.style.cssText='position:fixed;top:12px;right:12px;z-index:650;background:#6366f1;color:#fff;border:0;border-radius:999px;padding:9px 16px;font-weight:700;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer';
+  b.onclick=function(){var aw=document.getElementById('authWall');if(aw){aw.classList.remove('gone');aw.style.display='';aw.style.pointerEvents='';}};
+  document.body.appendChild(b);
 }
 function dismissAuthWall(){
   var aw=document.getElementById('authWall');
@@ -937,6 +946,7 @@ function dismissAuthWall(){
 }
 
 function setUser(username, avatarB64){
+  if(window._guestMode){location.reload();return;}
   curUser=username;isGuest=false;
   document.getElementById('hdrAvIni').innerText=username[0].toUpperCase();
   ['clipPageAvIni','linksPageAvIni'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerText=username[0].toUpperCase();});

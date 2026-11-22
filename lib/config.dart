@@ -152,24 +152,21 @@ class WebHubConfig {
     this.port = 2011,
     this.folderId = kDefaultFolderId,
     this.enabled = true,
-    this.https = false,
   });
   final String id;
   String name;
   int port;
   String folderId;
   bool enabled;
-  bool https; // self-signed certificate
 
   Map<String, dynamic> toJson() =>
-      {'id': id, 'name': name, 'port': port, 'folderId': folderId, 'enabled': enabled, 'https': https};
+      {'id': id, 'name': name, 'port': port, 'folderId': folderId, 'enabled': enabled};
   factory WebHubConfig.fromJson(Map<String, dynamic> j) => WebHubConfig(
         id: j['id'] as String? ?? FtpServerConfig.newId(),
         name: j['name'] as String? ?? 'Web hub',
         port: (j['port'] as num?)?.toInt() ?? 2011,
         folderId: j['folderId'] as String? ?? kDefaultFolderId,
         enabled: j['enabled'] as bool? ?? true,
-        https: j['https'] as bool? ?? false,
       );
 }
 
