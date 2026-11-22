@@ -72,20 +72,11 @@ class _SplashPageState extends State<SplashPage> {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF7C4DFF), Color(0xFF00B8D9)],
-          ),
-        ),
+        color: const Color(0xFF001450),
         child: Center(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Image.asset('assets/icon.png', width: 112, height: 112, errorBuilder: (_, __, ___) => const Icon(Icons.dns_rounded, size: 96, color: Colors.white)),
-            const SizedBox(height: 20),
-            const Text('PocketServer',
-                style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 28),
+            Image.asset('assets/icon.png', width: 220, height: 220, errorBuilder: (_, __, ___) => const Icon(Icons.dns_rounded, size: 96, color: Colors.white)),
+            const SizedBox(height: 32),
             SizedBox(
                 width: 140,
                 child: LinearProgressIndicator(color: Colors.white, backgroundColor: cs.primary.withOpacity(0.3))),
