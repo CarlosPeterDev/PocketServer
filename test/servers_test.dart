@@ -99,7 +99,11 @@ class Ftp {
 
   bool protP = false;
 
-  Future<Socket> _maybeTls(Socket d) async => protP ? SecureSocket.secure(d, onBadCertificate: (_) => true) : d;
+  Future<Socket> _maybeTls(Socket d) async {
+    if (!protP) return d;
+    final Socket s = await SecureSocket.secure(d, onBadCertificate: (_) => true);
+    return s;
+  }
 
   Future<List<int>> download(String cmdLine) async {
     var d = await _data();
