@@ -1,21 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs>
   <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C4DFF"/><stop offset="1" stop-color="#00B8D9"/></linearGradient>
-  <linearGradient id="srv" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#EDE7FF"/><stop offset="1" stop-color="#D9F6FF"/></linearGradient>
+  <linearGradient id="srv" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#F3EEFF"/><stop offset="1" stop-color="#DDF7FF"/></linearGradient>
+  <linearGradient id="srvd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2B1B6B"/><stop offset="1" stop-color="#14305F"/></linearGradient>
 </defs><rect width="1024" height="1024" rx="228" fill="url(#bg)"/>
-  <!-- wifi / sharing waves -->
-  <circle cx="512" cy="330" r="28" fill="#fff"/>
-  <path d="M441.3 259.3 A100 100 0 0 1 582.7 259.3" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round"/>
-  <path d="M391.8 209.8 A170 170 0 0 1 632.2 209.8" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round"/>
-  <path d="M342.3 160.3 A240 240 0 0 1 681.7 160.3" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round"/>
-  <!-- pocket -->
-  <path d="M292 400H732Q764 400 764 432V610Q764 730 512 860Q260 730 260 610V432Q260 400 292 400Z" fill="#fff"/>
-  <g transform="translate(512 640) scale(0.88) translate(-512 -640)">
-    <path d="M292 400H732Q764 400 764 432V610Q764 730 512 860Q260 730 260 610V432Q260 400 292 400Z" fill="none" stroke="#7C4DFF" stroke-opacity=".55" stroke-width="7" stroke-dasharray="22 16" stroke-linecap="round"/>
-  </g>
-  <!-- server units inside the pocket -->
-  <rect x="352" y="520" width="320" height="84" rx="20" fill="url(#srv)" stroke="#7C4DFF" stroke-opacity=".35" stroke-width="5"/>
-  <rect x="352" y="628" width="320" height="84" rx="20" fill="url(#srv)" stroke="#7C4DFF" stroke-opacity=".35" stroke-width="5"/>
-  <circle cx="394" cy="562" r="13" fill="#7C4DFF"/><circle cx="394" cy="670" r="13" fill="#00B8D9"/>
-  <rect x="430" y="553" width="150" height="18" rx="9" fill="#7C4DFF" opacity=".35"/>
-  <rect x="430" y="661" width="150" height="18" rx="9" fill="#00B8D9" opacity=".45"/>
+  <!-- server peeking out of the pocket -->
+  <rect x="330" y="210" width="364" height="108" rx="24" fill="url(#srvd)"/>
+  <circle cx="378" cy="264" r="15" fill="#7C4DFF"/><circle cx="426" cy="264" r="15" fill="#fff" opacity=".35"/>
+  <rect x="480" y="252" width="170" height="24" rx="12" fill="#fff" opacity=".28"/>
+  <rect x="330" y="334" width="364" height="108" rx="24" fill="url(#srvd)"/>
+  <circle cx="378" cy="388" r="15" fill="#00B8D9"/><circle cx="426" cy="388" r="15" fill="#fff" opacity=".35"/>
+  <rect x="480" y="376" width="170" height="24" rx="12" fill="#fff" opacity=".28"/>
+  <rect x="330" y="458" width="364" height="108" rx="24" fill="url(#srvd)"/>
+  <circle cx="378" cy="512" r="15" fill="#7C4DFF"/><circle cx="426" cy="512" r="15" fill="#fff" opacity=".35"/>
+  <rect x="480" y="500" width="170" height="24" rx="12" fill="#fff" opacity=".28"/>
+
+  <!-- pocket (front) -->
+  <path d="M262 560H762V776Q762 868 670 868H354Q262 868 262 776Z" fill="#fff"/>
+  <path d="M262 560H762V632H262Z" fill="#7C4DFF" opacity=".16"/>
+  <path d="M262 632H762" stroke="#7C4DFF" stroke-opacity=".6" stroke-width="7" stroke-dasharray="20 14" stroke-linecap="round"/>
+  <path d="M296 664V774Q296 834 356 834H668Q728 834 728 774V664" fill="none" stroke="#7C4DFF" stroke-opacity=".6" stroke-width="7" stroke-dasharray="20 14" stroke-linecap="round"/>
 </svg>
