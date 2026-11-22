@@ -21,6 +21,7 @@ class _DashboardPageState extends State<DashboardPage> {
   HostStatus st = HostStatus();
   StorageReport? report;
   bool scanning = false;
+  double _tileWidth = 160;
 
   static const catColors = <String, Color>{
     'Video': Color(0xFFE91E63),
@@ -91,14 +92,18 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ]),
       body: ListView(padding: const EdgeInsets.all(16), children: [
-        Wrap(spacing: 12, runSpacing: 12, children: [
+        LayoutBuilder(builder: (context, c) {
+          final cols = math.max(2, (c.maxWidth / 190).floor());
+          _tileWidth = (c.maxWidth - 12 * (cols - 1)) / cols;
+          return Wrap(spacing: 12, runSpacing: 12, children: [
           _tile(Icons.dns_outlined, '$total', 'Servers running', cs.primary),
           _tile(Icons.people_alt_outlined, '${_n('conns')}', 'FTP connections', cs.tertiary),
           _tile(Icons.download_outlined, fmtBytes(_n('out')), 'Sent (session)', const Color(0xFFE91E63)),
           _tile(Icons.upload_outlined, fmtBytes(_n('in')), 'Received (session)', const Color(0xFF4CAF50)),
           _tile(Icons.http, '${_n('req')}', 'Web requests', cs.secondary),
           _tile(Icons.gpp_maybe_outlined, '${_n('failed')}', 'Failed logins', cs.error),
-        ]),
+        ]);
+        }),
         const SizedBox(height: 20),
         _section('Live speed (last 60 s)'),
         Card(
@@ -236,7 +241,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _tile(IconData i, String v, String l, Color c) {
     return SizedBox(
-      width: 160,
+      width: _tileWidth,
       child: Card(
         margin: EdgeInsets.zero,
         child: Padding(
