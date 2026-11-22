@@ -410,6 +410,19 @@ void main() {
     });
   });
 
+  test('web hub over HTTPS', () async {
+    final root = await tmp.createTemp('httpsroot');
+    final port = await freePort();
+    final web = WebServer(ShareStore(root.path), port, id: 'tlsweb', tls: tls);
+    await web.start();
+    addTearDown(web.stop);
+    final c = HttpClient()..badCertificateCallback = (_, __, ___) => true;
+    addTearDown(() => c.close(force: true));
+    final r = await (await c.getUrl(Uri.parse('https://127.0.0.1:$port/tv'))).close();
+    expect(r.statusCode, 200);
+    expect(await r.transform(utf8.decoder).join(), contains('PocketServer TV'));
+  });
+
   group('Web hub', () {
     late WebServer web;
     late Directory root;

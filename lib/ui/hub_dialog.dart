@@ -16,6 +16,7 @@ class _HubDialogState extends State<HubDialog> {
   late final TextEditingController name, port;
   late String folderId;
   late bool enabled;
+  late bool https;
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _HubDialogState extends State<HubDialog> {
       folderId = kDefaultFolderId;
     }
     enabled = i?.enabled ?? true;
+    https = i?.https ?? false;
   }
 
   @override
@@ -70,6 +72,13 @@ class _HubDialogState extends State<HubDialog> {
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
+              title: const Text('HTTPS (self-signed certificate)'),
+              subtitle: const Text('Browsers show a warning once; traffic is encrypted'),
+              value: https,
+              onChanged: (v) => setState(() => https = v),
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
               title: const Text('Start automatically'),
               value: enabled,
               onChanged: (v) => setState(() => enabled = v),
@@ -90,6 +99,7 @@ class _HubDialogState extends State<HubDialog> {
                 port: int.parse(port.text),
                 folderId: folderId,
                 enabled: enabled,
+                https: https,
               ),
             );
           },

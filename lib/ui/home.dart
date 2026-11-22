@@ -327,7 +327,8 @@ class _HomePageState extends State<HomePage> {
   Widget _hubCard(WebHubConfig w, ColorScheme scheme) {
     final s = st.web[w.id];
     final running = s?.running ?? false;
-    final url = 'http://$_ip:${w.port}';
+    final scheme0 = w.https ? 'https' : 'http';
+    final url = '$scheme0://$_ip:${w.port}';
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
@@ -350,11 +351,11 @@ class _HomePageState extends State<HomePage> {
             if (running) ...[
               TextButton.icon(onPressed: () => _qr(url), icon: const Icon(Icons.qr_code, size: 16), label: const Text('QR')),
               TextButton.icon(
-                  onPressed: () => launchUrl(Uri.parse('http://localhost:${w.port}'), mode: LaunchMode.externalApplication),
+                  onPressed: () => launchUrl(Uri.parse('$scheme0://localhost:${w.port}'), mode: LaunchMode.externalApplication),
                   icon: const Icon(Icons.open_in_browser, size: 16),
                   label: const Text('Open')),
               TextButton.icon(
-                  onPressed: () => launchUrl(Uri.parse('http://localhost:${w.port}/tv'), mode: LaunchMode.externalApplication),
+                  onPressed: () => launchUrl(Uri.parse('$scheme0://localhost:${w.port}/tv'), mode: LaunchMode.externalApplication),
                   icon: const Icon(Icons.tv, size: 16),
                   label: const Text('TV mode')),
             ],

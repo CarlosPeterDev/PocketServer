@@ -16,7 +16,9 @@ import 'web_ui.dart';
 /// Dart port of the original Flask "PocketServer" server (files.py), without
 /// the converter / compressor.
 class WebServer {
-  WebServer(this.store, this.port, {this.id = 'web'});
+  WebServer(this.store, this.port, {this.id = 'web', this.tls});
+
+  final SecurityContext? tls;
 
   final String id;
   final ShareStore store;
@@ -27,7 +29,9 @@ class WebServer {
   bool get running => _server != null;
 
   Future<void> start() async {
-    final s = await HttpServer.bind(InternetAddress.anyIPv4, port, shared: true);
+    final s = tls == null
+        ? await HttpServer.bind(InternetAddress.anyIPv4, port, shared: true)
+        : await HttpServer.bindSecure(InternetAddress.anyIPv4, port, tls!, shared: true);
     s.autoCompress = false;
     _server = s;
     s.listen(_handle, onError: (_) {});
