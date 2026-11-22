@@ -11,6 +11,7 @@ import '../config.dart';
 import '../host/host_controller.dart';
 import '../paths.dart';
 import 'dashboard_page.dart';
+import 'dav_dialog.dart';
 import 'folders_page.dart';
 import 'ftp_dialog.dart';
 import 'hub_dialog.dart';
@@ -54,9 +55,10 @@ class _HomePageState extends State<HomePage> {
 
   String get _ip => st.ips.isEmpty ? 'localhost' : st.ips.first;
 
-  Set<int> _ports({String? exceptWeb, String? exceptFtp}) => {
+  Set<int> _ports({String? exceptWeb, String? exceptFtp, String? exceptDav}) => {
         ...cfg.webHubs.where((w) => w.id != exceptWeb).map((w) => w.port),
         ...cfg.ftp.where((f) => f.id != exceptFtp).map((f) => f.port),
+        ...cfg.dav.where((d) => d.id != exceptDav).map((d) => d.port),
       };
 
   // ── web hubs ──
@@ -116,6 +118,44 @@ class _HomePageState extends State<HomePage> {
     } else {
       await widget.host.stopFtp(res.id);
     }
+  }
+
+  // ── webdav ──
+  Future<void> _editDav([DavConfig? existing]) async {
+    final res = await showDialog<DavConfig>(
+      context: context,
+      builder: (_) => DavDialog(initial: existing, cfg: cfg, usedPorts: _ports(exceptDav: existing?.id)),
+    );
+    if (res == null) return;
+    final i = cfg.dav.indexWhere((d) => d.id == res.id);
+    if (i >= 0) {
+      cfg.dav[i] = res;
+    } else {
+      cfg.dav.add(res);
+    }
+    await _save();
+    if (res.enabled) {
+      await widget.host.startDav(res.id);
+    } else {
+      await widget.host.stopDav(res.id);
+    }
+  }
+
+  Future<void> _toggleDav(DavConfig d, bool on) async {
+    d.enabled = on;
+    await cfg.save(widget.paths.configFile);
+    if (on) {
+      await widget.host.startDav(d.id);
+    } else {
+      await widget.host.stopDav(d.id);
+    }
+    setState(() {});
+  }
+
+  Future<void> _deleteDav(DavConfig d) async {
+    if (!await _confirm('Delete "${d.name}"?')) return;
+    cfg.dav.removeWhere((e) => e.id == d.id);
+    await _save();
   }
 
   Future<bool> _confirm(String title) async {
@@ -230,10 +270,11 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       floatingActionButton: PopupMenuButton<String>(
-        onSelected: (v) => v == 'web' ? _editHub() : _editFtp(),
+        onSelected: (v) => v == 'web' ? _editHub() : (v == 'dav' ? _editDav() : _editFtp()),
         itemBuilder: (_) => const [
           PopupMenuItem(value: 'web', child: Text('New web hub')),
           PopupMenuItem(value: 'ftp', child: Text('New FTP / FTPS server')),
+          PopupMenuItem(value: 'dav', child: Text('New WebDAV server')),
         ],
         child: FloatingActionButton.extended(
           onPressed: null,
@@ -263,6 +304,12 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               for (final f in cfg.ftp) _ftpCard(f, scheme),
+              if (cfg.dav.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text('WebDAV drives', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                for (final d in cfg.dav) _davCard(d, scheme),
+              ],
               const SizedBox(height: 16),
               if (Platform.isIOS)
                 Text('iOS pauses apps shortly after you leave them, so servers only work while PocketServer is open.',
@@ -315,6 +362,39 @@ class _HomePageState extends State<HomePage> {
             TextButton.icon(onPressed: () => _editHub(w), icon: const Icon(Icons.edit, size: 16), label: const Text('Edit')),
             if (cfg.webHubs.length > 1)
               TextButton.icon(onPressed: () => _deleteHub(w), icon: const Icon(Icons.delete_outline, size: 16), label: const Text('Delete')),
+          ]),
+        ]),
+      ),
+    );
+  }
+
+  Widget _davCard(DavConfig d, ColorScheme scheme) {
+    final s = st.dav[d.id];
+    final running = s?.running ?? false;
+    final url = 'http://$_ip:${d.port}/';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            const Icon(Icons.storage_outlined),
+            const SizedBox(width: 8),
+            Expanded(child: Text(d.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
+            Switch(value: running, onChanged: (v) => _toggleDav(d, v)),
+          ]),
+          Text('Port ${d.port} • user ${d.username}${d.readOnly ? ' • read-only' : ''}\nFolder: ${cfg.nameOf(d.folderId)}',
+              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
+          if (s?.error != null) Text(s!.error!, style: TextStyle(color: scheme.error)),
+          if (running) ...[
+            const SizedBox(height: 4),
+            SelectableText(url),
+            Text('Windows: Map network drive. macOS: Connect to Server. Linux/Android: any WebDAV client.',
+                style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
+          ],
+          Wrap(alignment: WrapAlignment.end, children: [
+            TextButton.icon(onPressed: () => _copy(url, 'Address copied'), icon: const Icon(Icons.copy, size: 16), label: const Text('Copy')),
+            TextButton.icon(onPressed: () => _editDav(d), icon: const Icon(Icons.edit, size: 16), label: const Text('Edit')),
+            TextButton.icon(onPressed: () => _deleteDav(d), icon: const Icon(Icons.delete_outline, size: 16), label: const Text('Delete')),
           ]),
         ]),
       ),

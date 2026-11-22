@@ -21,6 +21,8 @@ abstract class HostController {
   Future<void> stopWeb(String id);
   Future<void> startFtp(String id);
   Future<void> stopFtp(String id);
+  Future<void> startDav(String id);
+  Future<void> stopDav(String id);
   Future<void> shutdown();
 
   static Future<HostController> create(AppPaths paths) async {
@@ -53,6 +55,10 @@ class LocalHost implements HostController {
   Future<void> startFtp(String id) => host.startFtp(id);
   @override
   Future<void> stopFtp(String id) => host.stopFtp(id);
+  @override
+  Future<void> startDav(String id) => host.startDav(id);
+  @override
+  Future<void> stopDav(String id) => host.stopDav(id);
   @override
   Future<void> shutdown() => host.dispose();
 }
@@ -115,6 +121,10 @@ class AndroidServiceHost implements HostController {
   @override
   Future<void> stopFtp(String id) async => _cmd('stopFtp', id);
   @override
+  Future<void> startDav(String id) async => _cmd('startDav', id);
+  @override
+  Future<void> stopDav(String id) async => _cmd('stopDav', id);
+  @override
   Future<void> shutdown() async {
     _svc.invoke('stopService');
   }
@@ -133,8 +143,10 @@ Future<void> serviceMain(ServiceInstance service) async {
     if (service is AndroidServiceInstance) {
       final w = s.web.values.where((f) => f.running).length;
       final n = s.ftp.values.where((f) => f.running).length;
+      final d = s.dav.values.where((f) => f.running).length;
       final parts = <String>[
         if (w > 0) '$w web hub${w == 1 ? '' : 's'}',
+        if (d > 0) '$d WebDAV',
         if (n > 0) '$n FTP server${n == 1 ? '' : 's'}',
       ];
       service.setForegroundNotificationInfo(
@@ -168,6 +180,10 @@ Future<void> serviceMain(ServiceInstance service) async {
         if (id != null) await host.startFtp(id);
       case 'stopFtp':
         if (id != null) await host.stopFtp(id);
+      case 'startDav':
+        if (id != null) await host.startDav(id);
+      case 'stopDav':
+        if (id != null) await host.stopDav(id);
     }
   });
   publish(host.current);

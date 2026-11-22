@@ -8,6 +8,7 @@ import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
 
 import 'share_store.dart';
+import 'login_guard.dart';
 import 'stats.dart';
 import 'tv_ui.dart';
 import 'web_ui.dart';
@@ -249,6 +250,8 @@ class WebServer {
   }
 
   Future<void> _login(HttpRequest req, HttpResponse res) async {
+    final ip = req.connectionInfo?.remoteAddress.address ?? '';
+    if (LoginGuard.i.isLocked(ip)) return _err(res, 'Too many failed logins. Try again in a few minutes.', 429);
     final d = await _mapBody(req);
     final u = ((d['username'] as String?) ?? '').trim();
     final pw = (d['password'] as String?) ?? '';
@@ -256,8 +259,10 @@ class WebServer {
     final rec = users[u];
     if (rec is! Map || rec['password'] != sha256Hex(pw)) {
       Stats.i.event(id, 'failed', u);
+      LoginGuard.i.fail(ip);
       return _err(res, 'Invalid username or password', 401);
     }
+    LoginGuard.i.ok(ip);
     _setSessionCookie(res, store.createSession(u));
     Stats.i.event(id, 'login', u);
     return _json(res, {'status': 'ok', 'username': u, 'avatar': store.userAvatar(u)});

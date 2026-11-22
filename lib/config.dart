@@ -93,6 +93,49 @@ class SharedFolder {
       );
 }
 
+/// One WebDAV server (mount as a network drive).
+class DavConfig {
+  DavConfig({
+    required this.id,
+    required this.name,
+    required this.username,
+    required this.password,
+    this.port = 8080,
+    this.folderId = kDefaultFolderId,
+    this.readOnly = false,
+    this.enabled = false,
+  });
+  final String id;
+  String name;
+  String username;
+  String password;
+  int port;
+  String folderId;
+  bool readOnly;
+  bool enabled;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'username': username,
+        'password': password,
+        'port': port,
+        'folderId': folderId,
+        'readOnly': readOnly,
+        'enabled': enabled,
+      };
+  factory DavConfig.fromJson(Map<String, dynamic> j) => DavConfig(
+        id: j['id'] as String? ?? FtpServerConfig.newId(),
+        name: j['name'] as String? ?? 'WebDAV',
+        username: j['username'] as String? ?? 'user',
+        password: j['password'] as String? ?? '',
+        port: (j['port'] as num?)?.toInt() ?? 8080,
+        folderId: j['folderId'] as String? ?? kDefaultFolderId,
+        readOnly: j['readOnly'] as bool? ?? false,
+        enabled: j['enabled'] as bool? ?? false,
+      );
+}
+
 /// One web file hub (its own port and folder).
 class WebHubConfig {
   WebHubConfig({
@@ -120,14 +163,16 @@ class WebHubConfig {
 }
 
 class AppConfig {
-  AppConfig({List<SharedFolder>? folders, List<WebHubConfig>? webHubs, List<FtpServerConfig>? ftp})
-      : folders = folders ?? [],
+  AppConfig({List<SharedFolder>? folders, List<WebHubConfig>? webHubs, List<FtpServerConfig>? ftp, List<DavConfig>? dav})
+      : dav = dav ?? [],
+        folders = folders ?? [],
         webHubs = webHubs ?? [WebHubConfig(id: 'web-main', name: 'Web hub')],
         ftp = ftp ?? [];
 
   List<SharedFolder> folders; // user added spaces (default is implicit)
   List<WebHubConfig> webHubs;
   List<FtpServerConfig> ftp;
+  List<DavConfig> dav;
 
   /// Resolve a folder id to a real directory path.
   String pathOf(String id, String defaultPath) {
@@ -143,6 +188,7 @@ class AppConfig {
         'folders': folders.map((e) => e.toJson()).toList(),
         'webHubs': webHubs.map((e) => e.toJson()).toList(),
         'ftp': ftp.map((e) => e.toJson()).toList(),
+        'dav': dav.map((e) => e.toJson()).toList(),
       };
 
   factory AppConfig.fromJson(Map<String, dynamic> j) {
@@ -153,6 +199,7 @@ class AppConfig {
       folders: list('folders', SharedFolder.fromJson),
       webHubs: j.containsKey('webHubs') ? hubs : null,
       ftp: list('ftp', FtpServerConfig.fromJson),
+      dav: list('dav', DavConfig.fromJson),
     );
   }
 
@@ -175,21 +222,24 @@ class AppConfig {
 
 /// Live status published by the server host (and sent across isolates as a Map).
 class HostStatus {
-  HostStatus({this.ips = const [], Map<String, FtpStatus>? web, Map<String, FtpStatus>? ftp, this.stats = const {}})
+  HostStatus({this.ips = const [], Map<String, FtpStatus>? web, Map<String, FtpStatus>? ftp, Map<String, FtpStatus>? dav, this.stats = const {}})
       : web = web ?? {},
+        dav = dav ?? {},
         ftp = ftp ?? {};
 
   final List<String> ips;
   final Map<String, FtpStatus> web; // web hub id -> status
   final Map<String, FtpStatus> ftp;
+  final Map<String, FtpStatus> dav;
   final Map<String, dynamic> stats; // see Stats.toJson
 
-  bool get anyRunning => web.values.any((e) => e.running) || ftp.values.any((e) => e.running);
+  bool get anyRunning => web.values.any((e) => e.running) || ftp.values.any((e) => e.running) || dav.values.any((e) => e.running);
 
   Map<String, dynamic> toJson() => {
         'ips': ips,
         'web': web.map((k, v) => MapEntry(k, v.toJson())),
         'ftp': ftp.map((k, v) => MapEntry(k, v.toJson())),
+        'dav': dav.map((k, v) => MapEntry(k, v.toJson())),
         'stats': stats,
       };
 
@@ -197,6 +247,7 @@ class HostStatus {
     Map<String, FtpStatus> m(String k) => ((j[k] as Map?) ?? {}).map((a, v) =>
         MapEntry(a as String, FtpStatus.fromJson(Map<String, dynamic>.from(v as Map))));
     return HostStatus(ips: ((j['ips'] as List?) ?? []).cast<String>(), web: m('web'), ftp: m('ftp'),
+        dav: m('dav'),
         stats: j['stats'] is Map ? Map<String, dynamic>.from(j['stats'] as Map) : const {});
   }
 }

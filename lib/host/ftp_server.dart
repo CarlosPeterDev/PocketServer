@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../config.dart';
+import 'login_guard.dart';
 import 'stats.dart';
 
 const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -304,6 +305,8 @@ class _FtpSession {
   Future<void> _pass(String pw) async {
     final u = _user;
     if (u == null) return _send('503 Send USER first');
+    final ip = _ctl.remoteAddress.address;
+    if (LoginGuard.i.isLocked(ip)) return _send('530 Too many failed logins, try later');
     final isAnon = cfg.anonymous && (u.toLowerCase() == 'anonymous' || u.toLowerCase() == 'ftp');
     if (isAnon) {
       _authed = true;
@@ -315,9 +318,11 @@ class _FtpSession {
       _authed = true;
       _anon = false;
       Stats.i.event(cfg.id, 'login', u);
+      LoginGuard.i.ok(ip);
       return _send('230 Login successful');
     }
     Stats.i.event(cfg.id, 'failed', u);
+    LoginGuard.i.fail(ip);
     await Future<void>.delayed(const Duration(milliseconds: 600)); // slow brute force
     _send('530 Login incorrect');
   }

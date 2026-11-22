@@ -63,7 +63,8 @@ class _FoldersPageState extends State<FoldersPage> {
   }
 
   Future<void> _remove(SharedFolder f) async {
-    final used = cfg.webHubs.any((w) => w.folderId == f.id) || cfg.ftp.any((s) => s.folderIds.contains(f.id));
+    final used = cfg.webHubs.any((w) => w.folderId == f.id) || cfg.dav.any((d) => d.folderId == f.id) ||
+        cfg.ftp.any((s) => s.folderIds.contains(f.id));
     if (used) return _toast('A server is using this folder. Change that server first.');
     cfg.folders.removeWhere((e) => e.id == f.id);
     await _persist();

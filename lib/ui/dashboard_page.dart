@@ -60,6 +60,8 @@ class _DashboardPageState extends State<DashboardPage> {
   String _nameOfServer(String id) {
     final w = widget.cfg.webHubs.where((e) => e.id == id).firstOrNull;
     if (w != null) return w.name;
+    final d = widget.cfg.dav.where((e) => e.id == id).firstOrNull;
+    if (d != null) return d.name;
     final f = widget.cfg.ftp.where((e) => e.id == id).firstOrNull;
     return f?.name ?? id;
   }
@@ -69,7 +71,9 @@ class _DashboardPageState extends State<DashboardPage> {
     final cs = Theme.of(context).colorScheme;
     final sIn = _series('sIn'), sOut = _series('sOut');
     final nowIn = sIn.isEmpty ? 0.0 : sIn.last, nowOut = sOut.isEmpty ? 0.0 : sOut.last;
-    final running = st.web.values.where((e) => e.running).length + st.ftp.values.where((e) => e.running).length;
+    final running = st.web.values.where((e) => e.running).length +
+        st.ftp.values.where((e) => e.running).length +
+        st.dav.values.where((e) => e.running).length;
     final total = running + 0;
     final outBy = Map<String, dynamic>.from((st.stats['outBy'] as Map?) ?? {});
     final inBy = Map<String, dynamic>.from((st.stats['inBy'] as Map?) ?? {});

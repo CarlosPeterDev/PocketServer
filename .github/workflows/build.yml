@@ -110,11 +110,15 @@ jobs:
       - run: flutter pub get
       - run: dart run flutter_launcher_icons -f tool/icons/windows.yaml
       - run: flutter build windows --release
-      - name: Package
+      - name: Package (zip + installer)
         shell: pwsh
         run: |
           New-Item -ItemType Directory out | Out-Null
           Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath "out/$env:APP-windows-x64.zip"
+          choco install innosetup -y --no-progress
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=1.0.${{ github.run_number }}" tool\installer.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
+          Get-ChildItem out
       - uses: actions/upload-artifact@v4
         with: { name: windows, path: out/* }
 

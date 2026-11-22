@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import '../config.dart';
 import '../paths.dart';
+import 'dav_server.dart';
 import 'ftp_server.dart';
 import 'share_store.dart';
 import 'stats.dart';
@@ -24,6 +25,8 @@ class ServerHost {
   final Map<String, String> _webErr = {};
   final Map<String, FtpServer> _ftp = {};
   final Map<String, String> _ftpErr = {};
+  final Map<String, DavServer> _dav = {};
+  final Map<String, String> _davErr = {};
   List<String> _ips = [];
   final _ctl = StreamController<HostStatus>.broadcast();
   Timer? _tick;
@@ -36,6 +39,11 @@ class ServerHost {
         web: {
           for (final w in cfg.webHubs)
             w.id: FtpStatus(running: _web[w.id]?.running ?? false, error: _webErr[w.id]),
+        },
+        dav: {
+          for (final d in cfg.dav)
+            d.id: FtpStatus(
+                running: _dav[d.id]?.running ?? false, error: _davErr[d.id], connections: _dav[d.id]?.connections ?? 0),
         },
         ftp: {
           for (final f in cfg.ftp)
@@ -66,6 +74,9 @@ class ServerHost {
     for (final f in cfg.ftp.where((e) => e.enabled)) {
       await startFtp(f.id);
     }
+    for (final d in cfg.dav.where((e) => e.enabled)) {
+      await startDav(d.id);
+    }
     _emit();
   }
 
@@ -90,6 +101,16 @@ class ServerHost {
           folderChanged([nw.folderId])) {
         await stopWeb(id);
         await startWeb(id);
+      }
+    }
+    for (final id in _dav.keys.toList()) {
+      final nd = cfg.dav.where((e) => e.id == id).firstOrNull;
+      final od = old.dav.where((e) => e.id == id).firstOrNull;
+      if (nd == null) {
+        await stopDav(id);
+      } else if (od == null || jsonEncode(od.toJson()) != jsonEncode(nd.toJson()) || folderChanged([nd.folderId])) {
+        await stopDav(id);
+        await startDav(id);
       }
     }
     for (final id in _ftp.keys.toList()) {
@@ -174,12 +195,38 @@ class ServerHost {
     _emit();
   }
 
+  Future<void> startDav(String id) async {
+    final c = cfg.dav.where((e) => e.id == id).firstOrNull;
+    if (c == null || (_dav[id]?.running ?? false)) return;
+    try {
+      final root = p.normalize(_dirOf(c.folderId));
+      await Directory(root).create(recursive: true);
+      final s = DavServer(DavConfig.fromJson(c.toJson()), root);
+      await s.start();
+      _dav[id] = s;
+      _davErr.remove(id);
+    } catch (e) {
+      _dav.remove(id);
+      _davErr[id] = _explain(e, c.port);
+    }
+    _emit();
+  }
+
+  Future<void> stopDav(String id) async {
+    await _dav.remove(id)?.stop();
+    _davErr.remove(id);
+    _emit();
+  }
+
   Future<void> startAll() async {
     for (final w in cfg.webHubs) {
       await startWeb(w.id);
     }
     for (final f in cfg.ftp) {
       await startFtp(f.id);
+    }
+    for (final d in cfg.dav) {
+      await startDav(d.id);
     }
   }
 
@@ -189,6 +236,9 @@ class ServerHost {
     }
     for (final id in _ftp.keys.toList()) {
       await stopFtp(id);
+    }
+    for (final id in _dav.keys.toList()) {
+      await stopDav(id);
     }
   }
 
