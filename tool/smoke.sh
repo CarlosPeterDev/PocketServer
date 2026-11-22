@@ -18,3 +18,8 @@ curl -s -m 10 -o smoke/tv.html -w "%{http_code}\n" http://127.0.0.1:2011/tv >> s
 grep -n "FATAL EXCEPTION" -A25 smoke/logcat.txt | head -80 > smoke/crash.txt
 if [ -s smoke/crash.txt ]; then echo CRASH > smoke/result.txt; else echo OK > smoke/result.txt; fi
 cat smoke/result.txt smoke/http.txt smoke/pid.txt
+echo "=== CRASH TRACE ==="
+cat smoke/crash.txt
+echo "=== FLUTTER / RUNTIME LOG ==="
+grep -E "AndroidRuntime|flutter|FATAL|Exception|Error|dev.carlospeter" smoke/logcat.txt | grep -v "Choreographer" | tail -120
+echo "=== END ==="
