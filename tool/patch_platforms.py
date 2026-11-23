@@ -32,8 +32,7 @@ def android_manifest():
     perms = [
         "INTERNET", "ACCESS_NETWORK_STATE", "ACCESS_WIFI_STATE", "WAKE_LOCK",
         "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_SPECIAL_USE", "POST_NOTIFICATIONS",
-        "CHANGE_WIFI_MULTICAST_STATE", "MANAGE_EXTERNAL_STORAGE", "RECEIVE_BOOT_COMPLETED",
-        "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+        "MANAGE_EXTERNAL_STORAGE", "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
     ]
     block = "".join(f'    <uses-permission android:name="android.permission.{x}"/>\n' for x in perms)
     s = re.sub(r"(<manifest[^>]*>\s*)", lambda m: m.group(1) + "\n" + block, s, count=1)
@@ -49,6 +48,16 @@ def android_manifest():
         '        </service>\n'
     )
     s = insert_before_last(s, "</application>", svc)
+    # Play: no boot start (the plugin adds this receiver + permission by default) and no cloud backup of
+    # config.json (it holds the server passwords)
+    drop = (
+        '    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" tools:node="remove"/>\n'
+        '    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" tools:node="remove"/>\n'
+    )
+    s = re.sub(r"(<manifest[^>]*>\s*)", lambda m: m.group(1) + "\n" + drop, s, count=1)
+    s = insert_before_last(s, "</application>",
+        '        <receiver android:name="id.flutter.flutter_background_service.BootReceiver" tools:node="remove"/>\n')
+    s = s.replace("<application", '<application android:allowBackup="false" tools:replace="android:allowBackup"', 1)
     # Android TV / leanback support
     tv = (
         '    <uses-feature android:name="android.software.leanback" android:required="false"/>\n'

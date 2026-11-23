@@ -2,11 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../ads.dart';
 import '../battery.dart';
 import '../host/host_controller.dart';
 import '../l10n.dart';
 import '../paths.dart';
 import '../settings.dart';
+import 'help_page.dart';
 import 'privacy.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -19,11 +21,15 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool? unrestricted;
+  bool adOptions = false;
 
   @override
   void initState() {
     super.initState();
     _checkBattery();
+    AdsGate.privacyOptionsRequired().then((v) {
+      if (mounted) setState(() => adOptions = v);
+    });
   }
 
   Future<void> _checkBattery() async {
@@ -77,6 +83,18 @@ class _SettingsPageState extends State<SettingsPage> {
               await showBatteryHelp(context);
               await _checkBattery();
             },
+          ),
+        ListTile(
+          leading: const Icon(Icons.menu_book_outlined),
+          title: Text(tr('How to use PocketServer')),
+          onTap: () => Navigator.of(context)
+              .push(MaterialPageRoute<void>(builder: (_) => HelpPage(host: widget.host))),
+        ),
+        if (adOptions)
+          ListTile(
+            leading: const Icon(Icons.ads_click),
+            title: Text(tr('Ad privacy choices')),
+            onTap: AdsGate.showPrivacyOptions,
           ),
         ListTile(
           leading: const Icon(Icons.privacy_tip_outlined),

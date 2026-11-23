@@ -50,4 +50,14 @@ void main() {
     expect((en['sections'] as List).length, (ar['sections'] as List).length);
     expect(ar['title'], isNotEmpty);
   });
+
+  test('help guide exists in both languages with matching topics', () {
+    final d = jsonDecode(File('assets/help.json').readAsStringSync()) as Map;
+    final en = ((d['en'] as Map)['topics'] as List).cast<Map>();
+    final ar = ((d['ar'] as Map)['topics'] as List).cast<Map>();
+    expect(ar.map((t) => t['id']).toList(), en.map((t) => t['id']).toList());
+    for (var i = 0; i < en.length; i++) {
+      expect((ar[i]['steps'] as List).length, (en[i]['steps'] as List).length, reason: '${en[i]['id']}');
+    }
+  });
 }

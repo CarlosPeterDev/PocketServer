@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart' as p;
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -15,6 +16,7 @@ import 'dashboard_page.dart';
 import 'dav_dialog.dart';
 import 'folders_page.dart';
 import 'ftp_dialog.dart';
+import 'help_page.dart';
 import 'hub_dialog.dart';
 import 'settings_page.dart';
 
@@ -30,6 +32,7 @@ class _HomePageState extends State<HomePage> {
   AppConfig cfg = AppConfig();
   HostStatus st = HostStatus();
   bool loaded = false;
+  bool guideHidden = true; // until we know
 
   @override
   void initState() {
@@ -39,6 +42,7 @@ class _HomePageState extends State<HomePage> {
       if (mounted) setState(() => st = s);
     });
     _load();
+    guideHidden = File(p.join(widget.paths.dataDir.path, 'guide_dismissed')).existsSync();
     if (Platform.isAndroid) {
       WidgetsBinding.instance.addPostFrameCallback((_) => Future<void>.delayed(const Duration(milliseconds: 600), _maybeAskBattery));
     }
@@ -195,6 +199,26 @@ class _HomePageState extends State<HomePage> {
     setState(() {});
   }
 
+  void _help([String? topic]) => Navigator.of(context)
+      .push(MaterialPageRoute<void>(builder: (_) => HelpPage(host: widget.host, topic: topic)));
+
+  void _hideGuide() {
+    try {
+      File(p.join(widget.paths.dataDir.path, 'guide_dismissed')).writeAsStringSync('1');
+    } catch (_) {}
+    setState(() => guideHidden = true);
+  }
+
+  Widget _sectionTitle(String title, String topic) => Row(children: [
+        Expanded(child: Text(title, style: Theme.of(context).textTheme.titleMedium)),
+        IconButton(
+          tooltip: tr('Guide'),
+          visualDensity: VisualDensity.compact,
+          icon: const Icon(Icons.help_outline, size: 20),
+          onPressed: () => _help(topic),
+        ),
+      ]);
+
   Future<void> _folders() async {
     await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => FoldersPage(cfg: cfg, paths: widget.paths)));
     await widget.host.reload();
@@ -278,11 +302,31 @@ class _HomePageState extends State<HomePage> {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
             children: [
-              Text(tr('Web hubs'), style: Theme.of(context).textTheme.titleMedium),
+              if (!guideHidden)
+                Card(
+                  color: scheme.primaryContainer,
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 4, 8),
+                    child: Row(children: [
+                      Icon(Icons.menu_book_outlined, color: scheme.onPrimaryContainer),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(tr('New here? Read the quick guide (2 minutes).'),
+                              style: TextStyle(color: scheme.onPrimaryContainer, fontWeight: FontWeight.w600)),
+                          TextButton(onPressed: () => _help(), child: Text(tr('Open guide'))),
+                        ]),
+                      ),
+                      IconButton(
+                          tooltip: tr('Close'), icon: const Icon(Icons.close), onPressed: _hideGuide),
+                    ]),
+                  ),
+                ),
+              _sectionTitle(tr('Web hubs'), 'web'),
               const SizedBox(height: 8),
               for (final w in cfg.webHubs) _hubCard(w, scheme),
               const SizedBox(height: 16),
-              Text(tr('FTP / FTPS servers'), style: Theme.of(context).textTheme.titleMedium),
+              _sectionTitle(tr('FTP / FTPS servers'), 'ftp'),
               const SizedBox(height: 8),
               if (cfg.ftp.isEmpty)
                 Card(
@@ -295,7 +339,7 @@ class _HomePageState extends State<HomePage> {
               for (final f in cfg.ftp) _ftpCard(f, scheme),
               if (cfg.dav.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                Text(tr('WebDAV drives'), style: Theme.of(context).textTheme.titleMedium),
+                _sectionTitle(tr('WebDAV drives'), 'webdav'),
                 const SizedBox(height: 8),
                 for (final d in cfg.dav) _davCard(d, scheme),
               ],

@@ -16,6 +16,67 @@ class AdIds {
 
 bool get adsSupported => Platform.isAndroid || Platform.isIOS;
 
+/// One-time ads start-up: EU/UK consent (Google UMP) first, then the SDK with a family-safe content cap.
+/// Resolves to false when consent does not allow ads (then no ad is ever requested).
+class AdsGate {
+  static Future<bool>? _f;
+  static Future<bool> ready() => _f ??= _init();
+
+  static Future<bool> _init() async {
+    if (!adsSupported) return false;
+    final done = Completer<void>();
+    try {
+      ConsentInformation.instance.requestConsentInfoUpdate(
+        ConsentRequestParameters(),
+        () async {
+          try {
+            await ConsentForm.loadAndShowConsentFormIfRequired((FormError? _) {
+              if (!done.isCompleted) done.complete();
+            });
+          } catch (_) {
+            if (!done.isCompleted) done.complete();
+          }
+        },
+        (FormError _) {
+          if (!done.isCompleted) done.complete();
+        },
+      );
+      await done.future.timeout(const Duration(minutes: 3));
+    } catch (_) {}
+    var can = true;
+    try {
+      can = await ConsentInformation.instance.canRequestAds();
+    } catch (_) {}
+    if (!can) return false;
+    try {
+      await MobileAds.instance.updateRequestConfiguration(RequestConfiguration(maxAdContentRating: MaxAdContentRating.pg));
+      await MobileAds.instance.initialize();
+    } catch (_) {}
+    return true;
+  }
+
+  /// True when the user must be able to re-open the consent choices (EU/UK).
+  static Future<bool> privacyOptionsRequired() async {
+    if (!adsSupported) return false;
+    try {
+      return await ConsentInformation.instance.getPrivacyOptionsRequirementStatus() ==
+          PrivacyOptionsRequirementStatus.required;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> showPrivacyOptions() async {
+    final c = Completer<void>();
+    try {
+      ConsentForm.showPrivacyOptionsForm((FormError? _) {
+        if (!c.isCompleted) c.complete();
+      });
+      await c.future.timeout(const Duration(minutes: 3));
+    } catch (_) {}
+  }
+}
+
 /// Loads an app-open ad during the splash. Resolves to the loaded ad, or null
 /// when it is not ready within [timeout] (then the ad is discarded for good,
 /// so it never pops up after the home screen is visible).
@@ -27,8 +88,10 @@ class SplashAd {
     final c = Completer<AppOpenAd?>();
     Future<void>(() async {
       try {
-        await MobileAds.instance.initialize();
-        if (_abandoned) return;
+        if (!await AdsGate.ready() || _abandoned) {
+          if (!c.isCompleted) c.complete(null);
+          return;
+        }
         await AppOpenAd.load(
           adUnitId: AdIds.appOpen,
           request: const AdRequest(),
@@ -82,20 +145,23 @@ class _TopBannerState extends State<TopBanner> {
   void initState() {
     super.initState();
     if (!adsSupported) return;
-    _ad = BannerAd(
-      adUnitId: AdIds.banner,
-      size: AdSize.banner,
-      request: const AdRequest(),
-      listener: BannerAdListener(
-        onAdLoaded: (_) {
-          if (mounted) setState(() => _ready = true);
-        },
-        onAdFailedToLoad: (ad, _) {
-          ad.dispose();
-          _ad = null;
-        },
-      ),
-    )..load();
+    AdsGate.ready().then((ok) {
+      if (!ok || !mounted) return;
+      _ad = BannerAd(
+        adUnitId: AdIds.banner,
+        size: AdSize.banner,
+        request: const AdRequest(),
+        listener: BannerAdListener(
+          onAdLoaded: (_) {
+            if (mounted) setState(() => _ready = true);
+          },
+          onAdFailedToLoad: (ad, _) {
+            ad.dispose();
+            _ad = null;
+          },
+        ),
+      )..load();
+    });
   }
 
   @override

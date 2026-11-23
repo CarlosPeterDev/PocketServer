@@ -79,6 +79,7 @@ class AndroidServiceHost implements HostController {
       androidConfiguration: AndroidConfiguration(
         onStart: serviceMain,
         autoStart: false,
+        autoStartOnBoot: false, // no boot receiver: servers only start when the user opens the app
         isForegroundMode: true,
         initialNotificationTitle: 'PocketServer',
         initialNotificationContent: tr('Starting servers…'),
