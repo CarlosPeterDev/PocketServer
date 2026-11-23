@@ -22,7 +22,7 @@ PRELUDE = r"""/*ps-es2015*/
   if(window.Promise&&!Promise.prototype.finally)Promise.prototype.finally=function(f){var P=this.constructor;return this.then(function(v){return P.resolve(f()).then(function(){return v})},function(e){return P.resolve(f()).then(function(){throw e})})};
   window.addEventListener('error',function(e){
     try{var d=document.getElementById('ps-err');
-    if(!d){d=document.createElement('div');d.id='ps-err';d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#7f1d1d;color:#fff;font:14px monospace;padding:8px;white-space:pre-wrap';(document.body||document.documentElement).appendChild(d)}
+    if(!d){d=document.createElement('div');d.id='ps-err';d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;pointer-events:none;background:#7f1d1d;color:#fff;font:14px monospace;padding:8px;white-space:pre-wrap';(document.body||document.documentElement).appendChild(d)}
     d.textContent='Script error: '+(e.message||'')+' ('+(e.lineno||'?')+')'}catch(_){}
   });
 })();

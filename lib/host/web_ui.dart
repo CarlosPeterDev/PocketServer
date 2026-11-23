@@ -781,6 +781,65 @@ button:focus-visible{outline:3px solid #3b82f6;outline-offset:2px}
 
 <!-- ═══════════════ SCRIPTS ═══════════════ -->
 <script>
+/*ps-i18n*/
+(function(){
+  var D={"1 Hour": "ساعة واحدة", "1 Month": "شهر واحد", "1 Week": "أسبوع واحد", "24 Hours": "24 ساعة", "Account": "الحساب", "All": "الكل", "All clipboard entries": "كل عناصر الحافظة", "All favourites & activity history": "كل المفضلة وسجل النشاط", "All notes you posted": "كل الملاحظات التي نشرتها", "All saved links": "كل الروابط المحفوظة", "All share links you created": "كل روابط المشاركة التي أنشأتها", "All your uploaded files & folders": "كل ملفاتك ومجلداتك المرفوعة", "Anyone on the network can see this": "يستطيع أي شخص على الشبكة رؤية هذا", "Appearance": "المظهر", "Change Password": "تغيير كلمة المرور", "Change photo": "تغيير الصورة", "Clipboard": "الحافظة", "Clipboard Sync": "مزامنة الحافظة", "Close": "إغلاق", "Default Upload Privacy": "خصوصية الرفع الافتراضية", "Delete": "حذف", "Drop to Upload": "أفلت للرفع", "ETA": "الوقت المتبقي", "Everything below will be wiped — this cannot be undone.": "سيتم مسح كل ما يلي ولا يمكن التراجع عن ذلك.", "Everything below will be wiped — this cannot be undone": "سيتم مسح كل ما يلي ولا يمكن التراجع عن ذلك", "Exit": "خروج", "FTP / FTPS Server": "خادم FTP / FTPS", "Files": "الملفات", "Folder": "مجلد", "Generate Share Link": "إنشاء رابط مشاركة", "Hidden from all other users": "مخفي عن كل المستخدمين الآخرين", "Link expires after:": "ينتهي الرابط بعد:", "Link expires after": "ينتهي الرابط بعد", "Links": "الروابط", "Loading...": "جارٍ التحميل...", "Loading": "جارٍ التحميل", "Long-press to select · tap to toggle": "اضغط مطولاً للتحديد · المس للتبديل", "Move": "نقل", "Network Share": "مشاركة الشبكة", "New Folder": "مجلد جديد", "OK": "حسناً", "Permanently delete your account.": "حذف حسابك نهائياً.", "Permanently delete your account": "حذف حسابك نهائياً", "Pick exactly who can access this": "اختر بالضبط من يستطيع الوصول", "Post": "نشر", "Private Files": "ملفات خاصة", "Profile": "الملف الشخصي", "Register": "إنشاء حساب", "Save and share your favorite links": "احفظ وشارك روابطك المفضلة", "Select": "تحديد", "Select users who can access:": "اختر المستخدمين المسموح لهم بالوصول:", "Select users who can access": "اختر المستخدمين المسموح لهم بالوصول", "Server Info": "معلومات الخادم", "Share URL:": "رابط المشاركة:", "Share URL": "رابط المشاركة", "Sign In": "تسجيل الدخول", "Sign in": "تسجيل الدخول", "Sign Out": "تسجيل الخروج", "Sign out": "تسجيل الخروج", "Create Account": "إنشاء حساب", "Continue as Guest (public files only)": "المتابعة كضيف (الملفات العامة فقط)", "Continue as Guest (public files only": "المتابعة كضيف (الملفات العامة فقط", "Text snippets — copy, save, download": "مقتطفات نصية — انسخ، احفظ، نزّل", "Unzip": "فك الضغط", "Update Password": "تحديث كلمة المرور", "Upload": "رفع", "Uploading...": "جارٍ الرفع...", "Uploading": "جارٍ الرفع", "Use QR button in top bar to share": "استخدم زر QR في الشريط العلوي للمشاركة", "Username": "اسم المستخدم", "Your personal file hub": "مركز ملفاتك الشخصي", "Zip": "ضغط", "File Info": "معلومات الملف", "Light": "فاتح", "Settings": "الإعدادات", "Danger Zone": "منطقة الخطر", "Favourites": "المفضلة", "Public": "عام", "Dark": "داكن", "Selected Users Only": "مستخدمون محددون فقط", "Notes": "الملاحظات", "Latest": "الأحدث", "Scan to Connect": "امسح للاتصال", "Size": "الحجم", "Storage Usage": "استخدام التخزين", "Auto": "تلقائي", "Set File Access": "تحديد صلاحية الملف", "Private": "خاص", "Private — Only You": "خاص — أنت فقط", "Share Link": "رابط مشاركة", "Name": "الاسم", "Access": "الوصول", "Cancel": "إلغاء", "Changing the extension may make the file unreadable.": "تغيير الامتداد قد يجعل الملف غير قابل للقراءة.", "Changing the extension may make the file unreadable": "تغيير الامتداد قد يجعل الملف غير قابل للقراءة", "Copy": "نسخ", "Copy All": "نسخ الكل", "Copy CSV": "نسخ CSV", "DESCRIPTION": "الوصف", "DL": "تنزيل", "Download": "تنزيل", "Download to open": "نزّل للفتح", "Edit": "تعديل", "Empty CSV": "ملف CSV فارغ", "Extension": "الامتداد", "File Name": "اسم الملف", "Filter": "تصفية", "Go to": "اذهب إلى", "Home": "الرئيسية", "NAME *": "الاسم *", "NAME": "الاسم", "URL *": "الرابط *", "URL": "الرابط", "No clipboards yet": "لا توجد عناصر حافظة بعد", "No links yet": "لا توجد روابط بعد", "No notes yet. Be the first!": "لا توجد ملاحظات بعد. كن الأول!", "No notes yet. Be the first": "لا توجد ملاحظات بعد. كن الأول", "No other users registered": "لا يوجد مستخدمون آخرون مسجلون", "No preview available": "لا توجد معاينة", "Pg": "ص", "Rename": "إعادة تسمية", "Save": "حفظ", "Save Access": "حفظ الصلاحيات", "Select users:": "اختر المستخدمين:", "Select users": "اختر المستخدمين", "Sign in to use Clipboard": "سجّل الدخول لاستخدام الحافظة", "Sign in to use Links": "سجّل الدخول لاستخدام الروابط", "Speed:": "السرعة:", "Speed": "السرعة", "Tap + to add your first link": "اضغط + لإضافة أول رابط", "To Clipboard": "إلى الحافظة", "Total on server": "الإجمالي على الخادم", "Who can see this link:": "من يستطيع رؤية هذا الرابط:", "Who can see this link": "من يستطيع رؤية هذا الرابط", "Your files": "ملفاتك", "Add Link": "إضافة رابط", "Save Changes": "حفظ التغييرات", "Upload files to get started": "ارفع ملفات للبدء", "Empty folder": "مجلد فارغ", "No files yet": "لا توجد ملفات بعد", "(optional)": "(اختياري)", "optional": "اختياري", "Apply": "تطبيق", "Done": "تم", "Password required": "كلمة المرور مطلوبة", "Please wait...": "يرجى الانتظار...", "Please wait": "يرجى الانتظار", "Saving...": "جارٍ الحفظ...", "Saving": "جارٍ الحفظ", "Move to": "نقل إلى", "Copy to": "نسخ إلى", "Password": "كلمة المرور", "Add a note...": "أضف ملاحظة...", "Add a note": "أضف ملاحظة", "Current password": "كلمة المرور الحالية", "Enter your password to confirm": "أدخل كلمة المرور للتأكيد", "New password (min 4 chars)": "كلمة مرور جديدة (4 أحرف على الأقل)", "New password (min 4 chars": "كلمة مرور جديدة (4 أحرف على الأقل", "Search files...": "ابحث عن ملفات...", "Search files": "ابحث عن ملفات", "Type here...": "اكتب هنا...", "Type here": "اكتب هنا", "Exit selection": "إلغاء التحديد", "Access updated": "تم تحديث الصلاحيات", "Account deleted. Goodbye!": "تم حذف الحساب. إلى اللقاء!", "Account deleted. Goodbye": "تم حذف الحساب. إلى اللقاء", "Avatar updated!": "تم تحديث الصورة!", "Avatar updated": "تم تحديث الصورة", "Browsing as guest 👀 (view & download only)": "تتصفح كضيف 👀 (عرض وتنزيل فقط)", "Browsing as guest 👀 (view & download only": "تتصفح كضيف 👀 (عرض وتنزيل فقط", "Copied!": "تم النسخ!", "Copied": "تم النسخ", "Copy failed": "فشل النسخ", "Copy failed — try long-press": "فشل النسخ — جرّب الضغط المطول", "Deleted": "تم الحذف", "Done!": "تم!", "Error": "خطأ", "Extracted!": "تم الاستخراج!", "Extracted": "تم الاستخراج", "File name cannot be empty": "لا يمكن ترك اسم الملف فارغاً", "File saved!": "تم حفظ الملف!", "File saved": "تم حفظ الملف", "Fill both password fields": "املأ حقلي كلمة المرور", "Folder created": "تم إنشاء المجلد", "Guests cannot upload files": "الضيوف لا يستطيعون رفع الملفات", "Link access updated": "تم تحديث صلاحية الرابط", "Logged out": "تم تسجيل الخروج", "Long-press a file to start selecting": "اضغط مطولاً على ملف لبدء التحديد", "Name is required": "الاسم مطلوب", "New password must be 4+ chars": "يجب أن تتكون كلمة المرور الجديدة من 4 أحرف على الأقل", "Note added!": "تمت إضافة الملاحظة!", "Note added": "تمت إضافة الملاحظة", "Password updated!": "تم تحديث كلمة المرور!", "Password updated": "تم تحديث كلمة المرور", "Please sign in first": "يرجى تسجيل الدخول أولاً", "Removed from favourites": "تمت الإزالة من المفضلة", "Renamed": "تمت إعادة التسمية", "Saved to Clipboard!": "تم الحفظ في الحافظة!", "Saved to Clipboard": "تم الحفظ في الحافظة", "Saved!": "تم الحفظ!", "Saved": "تم الحفظ", "Select exactly 1 item to rename": "اختر عنصراً واحداً فقط لإعادة تسميته", "Select files first": "اختر ملفات أولاً", "Selection mode — tap more to select": "وضع التحديد — المس المزيد للتحديد", "Share link created!": "تم إنشاء رابط المشاركة!", "Share link created": "تم إنشاء رابط المشاركة", "Sign in to manage access": "سجّل الدخول لإدارة الصلاحيات", "Sign in to star files": "سجّل الدخول لإضافة ملفات إلى المفضلة", "Sign in to use clipboard": "سجّل الدخول لاستخدام الحافظة", "Sign in to use this feature": "سجّل الدخول لاستخدام هذه الميزة", "URL is required": "الرابط مطلوب", "Upload complete!": "اكتمل الرفع!", "Upload complete": "اكتمل الرفع", "Upload failed": "فشل الرفع", "Zipped!": "تم الضغط!", "Zipped": "تم الضغط", "Added to favourites": "تمت الإضافة إلى المفضلة"}, PF=[["Welcome, ", "مرحباً، "], ["Access updated for ", "تم تحديث الصلاحيات لـ "], ["Default privacy saved: ", "تم حفظ الخصوصية الافتراضية: "], ["Duplicated as ", "تم النسخ باسم "], ["Theme: ", "المظهر: "]];
+  var EDGE=/^([^A-Za-z0-9؀-ۿ]*)([\s\S]*?)([^A-Za-z0-9؀-ۿ]*)$/;
+  var lang='en';
+  try{lang=localStorage.getItem('ps_lang')||''}catch(e){}
+  if(lang!=='ar'&&lang!=='en'){lang=((navigator.language||'en')+'').toLowerCase().indexOf('ar')===0?'ar':'en'}
+  function tx(s){
+    var t=s.replace(/^\s+|\s+$/g,''); if(!t)return s;
+    var i=s.indexOf(t), lead=s.slice(0,i), trail=s.slice(i+t.length), r;
+    if(D.hasOwnProperty(t))return lead+D[t]+trail;
+    var m=EDGE.exec(t);
+    if(m&&m[2]&&D.hasOwnProperty(m[2]))return lead+m[1]+D[m[2]]+m[3]+trail;
+    for(var k=0;k<PF.length;k++)if(t.indexOf(PF[k][0])===0)return lead+PF[k][1]+t.slice(PF[k][0].length)+trail;
+    if((r=/^Apply to All (\d+) Files$/.exec(t)))return lead+'تطبيق على كل '+r[1]+' ملفات'+trail;
+    return s;
+  }
+  var ATTRS=['placeholder','title','aria-label'];
+  function textNode(n){
+    var v=n.nodeValue;
+    if(n.__t===undefined||v!==n.__t)n.__o=v; /* new text from the page (not our own output) */
+    var o=lang==='ar'?tx(n.__o):n.__o; n.__t=o; if(o!==v)n.nodeValue=o;
+  }
+  function el(e){
+    var tag=e.nodeName;
+    if(tag==='SCRIPT'||tag==='STYLE'||tag==='TEXTAREA'||e.id==='ps-lang'||e.id==='ps-err')return;
+    for(var i=0;i<ATTRS.length;i++){var a=ATTRS[i];
+      if(e.hasAttribute&&e.hasAttribute(a)){var cur=e.getAttribute(a), key='__a_'+a;
+        if(e[key]===undefined||cur!==e[key+'t']){e[key]=cur}
+        var out=lang==='ar'?tx(e[key]):e[key]; e[key+'t']=out; if(out!==cur)e.setAttribute(a,out);}}
+    for(var c=e.firstChild;c;c=c.nextSibling)walk(c);
+  }
+  function walk(n){ if(n.nodeType===3)textNode(n); else if(n.nodeType===1)el(n); }
+  function apply(){
+    var h=document.documentElement; h.setAttribute('lang',lang); h.setAttribute('dir',lang==='ar'?'rtl':'ltr');
+    if(document.body)walk(document.body);
+    var b=document.getElementById('ps-lang'); if(b)b.textContent=lang==='ar'?'EN':'ع';
+  }
+  function start(){
+    var b=document.createElement('button'); b.id='ps-lang'; b.type='button';
+    b.style.cssText='position:fixed;left:10px;bottom:64px;z-index:9998;width:40px;height:40px;border-radius:20px;border:0;background:rgba(80,80,120,.85);color:#fff;font:600 15px sans-serif;cursor:pointer';
+    b.onclick=function(){lang=lang==='ar'?'en':'ar';try{localStorage.setItem('ps_lang',lang)}catch(e){} apply()};
+    document.body.appendChild(b); apply();
+    if(window.MutationObserver){
+      var busy=false;
+      new MutationObserver(function(ms){
+        if(busy)return; busy=true;
+        try{ for(var i=0;i<ms.length;i++){var m=ms[i];
+          if(m.type==='characterData')textNode(m.target);
+          else if(m.type==='attributes')el(m.target);
+          else for(var j=0;j<m.addedNodes.length;j++)walk(m.addedNodes[j]); } }catch(e){}
+        busy=false;
+      }).observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:ATTRS});
+    }
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start); else start();
+})();
+</script>
+<script>
 /*ps-es2015*/
 (function(){
   var o=Object, A=Array.prototype, S=String.prototype;
@@ -793,7 +852,7 @@ button:focus-visible{outline:3px solid #3b82f6;outline-offset:2px}
   if(window.Promise&&!Promise.prototype.finally)Promise.prototype.finally=function(f){var P=this.constructor;return this.then(function(v){return P.resolve(f()).then(function(){return v})},function(e){return P.resolve(f()).then(function(){throw e})})};
   window.addEventListener('error',function(e){
     try{var d=document.getElementById('ps-err');
-    if(!d){d=document.createElement('div');d.id='ps-err';d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#7f1d1d;color:#fff;font:14px monospace;padding:8px;white-space:pre-wrap';(document.body||document.documentElement).appendChild(d)}
+    if(!d){d=document.createElement('div');d.id='ps-err';d.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:99999;pointer-events:none;background:#7f1d1d;color:#fff;font:14px monospace;padding:8px;white-space:pre-wrap';(document.body||document.documentElement).appendChild(d)}
     d.textContent='Script error: '+(e.message||'')+' ('+(e.lineno||'?')+')'}catch(_){}
   });
 })();

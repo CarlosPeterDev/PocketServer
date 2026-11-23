@@ -13,6 +13,7 @@ File hub for Android, iOS, macOS, Linux and Windows.
 - **First launch** asks for the language and the privacy policy (`assets/privacy.json`, mirrored in `PRIVACY.md` by `tool/gen_privacy_md.py`). Nothing starts before the policy is accepted.
 - **Battery**: on Android the app explains why, then shows the system "Allow" box (full APK). The Play build does not declare that restricted permission and opens the battery settings page instead.
 - The web page is converted to old-browser JavaScript (`tool/transpile_web_ui.py`) so it also works on smart-TV browsers.
+- **Web page in Arabic**: the browser page follows the browser language (Arabic -> right-to-left Arabic) with a round EN/ع button (`tool/web_i18n.py`).
 - **Guide**: simple in-app help (what web / FTP / WebDAV are, how to connect over WiFi or hotspot, safety, troubleshooting) in `assets/help.json`.
 - Google Play: see `PLAY_STORE.md` for what is ready and what you must still do (own signing key, real AdMob ids).
 - AdMob test ads (app-open on the splash, banner on top) on Android and iOS only.
