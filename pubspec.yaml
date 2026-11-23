@@ -38,3 +38,4 @@ flutter:
     - assets/icon.png
     - assets/privacy.json
     - assets/help.json
+    - assets/intro.json

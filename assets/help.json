@@ -68,18 +68,6 @@
     "tip": "Windows sometimes refuses drives that use plain http. If that happens, use the Web hub or FTP instead: they work everywhere."
    },
    {
-    "id": "files",
-    "icon": "folder",
-    "title": "Where are my files?",
-    "intro": "All servers share one folder: the PocketServer folder inside the app. There is nothing to choose or set up.",
-    "steps": [
-     "Add files by uploading them from another device: through the web page, an FTP app or a WebDAV drive.",
-     "Download them again from the same places.",
-     "If you delete the app, this folder is deleted too, so copy important files out first."
-    ],
-    "tip": "On newer Android versions this folder is hidden from the phone's own file manager. That is normal: use the web page, FTP or WebDAV to reach your files."
-   },
-   {
     "id": "background",
     "icon": "battery",
     "title": "Keep it running",
@@ -189,18 +177,6 @@
      "أندرويد: استخدم تطبيقاً يدعم WebDAV مثل Solid Explorer أو X-plore."
     ],
     "tip": "أحياناً يرفض ويندوز الأقراص التي تستخدم http العادي. في هذه الحالة استخدم مركز الويب أو FTP: يعملان في كل مكان."
-   },
-   {
-    "id": "files",
-    "icon": "folder",
-    "title": "أين ملفاتي؟",
-    "intro": "كل الخوادم تشارك مجلداً واحداً: مجلد PocketServer داخل التطبيق. لا يوجد شيء لاختياره أو إعداده.",
-    "steps": [
-     "أضف الملفات برفعها من جهاز آخر: عبر صفحة الويب أو تطبيق FTP أو قرص WebDAV.",
-     "نزّلها مرة أخرى من نفس الأماكن.",
-     "إذا حذفت التطبيق يُحذف هذا المجلد أيضاً، لذلك انسخ الملفات المهمة إلى مكان آخر أولاً."
-    ],
-    "tip": "في إصدارات أندرويد الحديثة يكون هذا المجلد مخفياً عن مدير ملفات الهاتف. هذا طبيعي: استخدم صفحة الويب أو FTP أو WebDAV للوصول إلى ملفاتك."
    },
    {
     "id": "background",

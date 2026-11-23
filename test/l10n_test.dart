@@ -60,4 +60,19 @@ void main() {
       expect((ar[i]['steps'] as List).length, (en[i]['steps'] as List).length, reason: '${en[i]['id']}');
     }
   });
+
+  test('intro slides exist in both languages with matching shape', () {
+    final d = jsonDecode(File('assets/intro.json').readAsStringSync()) as Map;
+    final en = ((d['en'] as Map)['slides'] as List).cast<Map>();
+    final ar = ((d['ar'] as Map)['slides'] as List).cast<Map>();
+    expect(ar.map((t) => t['id']).toList(), en.map((t) => t['id']).toList());
+    for (var i = 0; i < en.length; i++) {
+      expect((ar[i]['points'] as List).length, (en[i]['points'] as List).length, reason: '${en[i]['id']}');
+    }
+  });
+
+  test('the guide does not mention a shared folder', () {
+    final t = File('assets/help.json').readAsStringSync().toLowerCase();
+    expect(t.contains('folder'), isFalse);
+  });
 }

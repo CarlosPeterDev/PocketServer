@@ -9,6 +9,7 @@ import '../l10n.dart';
 import '../paths.dart';
 import '../settings.dart';
 import 'help_page.dart';
+import 'intro_page.dart';
 import 'privacy.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -89,6 +90,16 @@ class _SettingsPageState extends State<SettingsPage> {
           title: Text(tr('How to use PocketServer')),
           onTap: () => Navigator.of(context)
               .push(MaterialPageRoute<void>(builder: (_) => HelpPage(host: widget.host))),
+        ),
+        ListTile(
+          leading: const Icon(Icons.slideshow_outlined),
+          title: Text(tr('Show the intro again')),
+          onTap: () async {
+            final st = await AppSettings.load(widget.paths.settingsFile);
+            if (!mounted) return;
+            await Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (_) => IntroPage(paths: widget.paths, settings: st)));
+          },
         ),
         if (adOptions)
           ListTile(

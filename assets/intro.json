@@ -1,0 +1,92 @@
+{
+ "en": {
+  "slides": [
+   {
+    "id": "welcome",
+    "icon": "dns",
+    "title": "Share files between your devices",
+    "text": "PocketServer turns your phone into a small file box. Your laptop, TV or another phone can open, upload and download your files.",
+    "points": []
+   },
+   {
+    "id": "offline",
+    "icon": "wifi",
+    "title": "It works without internet",
+    "text": "PocketServer only needs a WiFi network or your phone's Hotspot. It does not need internet or mobile data. Files go straight from your phone to the other device through your own WiFi, like a cable without the cable.",
+    "points": [
+     "Uploading and downloading use no mobile data and no internet.",
+     "The speed depends on your WiFi, not on your internet plan.",
+     "Test it yourself: turn on Airplane mode, then turn WiFi back on. Sharing still works."
+    ]
+   },
+   {
+    "id": "private",
+    "icon": "shield",
+    "title": "Private. Not a spy.",
+    "text": "Your files, passwords and settings stay on your phone. We have no server that receives them, and there is no account to create with us.",
+    "points": [
+     "Only devices on your own WiFi that know your address (and password) can reach your files.",
+     "You are in control: switch every server off with one button.",
+     "The code is public on GitHub, so anyone can check it.",
+     "On Android and iOS the app shows ads. Google loads them separately and they never get your files."
+    ]
+   },
+   {
+    "id": "steps",
+    "icon": "steps",
+    "title": "Ready in 3 steps",
+    "text": "",
+    "points": [
+     "Connect your devices to the same WiFi, or to your phone's Hotspot.",
+     "Switch a server on and open its address on the other device.",
+     "Upload and download files. Stuck? Open the guide any time."
+    ]
+   }
+  ]
+ },
+ "ar": {
+  "slides": [
+   {
+    "id": "welcome",
+    "icon": "dns",
+    "title": "شارك الملفات بين أجهزتك",
+    "text": "يحوّل PocketServer هاتفك إلى صندوق ملفات صغير. يستطيع اللابتوب أو التلفزيون أو هاتف آخر فتح ملفاتك ورفعها وتنزيلها.",
+    "points": []
+   },
+   {
+    "id": "offline",
+    "icon": "wifi",
+    "title": "يعمل بدون إنترنت",
+    "text": "يحتاج PocketServer فقط إلى شبكة واي فاي أو الهوت سبوت في هاتفك. لا يحتاج إلى إنترنت ولا إلى باقة بيانات. تنتقل الملفات مباشرة من هاتفك إلى الجهاز الآخر عبر الواي فاي الخاص بك، كأنها كابل بدون كابل.",
+    "points": [
+     "الرفع والتنزيل لا يستهلكان بيانات الهاتف ولا الإنترنت.",
+     "السرعة تعتمد على الواي فاي لديك وليس على باقة الإنترنت.",
+     "جرّب بنفسك: شغّل وضع الطيران ثم شغّل الواي فاي من جديد. ستبقى المشاركة تعمل."
+    ]
+   },
+   {
+    "id": "private",
+    "icon": "shield",
+    "title": "خاص وبدون تجسس",
+    "text": "ملفاتك وكلمات المرور والإعدادات تبقى على هاتفك. لا يوجد لدينا خادم يستقبلها، ولا حساب تنشئه معنا.",
+    "points": [
+     "فقط الأجهزة على الواي فاي الخاص بك والتي تعرف العنوان (وكلمة المرور) تصل إلى ملفاتك.",
+     "أنت المتحكم: أطفئ كل الخوادم بزر واحد.",
+     "الكود علني على GitHub، فيستطيع أي شخص فحصه.",
+     "على أندرويد وiOS يعرض التطبيق إعلانات. تحمّلها Google بشكل منفصل ولا تصل إلى ملفاتك."
+    ]
+   },
+   {
+    "id": "steps",
+    "icon": "steps",
+    "title": "جاهز في 3 خطوات",
+    "text": "",
+    "points": [
+     "صِل أجهزتك بنفس الواي فاي، أو بالهوت سبوت في هاتفك.",
+     "شغّل خادماً وافتح عنوانه على الجهاز الآخر.",
+     "ارفع ونزّل الملفات. هل علقت؟ افتح الدليل في أي وقت."
+    ]
+   }
+  ]
+ }
+}

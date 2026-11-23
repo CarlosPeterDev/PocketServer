@@ -8,6 +8,7 @@ import '../l10n.dart';
 import '../paths.dart';
 import '../settings.dart';
 import 'privacy.dart';
+import 'intro_page.dart';
 import 'splash.dart';
 
 /// Shown once (and again if the policy version changes): choose the language and accept the privacy policy.
@@ -41,7 +42,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final host = await widget.boot();
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => SplashPage(paths: widget.paths, host: host)),
+      MaterialPageRoute<void>(
+        builder: (_) => IntroPage(
+          paths: widget.paths,
+          settings: widget.settings,
+          next: (c) => Navigator.of(c).pushReplacement(
+            MaterialPageRoute<void>(builder: (_) => SplashPage(paths: widget.paths, host: host)),
+          ),
+        ),
+      ),
     );
   }
 

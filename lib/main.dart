@@ -9,6 +9,7 @@ import 'host/host_controller.dart';
 import 'l10n.dart';
 import 'paths.dart';
 import 'settings.dart';
+import 'ui/intro_page.dart';
 import 'ui/onboarding.dart';
 import 'ui/splash.dart';
 
@@ -33,6 +34,9 @@ Future<void> main() async {
   runApp(PocketServerApp(paths: paths, settings: settings, host: host));
 }
 
+void goToSplash(BuildContext c, AppPaths paths, HostController host) => Navigator.of(c)
+    .pushReplacement(MaterialPageRoute<void>(builder: (_) => SplashPage(paths: paths, host: host)));
+
 class PocketServerApp extends StatelessWidget {
   const PocketServerApp({super.key, required this.paths, required this.settings, required this.host});
   final AppPaths paths;
@@ -52,9 +56,11 @@ class PocketServerApp extends StatelessWidget {
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         theme: ThemeData(colorSchemeSeed: seed, useMaterial3: true),
         darkTheme: ThemeData(colorSchemeSeed: seed, brightness: Brightness.dark, useMaterial3: true),
-        home: host != null
-            ? SplashPage(paths: paths, host: host!)
-            : OnboardingPage(paths: paths, settings: settings, boot: () => bootHost(paths)),
+        home: host == null
+            ? OnboardingPage(paths: paths, settings: settings, boot: () => bootHost(paths))
+            : settings.introSeen
+                ? SplashPage(paths: paths, host: host!)
+                : IntroPage(paths: paths, settings: settings, next: (c) => goToSplash(c, paths, host!)),
       ),
     );
   }
