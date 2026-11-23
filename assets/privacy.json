@@ -11,7 +11,7 @@
    },
    {
     "h": "What the app stores on your device",
-    "p": "Server settings (names, ports, usernames, passwords, chosen folders), the users, share links, notes and activity of your web hubs, and the live statistics shown in the dashboard. This is kept in the app's private storage on your device and is removed when you uninstall the app or clear its data. Your files stay where they are: the app only reads and writes the folders you choose to share."
+    "p": "Server settings (names, ports, usernames, passwords), the users, share links, notes and activity of your web hubs, and the live statistics shown in the dashboard. This is kept in the app's private storage on your device and is removed when you uninstall the app or clear its data. The files you share live in the app's own PocketServer folder; the app does not read any other folder on your device."
    },
    {
     "h": "Who can reach your files",
@@ -23,7 +23,7 @@
    },
    {
     "h": "Permissions",
-    "p": "Network access: to run the servers. Notifications and foreground service (Android): to keep the servers running in the background, with a notification while they run. Folder access: only the folders you choose; the full Android build can ask for All files access so you can share any folder (optional). Battery optimisation (full Android build): an optional request so Android does not stop the servers when the screen is off."
+    "p": "Network access: to run the servers. Notifications and foreground service (Android): to keep the servers running in the background, with a notification while they run. Battery optimisation (Android, GitHub version only): an optional request so Android does not stop the servers when the screen is off. The app does not ask for access to your photos, files, contacts, camera, microphone or location."
    },
    {
     "h": "Children",
@@ -54,7 +54,7 @@
    },
    {
     "h": "ما الذي يخزّنه التطبيق على جهازك",
-    "p": "إعدادات الخوادم (الأسماء والمنافذ وأسماء المستخدمين وكلمات المرور والمجلدات المختارة)، ومستخدمو مراكز الويب وروابط المشاركة والملاحظات والنشاط، والإحصاءات المباشرة المعروضة في لوحة المعلومات. تُحفظ في التخزين الخاص بالتطبيق على جهازك وتُحذف عند إلغاء تثبيت التطبيق أو مسح بياناته. ملفاتك تبقى في مكانها: يقرأ التطبيق ويكتب فقط في المجلدات التي تختارها للمشاركة."
+    "p": "إعدادات الخوادم (الأسماء والمنافذ وأسماء المستخدمين وكلمات المرور)، ومستخدمو مراكز الويب وروابط المشاركة والملاحظات والنشاط، والإحصاءات المباشرة المعروضة في لوحة المعلومات. تُحفظ في التخزين الخاص بالتطبيق على جهازك وتُحذف عند إلغاء تثبيت التطبيق أو مسح بياناته. الملفات التي تشاركها تُحفظ في مجلد PocketServer الخاص بالتطبيق؛ ولا يقرأ التطبيق أي مجلد آخر على جهازك."
    },
    {
     "h": "من يستطيع الوصول إلى ملفاتك",
@@ -66,7 +66,7 @@
    },
    {
     "h": "الأذونات",
-    "p": "الوصول إلى الشبكة: لتشغيل الخوادم. الإشعارات والخدمة الأمامية (أندرويد): لإبقاء الخوادم تعمل في الخلفية مع إشعار أثناء عملها. الوصول إلى المجلدات: فقط المجلدات التي تختارها؛ ويمكن للنسخة الكاملة على أندرويد طلب \"الوصول إلى كل الملفات\" لمشاركة أي مجلد (اختياري). تحسين البطارية (النسخة الكاملة على أندرويد): طلب اختياري حتى لا يوقف أندرويد الخوادم عند إطفاء الشاشة."
+    "p": "الوصول إلى الشبكة: لتشغيل الخوادم. الإشعارات والخدمة الأمامية (أندرويد): لإبقاء الخوادم تعمل في الخلفية مع إشعار أثناء عملها. تحسين البطارية (أندرويد، نسخة GitHub فقط): طلب اختياري حتى لا يوقف أندرويد الخوادم عند إطفاء الشاشة. لا يطلب التطبيق الوصول إلى صورك أو ملفاتك أو جهات الاتصال أو الكاميرا أو الميكروفون أو الموقع."
    },
    {
     "h": "الأطفال",

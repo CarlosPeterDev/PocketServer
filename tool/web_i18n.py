@@ -46,7 +46,7 @@ AR = {
  'Who can see this link:':'من يستطيع رؤية هذا الرابط:','Your files':'ملفاتك','Add Link':'إضافة رابط','Save Changes':'حفظ التغييرات',
  'Upload files to get started':'ارفع ملفات للبدء','Empty folder':'مجلد فارغ','No files yet':'لا توجد ملفات بعد','(optional)':'(اختياري)',
  'Apply':'تطبيق','Done':'تم','Password required':'كلمة المرور مطلوبة','Please wait...':'يرجى الانتظار...','Saving...':'جارٍ الحفظ...',
- 'Move to':'نقل إلى','Copy to':'نسخ إلى','Password':'كلمة المرور',
+ 'Move to':'نقل إلى','Copy to':'نسخ إلى','Password':'كلمة المرور','Language':'اللغة',
  # placeholders / titles
  'Add a note...':'أضف ملاحظة...','Current password':'كلمة المرور الحالية','Enter your password to confirm':'أدخل كلمة المرور للتأكيد',
  'New password (min 4 chars)':'كلمة مرور جديدة (4 أحرف على الأقل)','Search files...':'ابحث عن ملفات...','Type here...':'اكتب هنا...',
@@ -116,13 +116,10 @@ JS = r"""/*ps-i18n*/
   function apply(){
     var h=document.documentElement; h.setAttribute('lang',lang); h.setAttribute('dir',lang==='ar'?'rtl':'ltr');
     if(document.body)walk(document.body);
-    var b=document.getElementById('ps-lang'); if(b)b.textContent=lang==='ar'?'EN':'ع';
   }
   function start(){
-    var b=document.createElement('button'); b.id='ps-lang'; b.type='button';
-    b.style.cssText='position:fixed;left:10px;bottom:64px;z-index:9998;width:40px;height:40px;border-radius:20px;border:0;background:rgba(80,80,120,.85);color:#fff;font:600 15px sans-serif;cursor:pointer';
-    b.onclick=function(){lang=lang==='ar'?'en':'ar';try{localStorage.setItem('ps_lang',lang)}catch(e){} apply()};
-    document.body.appendChild(b); apply();
+    window.psSetLang=function(l){lang=l==='ar'?'ar':'en';try{localStorage.setItem('ps_lang',lang)}catch(e){} apply()};
+    apply();
     if(window.MutationObserver){
       var busy=false;
       new MutationObserver(function(ms){
@@ -139,9 +136,22 @@ JS = r"""/*ps-i18n*/
 })();
 """
 
+LANG_BLOCK = '''    <!-- ps-lang -->
+    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 mb-4">
+      <p class="text-xs font-black text-slate-500 uppercase tracking-wider mb-3">Language</p>
+      <div class="flex gap-2">
+        <button onclick="psSetLang('en')" class="flex-1 py-2.5 rounded-xl font-black text-sm bg-white dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 active:scale-95">English</button>
+        <button onclick="psSetLang('ar')" class="flex-1 py-2.5 rounded-xl font-black text-sm bg-white dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 active:scale-95">العربية</button>
+      </div>
+    </div>
+
+'''
 s = P.read_text(encoding='utf-8')
-if MARK in s:
-    print('already has i18n'); raise SystemExit
+if MARK in s:  # replace an older block
+    i = s.index('<script>\n' + MARK); j = s.index('</script>\n', i) + len('</script>\n')
+    s = s[:i] + s[j:]
+if '<!-- ps-lang -->' not in s:
+    s = s.replace('    <!-- Server info -->', LANG_BLOCK + '    <!-- Server info -->', 1)
 a = s.rindex('<script>\n')
 block = '<script>\n' + JS.replace('__DICT__', json.dumps(D, ensure_ascii=False)).replace('__PREFIX__', json.dumps(PREFIX, ensure_ascii=False)) + '</script>\n'
 P.write_text(s[:a] + block + s[a:], encoding='utf-8')

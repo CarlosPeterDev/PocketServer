@@ -68,16 +68,16 @@
     "tip": "Windows sometimes refuses drives that use plain http. If that happens, use the Web hub or FTP instead: they work everywhere."
    },
    {
-    "id": "folders",
+    "id": "files",
     "icon": "folder",
-    "title": "Choose what to share",
-    "intro": "Each server shares one folder (called a space). By default it is PocketServer's own folder.",
+    "title": "Where are my files?",
+    "intro": "All servers share one folder: the PocketServer folder inside the app. There is nothing to choose or set up.",
     "steps": [
-     "Open Folders (the folder icon) and press Use a folder.",
-     "Pick a folder from your storage and give it a name.",
-     "Edit a server and choose that folder. An FTP server can share several folders at once."
+     "Add files by uploading them from another device: through the web page, an FTP app or a WebDAV drive.",
+     "Download them again from the same places.",
+     "If you delete the app, this folder is deleted too, so copy important files out first."
     ],
-    "tip": "On the Google Play version only the PocketServer folder can be shared. The full version can share any folder."
+    "tip": "On newer Android versions this folder is hidden from the phone's own file manager. That is normal: use the web page, FTP or WebDAV to reach your files."
    },
    {
     "id": "background",
@@ -191,16 +191,16 @@
     "tip": "أحياناً يرفض ويندوز الأقراص التي تستخدم http العادي. في هذه الحالة استخدم مركز الويب أو FTP: يعملان في كل مكان."
    },
    {
-    "id": "folders",
+    "id": "files",
     "icon": "folder",
-    "title": "اختر ما تريد مشاركته",
-    "intro": "كل خادم يشارك مجلداً واحداً (يُسمّى مساحة). افتراضياً هو مجلد PocketServer نفسه.",
+    "title": "أين ملفاتي؟",
+    "intro": "كل الخوادم تشارك مجلداً واحداً: مجلد PocketServer داخل التطبيق. لا يوجد شيء لاختياره أو إعداده.",
     "steps": [
-     "افتح المجلدات (أيقونة المجلد) واضغط استخدم مجلداً.",
-     "اختر مجلداً من تخزين هاتفك وأعطه اسماً.",
-     "عدّل الخادم واختر ذلك المجلد. يمكن لخادم FTP مشاركة عدة مجلدات معاً."
+     "أضف الملفات برفعها من جهاز آخر: عبر صفحة الويب أو تطبيق FTP أو قرص WebDAV.",
+     "نزّلها مرة أخرى من نفس الأماكن.",
+     "إذا حذفت التطبيق يُحذف هذا المجلد أيضاً، لذلك انسخ الملفات المهمة إلى مكان آخر أولاً."
     ],
-    "tip": "في نسخة Google Play يمكن مشاركة مجلد PocketServer فقط. النسخة الكاملة تستطيع مشاركة أي مجلد."
+    "tip": "في إصدارات أندرويد الحديثة يكون هذا المجلد مخفياً عن مدير ملفات الهاتف. هذا طبيعي: استخدم صفحة الويب أو FTP أو WebDAV للوصول إلى ملفاتك."
    },
    {
     "id": "background",

@@ -1,11 +1,11 @@
 # Publishing PocketServer on Google Play
 
 Use **`PocketServer-android-play.aab`** from the GitHub Release. The GitHub-only `PocketServer-android*.apk` files
-ask for "All files access" and the battery exemption, which Google Play restricts: do not upload those.
+also ask for the battery exemption, which Google Play restricts: do not upload those.
 
 ## Already handled in the code
-- **No restricted permissions in the Play build**: no `MANAGE_EXTERNAL_STORAGE`, no `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`
-  (stripped by `tool/patch_platforms.py strip-allfiles`; the app opens the battery settings page instead).
+- **No restricted permissions in the Play build**: no storage permission anywhere, and no `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`
+  (stripped from the Play build by `tool/patch_platforms.py strip-allfiles`; the app opens the battery settings page instead).
 - No boot receiver / no `RECEIVE_BOOT_COMPLETED`, no unused multicast permission, cloud backup off (the config file holds server passwords).
 - Foreground service type `specialUse` with the required subtype property; a notification is always shown while servers run.
 - **Ads**: Google UMP consent form for EU/UK before any ad request, "Ad privacy choices" entry in Settings when required,
@@ -44,12 +44,11 @@ ask for "All files access" and the battery exemption, which Google Play restrict
   (it is private, on the user's own network, not public).
 - **Permissions shown to users**: Network (run the servers), Notifications (foreground service notice), Advertising ID (ads).
 
-## Known limits of the Play build (be upfront in the listing)
-- It can only share PocketServer's own folder (reachable through the web hub, FTP and WebDAV). Sharing any folder needs
-  "All files access", which Play does not allow for this kind of app. A future option is the Storage Access Framework (a
-  larger change: files are then read through the system instead of directly).
-- On Android 11+ the app folder is under `Android/data/dev.carlospeter.pocketserver/files/PocketServer`, which phone file
-  managers hide: users add files through the web hub or an FTP/WebDAV client.
+## Good to know
+- The app has no storage permission at all: every server shares PocketServer's own folder. Users add and fetch files through the
+  web page, FTP or WebDAV, so nothing here needs Play's restricted "All files access".
+- On Android 11+ that folder is under `Android/data/dev.carlospeter.pocketserver/files/PocketServer`, which phone file managers
+  hide; the in-app guide ("Where are my files?") explains this.
 - Not a legal review: have the privacy policy and Data safety form checked before you submit.
 
 ## Store listing draft
@@ -57,6 +56,6 @@ ask for "All files access" and the battery exemption, which Google Play restrict
 **Short**: Share files with any device on your WiFi or hotspot: web, FTP, FTPS and WebDAV.
 **Long**: PocketServer turns your phone into a private file box. Open your files from a laptop, TV or another phone on the same
 WiFi or hotspot, with no cables, no cloud and no accounts with us. Web page, FTP / FTPS, WebDAV network drive, several servers
-with their own folders, password protection, live dashboard, English and Arabic.
+with their own ports, password protection, live dashboard, English and Arabic.
 **العنوان**: PocketServer: مشاركة ملفات عبر الواي فاي
 **وصف قصير**: شارك الملفات مع أي جهاز على نفس الواي فاي أو الهوت سبوت: ويب وFTP وFTPS وWebDAV.

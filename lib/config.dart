@@ -80,7 +80,7 @@ class FtpServerConfig {
         readOnly: j['readOnly'] as bool? ?? false,
         enabled: j['enabled'] as bool? ?? false,
         anonymous: j['anonymous'] as bool? ?? false,
-        folderIds: ((j['folderIds'] as List?) ?? []).cast<String>(),
+        folderIds: const [],
         maxConnections: (j['maxConnections'] as num?)?.toInt() ?? 0,
         speedLimitKBps: (j['speedLimitKBps'] as num?)?.toInt() ?? 0,
       );
@@ -140,7 +140,7 @@ class DavConfig {
         username: j['username'] as String? ?? 'user',
         password: j['password'] as String? ?? '',
         port: (j['port'] as num?)?.toInt() ?? 8080,
-        folderId: j['folderId'] as String? ?? kDefaultFolderId,
+        folderId: kDefaultFolderId,
         readOnly: j['readOnly'] as bool? ?? false,
         enabled: j['enabled'] as bool? ?? false,
       );
@@ -167,7 +167,7 @@ class WebHubConfig {
         id: j['id'] as String? ?? FtpServerConfig.newId(),
         name: j['name'] as String? ?? 'Web hub',
         port: (j['port'] as num?)?.toInt() ?? 2011,
-        folderId: j['folderId'] as String? ?? kDefaultFolderId,
+        folderId: kDefaultFolderId,
         enabled: j['enabled'] as bool? ?? true,
       );
 }
@@ -186,13 +186,10 @@ class AppConfig {
 
   /// Resolve a folder id to a real directory path.
   String pathOf(String id, String defaultPath) {
-    if (id == kDefaultFolderId) return defaultPath;
-    final f = folders.where((e) => e.id == id).firstOrNull;
-    return (f == null || f.path.isEmpty) ? defaultPath : f.path;
+    return defaultPath; // single shared folder: PocketServer's own folder
   }
 
-  String nameOf(String id) =>
-      id == kDefaultFolderId ? tr('App folder') : (folders.where((e) => e.id == id).firstOrNull?.name ?? tr('App folder'));
+  String nameOf(String id) => tr('App folder');
 
   Map<String, dynamic> toJson() => {
         'folders': folders.map((e) => e.toJson()).toList(),
@@ -206,7 +203,7 @@ class AppConfig {
         ((j[k] as List?) ?? []).map((e) => f(Map<String, dynamic>.from(e as Map))).toList();
     final hubs = list('webHubs', WebHubConfig.fromJson);
     return AppConfig(
-      folders: list('folders', SharedFolder.fromJson),
+      folders: const [], // folder choice was removed: every server shares the app folder
       webHubs: j.containsKey('webHubs') ? hubs : null,
       ftp: list('ftp', FtpServerConfig.fromJson),
       dav: list('dav', DavConfig.fromJson),

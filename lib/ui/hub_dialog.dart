@@ -28,10 +28,7 @@ class _HubDialogState extends State<HubDialog> {
     }
     name = TextEditingController(text: i?.name ?? tr('Web hub'));
     port = TextEditingController(text: '${i?.port ?? p}');
-    folderId = i?.folderId ?? kDefaultFolderId;
-    if (folderId != kDefaultFolderId && !widget.cfg.folders.any((f) => f.id == folderId)) {
-      folderId = kDefaultFolderId;
-    }
+    folderId = kDefaultFolderId;
     enabled = i?.enabled ?? true;
   }
 
@@ -58,16 +55,6 @@ class _HubDialogState extends State<HubDialog> {
                 if (widget.usedPorts.contains(n)) return tr('Port already used');
                 return null;
               },
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: folderId,
-              decoration: InputDecoration(labelText: tr('Folder')),
-              items: [
-                DropdownMenuItem(value: kDefaultFolderId, child: Text(tr('App folder'))),
-                for (final f in widget.cfg.folders) DropdownMenuItem(value: f.id, child: Text(f.name)),
-              ],
-              onChanged: (v) => setState(() => folderId = v ?? folderId),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,

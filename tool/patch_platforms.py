@@ -32,7 +32,7 @@ def android_manifest():
     perms = [
         "INTERNET", "ACCESS_NETWORK_STATE", "ACCESS_WIFI_STATE", "WAKE_LOCK",
         "FOREGROUND_SERVICE", "FOREGROUND_SERVICE_SPECIAL_USE", "POST_NOTIFICATIONS",
-        "MANAGE_EXTERNAL_STORAGE", "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+        "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
     ]
     block = "".join(f'    <uses-permission android:name="android.permission.{x}"/>\n' for x in perms)
     s = re.sub(r"(<manifest[^>]*>\s*)", lambda m: m.group(1) + "\n" + block, s, count=1)

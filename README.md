@@ -2,12 +2,12 @@
 
 File hub for Android, iOS, macOS, Linux and Windows.
 
-- **Web hubs** (default port 2011): browse, upload, share links, users & permissions, clipboards, notes, stars, activity, text editor. Create several, each with its own port and folder.
+- **Web hubs** (default port 2011): browse, upload, share links, users & permissions, clipboards, notes, stars, activity, text editor. Create several, each with its own port.
 - **WebDAV servers**: mount as a network drive (Windows, macOS, Linux, Android) with username and password.
 - **Login protection**: IPs are blocked for 10 minutes after repeated failed logins (web, FTP, WebDAV).
 - **Dashboard**: live traffic, speed chart, storage breakdown, activity.
-- **FTP / FTPS servers**: any number, each with name, username, password, port, read-only / anonymous, and one or more folders (several folders are merged as top-level directories). Plain FTP, explicit FTPS (AUTH TLS), implicit FTPS (self-signed certificate).
-- **Folders (spaces)**: pick folders from storage and assign them to servers.
+- **FTP / FTPS servers**: any number, each with name, username, password, port, read-only / anonymous. Plain FTP, explicit FTPS (AUTH TLS), implicit FTPS (self-signed certificate).
+- **One shared folder**: every server shares PocketServer's own folder (no storage permission needed). Add files through the web page, FTP or WebDAV.
 - **Android** runs servers in a foreground service (type `specialUse`) so they keep running in the background.
 - **Languages**: English and Arabic (RTL). First launch follows the phone language (Arabic phone -> Arabic, otherwise English); change it in Settings.
 - **First launch** asks for the language and the privacy policy (`assets/privacy.json`, mirrored in `PRIVACY.md` by `tool/gen_privacy_md.py`). Nothing starts before the policy is accepted.
@@ -19,8 +19,8 @@ File hub for Android, iOS, macOS, Linux and Windows.
 - AdMob test ads (app-open on the splash, banner on top) on Android and iOS only.
 
 ## Android builds
-- `PocketServer-android*.apk` - full build, can share any folder (asks for "All files access").
-- `PocketServer-android-play.aab/.apk` - Google Play build: no restricted storage permission, shares the app folder only (Android/data/<id>/files/PocketServer, reachable over USB).
+- `PocketServer-android*.apk` - GitHub build (also offers the battery "Allow" box).
+- `PocketServer-android-play.aab/.apk` - Google Play build: no restricted permissions (opens the battery settings page instead of the Allow box).
 
 ## Build
 Windows: `PocketServer-windows-setup.exe` installer (unsigned, SmartScreen may warn) plus a portable zip.

@@ -14,7 +14,6 @@ import '../l10n.dart';
 import '../paths.dart';
 import 'dashboard_page.dart';
 import 'dav_dialog.dart';
-import 'folders_page.dart';
 import 'ftp_dialog.dart';
 import 'help_page.dart';
 import 'hub_dialog.dart';
@@ -219,12 +218,6 @@ class _HomePageState extends State<HomePage> {
         ),
       ]);
 
-  Future<void> _folders() async {
-    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => FoldersPage(cfg: cfg, paths: widget.paths)));
-    await widget.host.reload();
-    if (mounted) setState(() {});
-  }
-
   /// On every launch (until fixed or dismissed for good): explain, then show the small system "Allow" box.
   Future<void> _maybeAskBattery() async {
     if (!Platform.isAndroid || !mounted) return;
@@ -274,7 +267,6 @@ class _HomePageState extends State<HomePage> {
             onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
                 builder: (_) => DashboardPage(cfg: cfg, paths: widget.paths, host: widget.host))),
           ),
-          IconButton(tooltip: tr('Folders'), icon: const Icon(Icons.folder_open), onPressed: _folders),
           IconButton(
             tooltip: tr('Settings'),
             icon: const Icon(Icons.settings_outlined),
@@ -371,7 +363,7 @@ class _HomePageState extends State<HomePage> {
             Expanded(child: Text(tr(w.name), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
             Switch(value: running, onChanged: (v) => _toggleHub(w, v)),
           ]),
-          Text(tr('Port {port} • folder: {folder}', {'port': w.port, 'folder': cfg.nameOf(w.folderId)}),
+          Text(tr('Port {port}', {'port': w.port}),
               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
           if (s?.error != null) Text(s!.error!, style: TextStyle(color: scheme.error)),
           if (running) ...[
@@ -410,7 +402,7 @@ class _HomePageState extends State<HomePage> {
             Expanded(child: Text(tr(d.name), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
             Switch(value: running, onChanged: (v) => _toggleDav(d, v)),
           ]),
-          Text('${tr('Port {port} • user {user}', {'port': d.port, 'user': d.username})}${d.readOnly ? ' • ${tr('read-only')}' : ''}\n${tr('Folder: {folder}', {'folder': cfg.nameOf(d.folderId)})}',
+          Text('${tr('Port {port} • user {user}', {'port': d.port, 'user': d.username})}${d.readOnly ? ' • ${tr('read-only')}' : ''}',
               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
           if (s?.error != null) Text(s!.error!, style: TextStyle(color: scheme.error)),
           if (running) ...[
@@ -433,7 +425,6 @@ class _HomePageState extends State<HomePage> {
     final s = st.ftp[f.id];
     final running = s?.running ?? false;
     final url = '${f.mode.scheme}://$_ip:${f.port}';
-    final folders = (f.folderIds.isEmpty ? [kDefaultFolderId] : f.folderIds).map(cfg.nameOf).join(' + ');
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
@@ -446,7 +437,7 @@ class _HomePageState extends State<HomePage> {
           ]),
           Text(
               '${f.mode.label} • ${tr('port {port}', {'port': f.port})} • ${tr('user {user}', {'user': f.anonymous ? 'anonymous / ${f.username}' : f.username})}'
-              '${f.readOnly ? ' • ${tr('read-only')}' : ''}\n${tr('Folder: {folder}', {'folder': folders})}',
+              '${f.readOnly ? ' • ${tr('read-only')}' : ''}',
               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13)),
           if (s?.error != null) Text(s!.error!, style: TextStyle(color: scheme.error)),
           if (running) ...[

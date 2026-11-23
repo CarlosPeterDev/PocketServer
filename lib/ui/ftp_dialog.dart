@@ -38,10 +38,7 @@ class _FtpDialogState extends State<FtpDialog> {
     anonymous = i?.anonymous ?? false;
     enabled = i?.enabled ?? true;
     hide = true;
-    folderIds = {...(i?.folderIds ?? <String>[])};
-    final valid = {kDefaultFolderId, ...widget.cfg.folders.map((f) => f.id)};
-    folderIds.removeWhere((e) => !valid.contains(e));
-    if (folderIds.isEmpty) folderIds.add(kDefaultFolderId);
+    folderIds = {kDefaultFolderId};
   }
 
   @override
@@ -106,26 +103,6 @@ class _FtpDialogState extends State<FtpDialog> {
                 items: [for (final m in FtpMode.values) DropdownMenuItem(value: m, child: Text(m.label))],
                 onChanged: (m) => setState(() => mode = m ?? mode),
               ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(tr('Folders (several = merged)'), style: Theme.of(context).textTheme.labelLarge),
-              ),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                dense: true,
-                title: Text(tr('App folder')),
-                value: folderIds.contains(kDefaultFolderId),
-                onChanged: (v) => setState(() => v == true ? folderIds.add(kDefaultFolderId) : folderIds.remove(kDefaultFolderId)),
-              ),
-              for (final f in widget.cfg.folders)
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  dense: true,
-                  title: Text(f.name),
-                  value: folderIds.contains(f.id),
-                  onChanged: (v) => setState(() => v == true ? folderIds.add(f.id) : folderIds.remove(f.id)),
-                ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(tr('Read-only')),
@@ -153,7 +130,6 @@ class _FtpDialogState extends State<FtpDialog> {
         FilledButton(
           onPressed: () {
             if (!_form.currentState!.validate()) return;
-            if (folderIds.isEmpty) return;
             Navigator.pop(
               context,
               FtpServerConfig(
@@ -166,7 +142,7 @@ class _FtpDialogState extends State<FtpDialog> {
                 readOnly: readOnly,
                 anonymous: anonymous,
                 enabled: enabled,
-                folderIds: folderIds.toList(),
+                folderIds: const [],
                 maxConnections: int.tryParse(maxConn.text) ?? 0,
                 speedLimitKBps: int.tryParse(speed.text) ?? 0,
               ),

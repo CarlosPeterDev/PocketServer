@@ -30,8 +30,7 @@ class _DavDialogState extends State<DavDialog> {
     user = TextEditingController(text: i?.username ?? 'user');
     pass = TextEditingController(text: i?.password ?? '');
     port = TextEditingController(text: '${i?.port ?? p}');
-    folderId = i?.folderId ?? kDefaultFolderId;
-    if (folderId != kDefaultFolderId && !widget.cfg.folders.any((f) => f.id == folderId)) folderId = kDefaultFolderId;
+    folderId = kDefaultFolderId;
     readOnly = i?.readOnly ?? false;
     enabled = i?.enabled ?? true;
     hide = true;
@@ -79,16 +78,6 @@ class _DavDialogState extends State<DavDialog> {
                   if (widget.usedPorts.contains(n)) return tr('Port already used');
                   return null;
                 },
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: folderId,
-                decoration: InputDecoration(labelText: tr('Folder')),
-                items: [
-                  DropdownMenuItem(value: kDefaultFolderId, child: Text(tr('App folder'))),
-                  for (final f in widget.cfg.folders) DropdownMenuItem(value: f.id, child: Text(f.name)),
-                ],
-                onChanged: (v) => setState(() => folderId = v ?? folderId),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
