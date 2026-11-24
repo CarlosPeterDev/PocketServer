@@ -10,7 +10,8 @@ import 'storage_scan.dart';
 
 /// Live dashboard: traffic, speed chart, per-server stats, storage breakdown, activity.
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key, required this.cfg, required this.paths, required this.host});
+  const DashboardPage({super.key, required this.cfg, required this.paths, required this.host, this.embedded = false});
+  final bool embedded;
   final AppConfig cfg;
   final AppPaths paths;
   final HostController host;
@@ -82,17 +83,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final servers = {...outBy.keys, ...inBy.keys};
     final events = ((st.stats['events'] as List?) ?? []).cast<Map>();
 
-    return Scaffold(
-      appBar: AppBar(title: Text(tr('Dashboard')), actions: [
-        IconButton(
-          tooltip: tr('Rescan storage'),
-          icon: scanning
-              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Icon(Icons.refresh),
-          onPressed: scanning ? null : _scan,
-        ),
-      ]),
-      body: ListView(padding: const EdgeInsets.all(16), children: [
+    final content = <Widget>[
         LayoutBuilder(builder: (context, c) {
           final cols = math.max(2, (c.maxWidth / 190).floor());
           _tileWidth = (c.maxWidth - 12 * (cols - 1)) / cols;
@@ -154,7 +145,28 @@ class _DashboardPageState extends State<DashboardPage> {
               for (final e in events.take(25)) _eventTile(e, cs),
             ]),
           ),
-      ]),
+    ];
+    final refresh = IconButton(
+      tooltip: tr('Rescan storage'),
+      icon: scanning
+          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+          : const Icon(Icons.refresh),
+      onPressed: scanning ? null : _scan,
+    );
+    if (widget.embedded) {
+      // shown inside the main screen, above the servers
+      return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Expanded(child: Text(tr('Dashboard'), style: Theme.of(context).textTheme.titleLarge)),
+          refresh,
+        ]),
+        const SizedBox(height: 8),
+        ...content,
+      ]);
+    }
+    return Scaffold(
+      appBar: AppBar(title: Text(tr('Dashboard')), actions: [refresh]),
+      body: ListView(padding: const EdgeInsets.all(16), children: content),
     );
   }
 

@@ -279,12 +279,6 @@ class _HomePageState extends State<HomePage> {
             onPressed: () => anyRunning ? widget.host.stopAll() : widget.host.startAll(),
           ),
           IconButton(
-            tooltip: tr('Dashboard'),
-            icon: const Icon(Icons.insights_outlined),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(
-                builder: (_) => DashboardPage(cfg: cfg, paths: widget.paths, host: widget.host))),
-          ),
-          IconButton(
             tooltip: tr('Settings'),
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => Navigator.of(context)
@@ -331,6 +325,10 @@ class _HomePageState extends State<HomePage> {
                     ]),
                   ),
                 ),
+              DashboardPage(cfg: cfg, paths: widget.paths, host: widget.host, embedded: true),
+              const SizedBox(height: 24),
+              Text(tr('Servers'), style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 8),
               _sectionTitle(tr('Web hubs'), 'web'),
               const SizedBox(height: 8),
               for (final w in cfg.webHubs) _hubCard(w, scheme),
