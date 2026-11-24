@@ -54,7 +54,7 @@ Future<void> showBatteryHelp(BuildContext context, {File? marker}) async {
       content: SingleChildScrollView(
         child: Text(
           '${tr('PocketServer shares your files from this phone, so it has to keep running when the screen is off or the app is in the background. With the default battery setting, Android may stop it after a while to save power, and your FTP, WebDAV and web connections (and any transfer in progress) would stop working.')}\n\n'
-          tr('Tap Continue, then press Allow in the small Android box that appears. You can change this back at any time in the phone settings.'),
+          '${tr('Tap Continue, then press Allow in the small Android box that appears. You can change this back at any time in the phone settings.')}',
         ),
       ),
       actions: [
