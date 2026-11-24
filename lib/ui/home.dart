@@ -279,6 +279,11 @@ class _HomePageState extends State<HomePage> {
             onPressed: () => anyRunning ? widget.host.stopAll() : widget.host.startAll(),
           ),
           IconButton(
+            tooltip: tr('Guide'),
+            icon: const Icon(Icons.menu_book_outlined),
+            onPressed: () => _help(),
+          ),
+          IconButton(
             tooltip: tr('Settings'),
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => Navigator.of(context)
