@@ -30,6 +30,8 @@ jobs:
           rm -rf test
           python3 tool/patch_platforms.py android
       - run: flutter pub get
+      - name: Add Stop button to the service notification
+        run: python3 tool/patch_bg_service.py
       - run: dart run flutter_launcher_icons -f tool/icons/android.yaml
       - run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - name: Build APK and AAB (same code, same permissions)
