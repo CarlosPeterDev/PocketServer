@@ -134,4 +134,6 @@ const Map<String, String> kArabic = {
   'Other': 'أخرى',
   'FTP server': 'خادم FTP',
   'Port {port}': 'المنفذ {port}',
+  'If this address does not open on another device, try:': 'إذا لم يفتح هذا العنوان على جهاز آخر، جرّب:',
+  'Not found? Both devices must be on the same WiFi (or one on the other\'s hotspot). Turn off "AP / client isolation" in the router and turn off VPN.': 'لا يعمل؟ يجب أن يكون الجهازان على نفس الواي فاي (أو أحدهما على هوتسبوت الآخر). أوقف "عزل العملاء / AP isolation" في الراوتر وأوقف الـ VPN.',
 };

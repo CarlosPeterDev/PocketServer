@@ -24,7 +24,7 @@ On Android and iOS the app shows ads from Google AdMob. AdMob may collect and us
 
 ### Permissions
 
-Network access: to run the servers. Notifications and foreground service (Android): to keep the servers running in the background, with a notification while they run. Battery optimisation (Android, not in the Google Play version): an optional request so Android does not stop the servers when the screen is off. The app does not ask for access to your photos, files, contacts, camera, microphone or location.
+Network access: to run the servers. Notifications and foreground service (Android): to keep the servers running in the background, with a notification while they run. Battery optimisation (Android): an optional request so Android does not stop the servers when the screen is off. The app does not ask for access to your photos, files, contacts, camera, microphone or location.
 
 ### Children
 
@@ -69,7 +69,7 @@ _آخر تحديث: 22 نوفمبر 2026_
 
 ### الأذونات
 
-الوصول إلى الشبكة: لتشغيل الخوادم. الإشعارات والخدمة الأمامية (أندرويد): لإبقاء الخوادم تعمل في الخلفية مع إشعار أثناء عملها. تحسين البطارية (أندرويد، ليس في نسخة Google Play): طلب اختياري حتى لا يوقف أندرويد الخوادم عند إطفاء الشاشة. لا يطلب التطبيق الوصول إلى صورك أو ملفاتك أو جهات الاتصال أو الكاميرا أو الميكروفون أو الموقع.
+الوصول إلى الشبكة: لتشغيل الخوادم. الإشعارات والخدمة الأمامية (أندرويد): لإبقاء الخوادم تعمل في الخلفية مع إشعار أثناء عملها. تحسين البطارية (أندرويد): طلب اختياري حتى لا يوقف أندرويد الخوادم عند إطفاء الشاشة. لا يطلب التطبيق الوصول إلى صورك أو ملفاتك أو جهات الاتصال أو الكاميرا أو الميكروفون أو الموقع.
 
 ### الأطفال
 

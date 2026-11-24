@@ -32,22 +32,13 @@ jobs:
       - run: flutter pub get
       - run: dart run flutter_launcher_icons -f tool/icons/android.yaml
       - run: flutter analyze --no-fatal-infos --no-fatal-warnings
-      - name: Build full APKs (all-files access, any folder)
+      - name: Build APK and AAB (same code, same permissions)
         run: |
           flutter build apk --release --build-number ${{ github.run_number }}
-          flutter build apk --release --split-per-abi --build-number ${{ github.run_number }}
+          flutter build appbundle --release --build-number ${{ github.run_number }}
           mkdir out
           cp build/app/outputs/flutter-apk/app-release.apk out/${APP}-android.apk
-          for a in arm64-v8a armeabi-v7a x86_64; do
-            cp build/app/outputs/flutter-apk/app-$a-release.apk out/${APP}-android-$a.apk
-          done
-      - name: Build Google Play versions (no restricted permission)
-        run: |
-          python3 tool/patch_platforms.py strip-allfiles
-          flutter build appbundle --release --dart-define=PLAY_BUILD=true --build-number ${{ github.run_number }}
-          cp build/app/outputs/bundle/release/app-release.aab out/${APP}-android-play.aab
-          flutter build apk --release --dart-define=PLAY_BUILD=true --build-number ${{ github.run_number }}
-          cp build/app/outputs/flutter-apk/app-release.apk out/${APP}-android-play.apk
+          cp build/app/outputs/bundle/release/app-release.aab out/${APP}-android.aab
       - uses: actions/upload-artifact@v4
         with: { name: android, path: out/* }
 

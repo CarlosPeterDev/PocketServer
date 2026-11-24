@@ -902,12 +902,12 @@ var __async = (__this, __arguments, generator) => {
   });
 };
 pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-let curPath = "", selItems = /* @__PURE__ */ new Set(), curTab = "files", clips = [], links = [];
-let curUser = null, isGuest = false;
-let permCurFile = null, ctxFile = null;
-let pdfDoc = null, pdfPg = 1;
-let lpTimer = null, upStart = 0;
-let allUsers = [];
+var curPath = "", selItems = /* @__PURE__ */ new Set(), curTab = "files", clips = [], links = [];
+var curUser = null, isGuest = false;
+var permCurFile = null, ctxFile = null;
+var pdfDoc = null, pdfPg = 1;
+var lpTimer = null, upStart = 0;
+var allUsers = [];
 function init() {
   return __async(this, null, function* () {
     applyTheme(localStorage.theme || "auto");
@@ -961,7 +961,7 @@ function toast(msg, type = "info") {
   }, 2700);
   setTimeout(() => el.remove(), 3100);
 }
-let mCB = null;
+var mCB = null;
 function showM(title, desc, inp, cb) {
   document.getElementById("mT").innerText = title;
   const de = document.getElementById("mD"), iw = document.getElementById("mIW"), ie = document.getElementById("mI");
@@ -1004,7 +1004,7 @@ function esc(s) {
 function ea(s) {
   return String(s).replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '\\"');
 }
-let awMode = "login";
+var awMode = "login";
 function awTab(m) {
   awMode = m;
   const isL = m === "login";
@@ -1101,10 +1101,12 @@ function guestMode() {
 }
 function showGuestSignIn() {
   if (document.getElementById("guestSignIn")) return;
+  var hv = document.getElementById("hdrAv");
+  if (hv) hv.style.display = "none";
   var b = document.createElement("button");
   b.id = "guestSignIn";
   b.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Sign in';
-  b.style.cssText = "position:fixed;top:12px;right:12px;z-index:650;background:#6366f1;color:#fff;border:0;border-radius:999px;padding:9px 16px;font-weight:700;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer";
+  b.style.cssText = hv ? "background:#6366f1;color:#fff;border:0;border-radius:999px;padding:6px 12px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0" : "position:fixed;top:12px;right:12px;z-index:650;background:#6366f1;color:#fff;border:0;border-radius:999px;padding:9px 16px;font-weight:700;font-size:14px;cursor:pointer";
   b.onclick = function() {
     var aw = document.getElementById("authWall");
     if (aw) {
@@ -1113,7 +1115,7 @@ function showGuestSignIn() {
       aw.style.pointerEvents = "";
     }
   };
-  document.body.appendChild(b);
+  if (hv && hv.parentNode) hv.parentNode.insertBefore(b, hv); else document.body.appendChild(b);
 }
 function dismissAuthWall() {
   var aw = document.getElementById("authWall");
@@ -1332,7 +1334,7 @@ function renderGrid(items) {
   });
   if (typeof window._tvAutoFocus === "function") window._tvAutoFocus();
 }
-let ctxData = {};
+var ctxData = {};
 function showCtx(e, name, path, type, isF, vis, owner) {
   e.preventDefault();
   e.stopPropagation();
@@ -1753,7 +1755,7 @@ function pCopyTxt() {
     safeCopy(t);
   });
 }
-let selMode = false;
+var selMode = false;
 function enterSelMode(name) {
   selMode = true;
   selItems.add(name);
@@ -1962,7 +1964,7 @@ function showQR() {
   document.getElementById("qrUrl").innerText = u;
   new QRCode(document.getElementById("qrc"), { text: u, width: 180, height: 180 });
 }
-let permFilePath = null, permOwner = null;
+var permFilePath = null, permOwner = null;
 function openPermM(path, name, vis, owner) {
   if (!curUser) {
     toast("Sign in to manage access", "warn");
@@ -2038,7 +2040,7 @@ function renderClips() {
     return '<div class="cc">\n      <div class="dm-foot" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid #e2e8f0;background:#f8fafc">\n        <div style="width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,#60a5fa,#a78bfa);flex-shrink:0"></div>\n        <input value="'.concat(esc(cl.title || "Clipboard"), '" placeholder="Name..."\n          style="flex:1;background:transparent;font-weight:800;font-size:12px;outline:none;border:none;min-width:0" class="dm-label"\n          onchange="clips[').concat(i, '].title=this.value;saveClipsAPI()">\n        <span style="font-size:9px;color:#94a3b8;font-family:monospace;flex-shrink:0">').concat(ch, "c\xB7").concat(ln, 'l</span>\n        <button onclick="openClipPermM(').concat(i, ')" style="font-size:9px;padding:3px 7px;border-radius:8px;border:1.5px solid ').concat(visClr, ";color:").concat(visClr, ';background:transparent;cursor:pointer;font-weight:800;flex-shrink:0">').concat(visLabel, '</button>\n      </div>\n      <textarea id="ct').concat(i, '" class="dm-sheet" style="width:100%;background:white;padding:10px 12px;font-size:12px;font-family:monospace;outline:none;border:none;resize:vertical;min-height:90px;border-radius:0" placeholder="Paste or type..." oninput="autoSv(').concat(i, ')">').concat(esc(cl.text || ""), '</textarea>\n      <div class="dm-foot" style="display:flex;flex-wrap:wrap;gap:5px;padding:8px 10px;border-top:1px solid #e2e8f0;background:#f8fafc">\n        <button onclick="cpClip(').concat(i, ')" style="font-size:10px;padding:6px 10px;background:#dbeafe;color:#2563eb;border-radius:9px;font-weight:800;border:none;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="fa-solid fa-copy"></i>Copy</button>\n        <button onclick="svClipFile(').concat(i, ')" style="font-size:10px;padding:6px 10px;background:#dcfce7;color:#16a34a;border-radius:9px;font-weight:800;border:none;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="fa-solid fa-floppy-disk"></i>Save</button>\n        <button onclick="dlClip(').concat(i, ')" style="font-size:10px;padding:6px 10px;background:#e0e7ff;color:#4338ca;border-radius:9px;font-weight:800;border:none;cursor:pointer;display:flex;align-items:center;gap:4px"><i class="fa-solid fa-download"></i>DL</button>\n        <button onclick="delClip(').concat(i, ')" style="font-size:10px;padding:6px 10px;background:#fee2e2;color:#dc2626;border-radius:9px;font-weight:800;border:none;cursor:pointer;margin-left:auto"><i class="fa-solid fa-trash"></i></button>\n      </div>\n    </div>');
   }).join("");
 }
-let svTmr = {};
+var svTmr = {};
 function autoSv(i) {
   clearTimeout(svTmr[i]);
   svTmr[i] = setTimeout(() => {
@@ -2139,7 +2141,7 @@ function changePassword() {
     } else toast(d.error || "Failed", "error");
   });
 }
-let clipPermIdx = null;
+var clipPermIdx = null;
 function openClipPermM(i) {
   clipPermIdx = i;
   const cl = clips[i];
@@ -2435,7 +2437,7 @@ function confirmDeleteAccount() {
     }
   };
 })();
-let notesPath = "";
+var notesPath = "";
 function openNotes(path, name) {
   notesPath = path;
   document.getElementById("notesFN").innerText = name;
@@ -2475,7 +2477,7 @@ function deleteNote(idx) {
     loadNotes();
   });
 }
-let starredPaths = /* @__PURE__ */ new Set();
+var starredPaths = /* @__PURE__ */ new Set();
 function loadStars() {
   return __async(this, null, function* () {
     if (!curUser) return;
@@ -2577,7 +2579,7 @@ function showFileInfo(path) {
     document.getElementById("fileInfoM").style.display = "flex";
   });
 }
-let shareFilePath = "", shareExpiry = 24;
+var shareFilePath = "", shareExpiry = 24;
 function openShareLink(path, name) {
   shareFilePath = path;
   document.getElementById("shareLinkFN").innerText = name;
@@ -2611,7 +2613,7 @@ function copyShareLink() {
   const url = document.getElementById("shareLinkUrl").value;
   safeCopy(url, "Link copied! \u{1F517}");
 }
-let editorPath = "";
+var editorPath = "";
 function openEditor(path, name) {
   return __async(this, null, function* () {
     editorPath = path;
@@ -2652,7 +2654,7 @@ function loadStorageStats() {
     el.innerHTML = '<div style="margin-top:8px">\n    <div style="display:flex;justify-content:space-between;margin-bottom:4px">\n      <span style="font-size:11px;font-weight:800;color:#64748b">Your files</span>\n      <span style="font-size:11px;font-weight:900;color:#3b82f6">'.concat(d.your_size, " (").concat(d.your_files, ' files)</span>\n    </div>\n    <div style="display:flex;justify-content:space-between">\n      <span style="font-size:11px;font-weight:800;color:#64748b">Total on server</span>\n      <span style="font-size:11px;font-weight:900;color:#64748b">').concat(d.total_size, '</span>\n    </div>\n    <div style="margin-top:8px;background:#f1f5f9;border-radius:6px;height:6px;overflow:hidden">\n      <div style="height:6px;border-radius:6px;background:linear-gradient(90deg,#3b82f6,#8b5cf6);width:').concat(Math.min(100, Math.round(d.your_size_bytes / Math.max(1, d.total_size_bytes || 1) * 100)), '%"></div>\n    </div>\n  </div>');
   });
 }
-const _origOpenSett = openSett;
+var _origOpenSett = openSett;
 </script>
 </body>
 </html>

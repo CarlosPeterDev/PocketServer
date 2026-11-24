@@ -78,8 +78,6 @@ def strip_all_files():
     p = "android/app/src/main/AndroidManifest.xml"
     s = rd(p)
     s = re.sub(r'\s*<uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>', "", s)
-    # Play restricts the battery-optimisation exemption request too (the app then opens the settings page instead)
-    s = re.sub(r'\s*<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>', "", s)
     wr(p, s)
 
 
@@ -204,10 +202,6 @@ def macos():
 
 
 if __name__ == "__main__":
-    if sys.argv[1:] == ["strip-allfiles"]:
-        strip_all_files()
-        print("stripped MANAGE_EXTERNAL_STORAGE + REQUEST_IGNORE_BATTERY_OPTIMIZATIONS")
-        sys.exit(0)
     which = set(sys.argv[1:]) or {"android", "ios", "macos"}
     if "android" in which:
         android_manifest()

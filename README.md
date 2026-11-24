@@ -20,8 +20,8 @@ File hub for Android, iOS, macOS, Linux and Windows.
 - AdMob test ads (app-open on the splash, banner on top) on Android and iOS only.
 
 ## Android builds
-- `PocketServer-android*.apk` - GitHub build (also offers the battery "Allow" box).
-- `PocketServer-android-play.aab/.apk` - Google Play build: no restricted permissions (opens the battery settings page instead of the Allow box).
+- `PocketServer-android.apk` - one APK for every phone (installs directly).
+- `PocketServer-android.aab` - the same app as a bundle for Google Play. Same code and permissions as the APK, so testing the APK tests what Play will publish.
 
 ## Build
 Windows: `PocketServer-windows-setup.exe` installer (unsigned, SmartScreen may warn) plus a portable zip.

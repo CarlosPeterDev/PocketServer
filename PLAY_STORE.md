@@ -1,11 +1,14 @@
 # Publishing PocketServer on Google Play
 
-Use **`PocketServer-android-play.aab`** from the GitHub Release. The GitHub-only `PocketServer-android*.apk` files
-also ask for the battery exemption, which Google Play restricts: do not upload those.
+Upload **`PocketServer-android.aab`** from the GitHub Release. `PocketServer-android.apk` is the same app (same code and
+permissions) packaged for direct install, so testing the APK tests what Play will publish.
 
 ## Already handled in the code
-- **No restricted permissions in the Play build**: no storage permission anywhere, and no `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`
-  (stripped from the Play build by `tool/patch_platforms.py strip-allfiles`; the app opens the battery settings page instead).
+- No storage permission anywhere. The app does declare `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` (the small system "Allow" box).
+  Google Play restricts this permission: you must fill in the **Permissions declaration form** in Play Console
+  (App content) and explain: "PocketServer is a file server that must keep running while the screen is off, otherwise the
+  user's FTP/WebDAV/web transfers stop. The app asks once, only after explaining why, and works if the user declines."
+  Review can be strict for this permission; if Play rejects it, remove it from `tool/patch_platforms.py` (the app falls back to the battery settings page).
 - No boot receiver / no `RECEIVE_BOOT_COMPLETED`, no unused multicast permission, cloud backup off (the config file holds server passwords).
 - Foreground service type `specialUse` with the required subtype property; a notification is always shown while servers run.
 - **Ads**: Google UMP consent form for EU/UK before any ad request, "Ad privacy choices" entry in Settings when required,

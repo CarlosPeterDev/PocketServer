@@ -274,14 +274,40 @@ class FtpStatus {
       );
 }
 
+/// This phone's IPv4 addresses, the most likely WiFi / hotspot address first.
+/// Mobile-data, VPN and link-local interfaces go last (they are unreachable from other devices).
 Future<List<String>> localIps() async {
-  final out = <String>[];
+  final scored = <MapEntry<String, int>>[];
   try {
     for (final ni in await NetworkInterface.list(type: InternetAddressType.IPv4)) {
+      final n = ni.name.toLowerCase();
+      final bad = RegExp(r'^(rmnet|ccmni|pdp|tun|ppp|v4-|clat|dummy|lo)').hasMatch(n);
       for (final a in ni.addresses) {
-        if (!a.isLoopback) out.add(a.address);
+        if (a.isLoopback) continue;
+        final ip = a.address;
+        var score = 5;
+        if (ip.startsWith('169.254.')) {
+          score = 9;
+        } else if (bad) {
+          score = 8;
+        } else if (ip.startsWith('192.168.')) {
+          score = 0;
+        } else if (ip.startsWith('172.')) {
+          final o = int.tryParse(ip.split('.')[1]) ?? 0;
+          score = (o >= 16 && o <= 31) ? 1 : 6;
+        } else if (ip.startsWith('10.')) {
+          score = 2;
+        } else if (RegExp(r'^(wlan|ap|swlan|eth|en|wl)').hasMatch(n)) {
+          score = 3;
+        }
+        scored.add(MapEntry(ip, score));
       }
     }
   } catch (_) {}
+  scored.sort((x, y) => x.value.compareTo(y.value));
+  final out = <String>[];
+  for (final e in scored) {
+    if (!out.contains(e.key)) out.add(e.key);
+  }
   return out;
 }

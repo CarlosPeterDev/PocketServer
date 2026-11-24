@@ -63,6 +63,23 @@ class _HomePageState extends State<HomePage> {
 
   String get _ip => st.ips.isEmpty ? 'localhost' : st.ips.first;
 
+  /// Other addresses of this phone (WiFi vs hotspot ...) plus a hint for "not found" on other devices.
+  Widget _altAddresses(ColorScheme scheme, String scheme0, int port, String suffix) {
+    final others = st.ips.skip(1).toList();
+    final small = TextStyle(color: scheme.onSurfaceVariant, fontSize: 12);
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      if (others.isNotEmpty) ...[
+        const SizedBox(height: 4),
+        Text(tr('If this address does not open on another device, try:'), style: small),
+        for (final ip in others)
+          SelectableText('$scheme0://$ip:$port$suffix', textDirection: TextDirection.ltr, style: small),
+      ],
+      const SizedBox(height: 4),
+      Text(tr('Not found? Both devices must be on the same WiFi (or one on the other\'s hotspot). Turn off "AP / client isolation" in the router and turn off VPN.'),
+          style: small),
+    ]);
+  }
+
   Set<int> _ports({String? exceptWeb, String? exceptFtp, String? exceptDav}) => {
         ...cfg.webHubs.where((w) => w.id != exceptWeb).map((w) => w.port),
         ...cfg.ftp.where((f) => f.id != exceptFtp).map((f) => f.port),
@@ -369,6 +386,7 @@ class _HomePageState extends State<HomePage> {
           if (running) ...[
             const SizedBox(height: 4),
             SelectableText(url, textDirection: TextDirection.ltr, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+            _altAddresses(scheme, 'http', w.port, ''),
           ],
           Wrap(alignment: WrapAlignment.end, children: [
             if (running) ...[
@@ -408,6 +426,7 @@ class _HomePageState extends State<HomePage> {
           if (running) ...[
             const SizedBox(height: 4),
             SelectableText(url, textDirection: TextDirection.ltr),
+            _altAddresses(scheme, 'http', d.port, '/'),
             Text(tr('Windows: Map network drive. macOS: Connect to Server. Linux/Android: any WebDAV client.'),
                 style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
           ],
@@ -443,6 +462,7 @@ class _HomePageState extends State<HomePage> {
           if (running) ...[
             const SizedBox(height: 4),
             SelectableText(url, textDirection: TextDirection.ltr),
+            _altAddresses(scheme, f.mode.scheme, f.port, ''),
             Text(tr(s!.connections == 1 ? '{n} connection' : '{n} connections', {'n': s.connections}),
                 style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
             if (f.mode != FtpMode.ftp)

@@ -39,6 +39,8 @@ r = subprocess.run(['npx', '--yes', 'esbuild@0.28.2', '--target=chrome53', '--lo
 if r.returncode:
     sys.exit(r.stderr)
 out = r.stdout
+# old browsers enforce the temporal dead zone: init() runs before later top-level let/const -> use var (hoisted)
+out = re.sub(r'(?m)^(?:let|const) ', 'var ', out)
 if "'''" in out:
     sys.exit("output contains ''' which would end the Dart raw string")
 P.write_text(s[:a] + PRELUDE + out + s[b:], encoding='utf-8')
