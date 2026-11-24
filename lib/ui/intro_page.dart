@@ -30,6 +30,7 @@ const _icons = <String, IconData>{
   'wifi': Icons.wifi,
   'shield': Icons.verified_user_outlined,
   'steps': Icons.checklist_rounded,
+  'pin': Icons.push_pin_outlined,
 };
 
 class _IntroPageState extends State<IntroPage> {

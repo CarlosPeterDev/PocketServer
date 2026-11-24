@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -21,6 +23,7 @@ const _icons = <String, IconData>{
   'battery': Icons.battery_saver_outlined,
   'shield': Icons.shield_outlined,
   'help': Icons.help_outline,
+  'pin': Icons.push_pin_outlined,
 };
 
 /// Simple, non-technical guide: what each server type is, how to connect, WiFi / hotspot.
@@ -28,7 +31,7 @@ class HelpPage extends StatelessWidget {
   const HelpPage({super.key, required this.host, this.topic});
   final HostController host;
 
-  /// Topic id to open first (start, wifi, web, ftp, webdav, folders, background, safety, trouble).
+  /// Topic id to open first (start, wifi, static, web, ftp, webdav, folders, background, safety, trouble).
   final String? topic;
 
   @override
@@ -89,6 +92,21 @@ class HelpPage extends StatelessWidget {
                           Expanded(child: Text(s)),
                         ]),
                       ),
+                    if (t['action'] == 'wifi' && Platform.isAndroid) ...[
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: FilledButton.tonalIcon(
+                          icon: const Icon(Icons.wifi),
+                          label: Text(tr('Open WiFi settings')),
+                          onPressed: () async {
+                            try {
+                              await const AndroidIntent(action: 'android.settings.WIFI_SETTINGS').launch();
+                            } catch (_) {}
+                          },
+                        ),
+                      ),
+                    ],
                     if ((t['tip'] as String).isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Container(

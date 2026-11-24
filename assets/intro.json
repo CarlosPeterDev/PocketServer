@@ -1,90 +1,112 @@
 {
- "en": {
-  "slides": [
-   {
-    "id": "welcome",
-    "icon": "dns",
-    "title": "Share files between your devices",
-    "text": "PocketServer turns your phone into a small file box. Your laptop, TV or another phone can open, upload and download your files.",
-    "points": []
-   },
-   {
-    "id": "offline",
-    "icon": "wifi",
-    "title": "It works without internet",
-    "text": "PocketServer only needs a WiFi network or your phone's Hotspot. It does not need internet or mobile data. Files go straight from your phone to the other device through your own WiFi, like a cable without the cable.",
-    "points": [
-     "Uploading and downloading use no mobile data and no internet.",
-     "The speed depends on your WiFi, not on your internet plan.",
-     "Test it yourself: turn on Airplane mode, then turn WiFi back on. Sharing still works."
+  "en": {
+    "slides": [
+      {
+        "id": "welcome",
+        "icon": "dns",
+        "title": "Share files between your devices",
+        "text": "PocketServer turns your phone into a small file box. Your laptop, TV or another phone can open, upload and download your files.",
+        "points": []
+      },
+      {
+        "id": "offline",
+        "icon": "wifi",
+        "title": "It works without internet",
+        "text": "PocketServer only needs a WiFi network or your phone's Hotspot. It does not need internet or mobile data. Files go straight from your phone to the other device through your own WiFi, like a cable without the cable.",
+        "points": [
+          "Uploading and downloading use no mobile data and no internet.",
+          "The speed depends on your WiFi, not on your internet plan.",
+          "Test it yourself: turn on Airplane mode, then turn WiFi back on. Sharing still works."
+        ]
+      },
+      {
+        "id": "private",
+        "icon": "shield",
+        "title": "Private. Not a spy.",
+        "text": "Your files, passwords and settings stay on your phone. We have no server that receives them, and there is no account to create with us.",
+        "points": [
+          "Only devices on your own WiFi that know your address (and password) can reach your files.",
+          "You are in control: switch every server off with one button.",
+          "On Android and iOS the app shows ads. Google loads them separately and they never get your files."
+        ]
+      },
+      {
+        "id": "address",
+        "icon": "pin",
+        "title": "About the address",
+        "text": "Your phone gets its address from the WiFi router, so it can change later. That is normal.",
+        "points": [
+          "If the link stops working, open the app again and use the new address shown on the server card.",
+          "Want the same link every time? You can make the address fixed in your phone WiFi settings. The guide explains how, step by step.",
+          "A fixed address only applies to the WiFi you set it on. On another WiFi, set it again while connected there."
+        ]
+      },
+      {
+        "id": "steps",
+        "icon": "steps",
+        "title": "Ready in 3 steps",
+        "text": "",
+        "points": [
+          "Connect your devices to the same WiFi, or to your phone's Hotspot.",
+          "Switch a server on and open its address on the other device.",
+          "Upload and download files. Stuck? Open the guide any time."
+        ]
+      }
     ]
-   },
-   {
-    "id": "private",
-    "icon": "shield",
-    "title": "Private. Not a spy.",
-    "text": "Your files, passwords and settings stay on your phone. We have no server that receives them, and there is no account to create with us.",
-    "points": [
-     "Only devices on your own WiFi that know your address (and password) can reach your files.",
-     "You are in control: switch every server off with one button.",
-     "On Android and iOS the app shows ads. Google loads them separately and they never get your files."
+  },
+  "ar": {
+    "slides": [
+      {
+        "id": "welcome",
+        "icon": "dns",
+        "title": "شارك الملفات بين أجهزتك",
+        "text": "يحوّل PocketServer هاتفك إلى صندوق ملفات صغير. يستطيع اللابتوب أو التلفزيون أو هاتف آخر فتح ملفاتك ورفعها وتنزيلها.",
+        "points": []
+      },
+      {
+        "id": "offline",
+        "icon": "wifi",
+        "title": "يعمل بدون إنترنت",
+        "text": "يحتاج PocketServer فقط إلى شبكة واي فاي أو الهوت سبوت في هاتفك. لا يحتاج إلى إنترنت ولا إلى باقة بيانات. تنتقل الملفات مباشرة من هاتفك إلى الجهاز الآخر عبر الواي فاي الخاص بك، كأنها كابل بدون كابل.",
+        "points": [
+          "الرفع والتنزيل لا يستهلكان بيانات الهاتف ولا الإنترنت.",
+          "السرعة تعتمد على الواي فاي لديك وليس على باقة الإنترنت.",
+          "جرّب بنفسك: شغّل وضع الطيران ثم شغّل الواي فاي من جديد. ستبقى المشاركة تعمل."
+        ]
+      },
+      {
+        "id": "private",
+        "icon": "shield",
+        "title": "خاص وبدون تجسس",
+        "text": "ملفاتك وكلمات المرور والإعدادات تبقى على هاتفك. لا يوجد لدينا خادم يستقبلها، ولا حساب تنشئه معنا.",
+        "points": [
+          "فقط الأجهزة على الواي فاي الخاص بك والتي تعرف العنوان (وكلمة المرور) تصل إلى ملفاتك.",
+          "أنت المتحكم: أطفئ كل الخوادم بزر واحد.",
+          "على أندرويد وiOS يعرض التطبيق إعلانات. تحمّلها Google بشكل منفصل ولا تصل إلى ملفاتك."
+        ]
+      },
+      {
+        "id": "address",
+        "icon": "pin",
+        "title": "عن العنوان",
+        "text": "يحصل هاتفك على عنوانه من راوتر الواي فاي، لذلك قد يتغير لاحقاً. هذا طبيعي.",
+        "points": [
+          "إذا توقف الرابط عن العمل، افتح التطبيق من جديد واستخدم العنوان الجديد الظاهر في بطاقة الخادم.",
+          "تريد نفس الرابط دائماً؟ يمكنك تثبيت العنوان من إعدادات الواي فاي في هاتفك. الدليل يشرح الطريقة خطوة بخطوة.",
+          "العنوان الثابت ينطبق فقط على الشبكة التي ثبّتّه عليها. في شبكة أخرى ثبّته مرة أخرى وأنت متصل بها."
+        ]
+      },
+      {
+        "id": "steps",
+        "icon": "steps",
+        "title": "جاهز في 3 خطوات",
+        "text": "",
+        "points": [
+          "صِل أجهزتك بنفس الواي فاي، أو بالهوت سبوت في هاتفك.",
+          "شغّل خادماً وافتح عنوانه على الجهاز الآخر.",
+          "ارفع ونزّل الملفات. هل علقت؟ افتح الدليل في أي وقت."
+        ]
+      }
     ]
-   },
-   {
-    "id": "steps",
-    "icon": "steps",
-    "title": "Ready in 3 steps",
-    "text": "",
-    "points": [
-     "Connect your devices to the same WiFi, or to your phone's Hotspot.",
-     "Switch a server on and open its address on the other device.",
-     "Upload and download files. Stuck? Open the guide any time."
-    ]
-   }
-  ]
- },
- "ar": {
-  "slides": [
-   {
-    "id": "welcome",
-    "icon": "dns",
-    "title": "شارك الملفات بين أجهزتك",
-    "text": "يحوّل PocketServer هاتفك إلى صندوق ملفات صغير. يستطيع اللابتوب أو التلفزيون أو هاتف آخر فتح ملفاتك ورفعها وتنزيلها.",
-    "points": []
-   },
-   {
-    "id": "offline",
-    "icon": "wifi",
-    "title": "يعمل بدون إنترنت",
-    "text": "يحتاج PocketServer فقط إلى شبكة واي فاي أو الهوت سبوت في هاتفك. لا يحتاج إلى إنترنت ولا إلى باقة بيانات. تنتقل الملفات مباشرة من هاتفك إلى الجهاز الآخر عبر الواي فاي الخاص بك، كأنها كابل بدون كابل.",
-    "points": [
-     "الرفع والتنزيل لا يستهلكان بيانات الهاتف ولا الإنترنت.",
-     "السرعة تعتمد على الواي فاي لديك وليس على باقة الإنترنت.",
-     "جرّب بنفسك: شغّل وضع الطيران ثم شغّل الواي فاي من جديد. ستبقى المشاركة تعمل."
-    ]
-   },
-   {
-    "id": "private",
-    "icon": "shield",
-    "title": "خاص وبدون تجسس",
-    "text": "ملفاتك وكلمات المرور والإعدادات تبقى على هاتفك. لا يوجد لدينا خادم يستقبلها، ولا حساب تنشئه معنا.",
-    "points": [
-     "فقط الأجهزة على الواي فاي الخاص بك والتي تعرف العنوان (وكلمة المرور) تصل إلى ملفاتك.",
-     "أنت المتحكم: أطفئ كل الخوادم بزر واحد.",
-     "على أندرويد وiOS يعرض التطبيق إعلانات. تحمّلها Google بشكل منفصل ولا تصل إلى ملفاتك."
-    ]
-   },
-   {
-    "id": "steps",
-    "icon": "steps",
-    "title": "جاهز في 3 خطوات",
-    "text": "",
-    "points": [
-     "صِل أجهزتك بنفس الواي فاي، أو بالهوت سبوت في هاتفك.",
-     "شغّل خادماً وافتح عنوانه على الجهاز الآخر.",
-     "ارفع ونزّل الملفات. هل علقت؟ افتح الدليل في أي وقت."
-    ]
-   }
-  ]
- }
+  }
 }

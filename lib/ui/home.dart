@@ -77,6 +77,15 @@ class _HomePageState extends State<HomePage> {
       const SizedBox(height: 4),
       Text(tr('Not found? Both devices must be on the same WiFi (or one on the other\'s hotspot). Turn off "AP / client isolation" in the router and turn off VPN.'),
           style: small),
+      Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: TextButton.icon(
+          style: TextButton.styleFrom(visualDensity: VisualDensity.compact, padding: EdgeInsets.zero),
+          onPressed: () => _help('static'),
+          icon: const Icon(Icons.push_pin_outlined, size: 16),
+          label: Text(tr('Address changes? Make it fixed'), style: const TextStyle(fontSize: 12)),
+        ),
+      ),
     ]);
   }
 

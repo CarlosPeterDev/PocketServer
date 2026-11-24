@@ -1,224 +1,256 @@
 {
- "en": {
-  "topics": [
-   {
-    "id": "start",
-    "icon": "lightbulb",
-    "title": "What is PocketServer?",
-    "intro": "PocketServer turns this phone (or computer) into a small file box. Other devices nearby, like your laptop, your TV or a friend's phone, can open your files, upload new ones or download them. No cables and no internet needed.",
-    "steps": [
-     "Switch a server on in PocketServer.",
-     "On the other device, type the address shown on the server card.",
-     "Browse, upload or download your files."
-    ],
-    "tip": "Your files never go to a company or a website. They only travel inside your own WiFi or hotspot."
-   },
-   {
-    "id": "wifi",
-    "icon": "wifi",
-    "title": "Step 1: Connect both devices",
-    "intro": "PocketServer only works between devices that are on the same network. This is the most common reason something does not connect.",
-    "steps": [
-     "Easiest: connect both devices to the same WiFi (same WiFi name).",
-     "No WiFi? Turn on the Hotspot on the phone that runs PocketServer, then connect the other device to that hotspot.",
-     "Mobile data alone does not work. WiFi or Hotspot must be on.",
-     "The address on each server card starts with numbers like 192.168.1.5. Those numbers are the address of this phone on the network."
-    ],
-    "tip": "Guest WiFi, public WiFi and some routers stop devices from seeing each other. If it never connects, use the phone's Hotspot instead. Turn off any VPN on both devices."
-   },
-   {
-    "id": "web",
-    "icon": "web",
-    "title": "Web hub (the easiest way)",
-    "intro": "A web hub is a page you open in any browser (Chrome, Safari, Edge...). Nothing to install on the other device.",
-    "steps": [
-     "Switch on the Web hub card in PocketServer.",
-     "On the other device, open the browser and type the address from the card, for example http://192.168.1.5:2011 . Or press QR and scan it with the camera.",
-     "Create an account the first time, then sign in. Guest mode shows only public files.",
-     "Use the buttons on the page to upload, download, share links and more."
-    ],
-    "tip": "Type the address exactly, including http:// and the number after the colon."
-   },
-   {
-    "id": "ftp",
-    "icon": "dns",
-    "title": "FTP and FTPS",
-    "intro": "FTP is a classic way to move many files between a phone and a computer, using an FTP app. FTPS is the same thing with a lock: the data is encrypted.",
-    "steps": [
-     "Press Add server, then New FTP / FTPS server.",
-     "Choose a name, a username, a password and a port. If you are not sure, keep the port as it is.",
-     "Switch the server on. The card shows an address like ftp://192.168.1.5:2121",
-     "On the computer, open an FTP app (for example FileZilla) or type the address in the Windows File Explorer address bar.",
-     "Enter the host (the numbers), the port, your username and your password."
-    ],
-    "tip": "At home plain FTP is simpler. Use FTPS on WiFi you do not fully trust. Your FTP app may ask you to accept a certificate: this is normal."
-   },
-   {
-    "id": "webdav",
-    "icon": "storage",
-    "title": "WebDAV (network drive)",
-    "intro": "WebDAV shows the files of this phone like a normal drive on your computer, so you can open and copy files directly.",
-    "steps": [
-     "Press Add server, then New WebDAV server, and choose a username and a password.",
-     "Switch it on and note the address, for example http://192.168.1.5:8080/",
-     "Windows: open This PC, choose Map network drive, paste the address and sign in.",
-     "Mac: in Finder press Go, then Connect to Server, and paste the address.",
-     "Android: use an app that supports WebDAV, for example Solid Explorer or X-plore."
-    ],
-    "tip": "Windows sometimes refuses drives that use plain http. If that happens, use the Web hub or FTP instead: they work everywhere."
-   },
-   {
-    "id": "background",
-    "icon": "battery",
-    "title": "Keep it running",
-    "intro": "Android may stop apps to save battery. PocketServer shows a notification while it runs so it can stay alive.",
-    "steps": [
-     "Allow notifications when Android asks.",
-     "When PocketServer asks about the battery, press Continue and then Allow.",
-     "You can check this at any time in Settings."
-    ],
-    "tip": "Servers stop when you press Stop everything or switch them off."
-   },
-   {
-    "id": "safety",
-    "icon": "shield",
-    "title": "Stay safe",
-    "intro": "Sharing files is safe when you follow a few simple rules.",
-    "steps": [
-     "Use a strong password for FTP and WebDAV.",
-     "Share only on WiFi or hotspots you trust.",
-     "Switch servers off when you are finished.",
-     "Never give your address or password to people you do not know.",
-     "Do not open ports on your router to the internet."
-    ],
-    "tip": "Plain web, FTP and WebDAV are not encrypted: someone on the same WiFi could see the traffic. Use FTPS when in doubt."
-   },
-   {
-    "id": "trouble",
-    "icon": "help",
-    "title": "It does not connect?",
-    "intro": "Go through this list from top to bottom.",
-    "steps": [
-     "Is the server switched on in PocketServer?",
-     "Are both devices on the same WiFi, or is the other device on this phone's hotspot?",
-     "Did you type the address exactly, including the number after the colon?",
-     "Turn off any VPN on both devices.",
-     "Wrong password? Check the username and password in Edit.",
-     "Close and open PocketServer, then try again."
-    ],
-    "tip": ""
-   }
-  ]
- },
- "ar": {
-  "topics": [
-   {
-    "id": "start",
-    "icon": "lightbulb",
-    "title": "ما هو PocketServer؟",
-    "intro": "يحوّل PocketServer هذا الهاتف (أو الحاسوب) إلى صندوق ملفات صغير. الأجهزة القريبة، مثل اللابتوب أو التلفزيون أو هاتف صديقك، تستطيع فتح ملفاتك ورفع ملفات جديدة أو تنزيلها. بدون كابلات وبدون إنترنت.",
-    "steps": [
-     "شغّل أي خادم في PocketServer.",
-     "على الجهاز الآخر اكتب العنوان الظاهر في بطاقة الخادم.",
-     "تصفّح ملفاتك أو ارفعها أو نزّلها."
-    ],
-    "tip": "ملفاتك لا تذهب إلى أي شركة أو موقع. تنتقل فقط داخل شبكة الواي فاي أو الهوت سبوت الخاصة بك."
-   },
-   {
-    "id": "wifi",
-    "icon": "wifi",
-    "title": "الخطوة 1: وصّل الجهازين",
-    "intro": "يعمل PocketServer فقط بين أجهزة على نفس الشبكة. وهذا أكثر سبب شائع لعدم الاتصال.",
-    "steps": [
-     "الأسهل: صِل الجهازين بنفس شبكة الواي فاي (نفس اسم الشبكة).",
-     "لا يوجد واي فاي؟ شغّل الهوت سبوت في الهاتف الذي يعمل عليه PocketServer ثم صِل الجهاز الآخر به.",
-     "بيانات الهاتف وحدها لا تكفي. يجب تشغيل الواي فاي أو الهوت سبوت.",
-     "العنوان في بطاقة كل خادم يبدأ بأرقام مثل 192.168.1.5. هذه الأرقام هي عنوان هذا الهاتف على الشبكة."
-    ],
-    "tip": "شبكات الضيوف والشبكات العامة وبعض أجهزة الراوتر تمنع الأجهزة من رؤية بعضها. إذا لم يتصل أبداً فاستخدم هوت سبوت الهاتف. وأوقف أي VPN على الجهازين."
-   },
-   {
-    "id": "web",
-    "icon": "web",
-    "title": "مركز الويب (الطريقة الأسهل)",
-    "intro": "مركز الويب هو صفحة تفتحها في أي متصفح (كروم، سفاري، إيدج...). لا حاجة لتثبيت أي شيء على الجهاز الآخر.",
-    "steps": [
-     "شغّل بطاقة مركز الويب في PocketServer.",
-     "على الجهاز الآخر افتح المتصفح واكتب العنوان الظاهر في البطاقة، مثل http://192.168.1.5:2011 . أو اضغط QR وامسحه بالكاميرا.",
-     "أنشئ حساباً في أول مرة ثم سجّل الدخول. وضع الضيف يعرض الملفات العامة فقط.",
-     "استخدم الأزرار في الصفحة للرفع والتنزيل ومشاركة الروابط وغيرها."
-    ],
-    "tip": "اكتب العنوان كما هو تماماً، مع http:// والرقم الذي بعد النقطتين."
-   },
-   {
-    "id": "ftp",
-    "icon": "dns",
-    "title": "FTP وFTPS",
-    "intro": "FTP طريقة كلاسيكية لنقل ملفات كثيرة بين الهاتف والحاسوب باستخدام تطبيق FTP. أما FTPS فهو نفسه لكن مع قفل: البيانات تكون مشفّرة.",
-    "steps": [
-     "اضغط إضافة خادم ثم خادم FTP / FTPS جديد.",
-     "اختر اسماً واسم مستخدم وكلمة مرور ومنفذاً. إذا لم تكن متأكداً فاترك المنفذ كما هو.",
-     "شغّل الخادم. ستظهر في البطاقة عنوان مثل ftp://192.168.1.5:2121",
-     "على الحاسوب افتح تطبيق FTP (مثل FileZilla) أو اكتب العنوان في شريط عنوان مستكشف ملفات ويندوز.",
-     "أدخل المضيف (الأرقام) والمنفذ واسم المستخدم وكلمة المرور."
-    ],
-    "tip": "في البيت FTP العادي أبسط. استخدم FTPS على شبكة واي فاي لا تثق بها تماماً. قد يطلب منك تطبيق FTP قبول شهادة: هذا طبيعي."
-   },
-   {
-    "id": "webdav",
-    "icon": "storage",
-    "title": "WebDAV (قرص شبكة)",
-    "intro": "يعرض WebDAV ملفات هذا الهاتف كقرص عادي على حاسوبك، فتفتح الملفات وتنسخها مباشرة.",
-    "steps": [
-     "اضغط إضافة خادم ثم خادم WebDAV جديد، واختر اسم مستخدم وكلمة مرور.",
-     "شغّله وسجّل العنوان، مثل http://192.168.1.5:8080/",
-     "ويندوز: افتح هذا الكمبيوتر، اختر Map network drive، الصق العنوان وسجّل الدخول.",
-     "ماك: في Finder اضغط Go ثم Connect to Server والصق العنوان.",
-     "أندرويد: استخدم تطبيقاً يدعم WebDAV مثل Solid Explorer أو X-plore."
-    ],
-    "tip": "أحياناً يرفض ويندوز الأقراص التي تستخدم http العادي. في هذه الحالة استخدم مركز الويب أو FTP: يعملان في كل مكان."
-   },
-   {
-    "id": "background",
-    "icon": "battery",
-    "title": "أبقِه يعمل",
-    "intro": "قد يوقف أندرويد التطبيقات لتوفير البطارية. يعرض PocketServer إشعاراً أثناء عمله حتى يبقى شغّالاً.",
-    "steps": [
-     "اسمح بالإشعارات عندما يطلب أندرويد ذلك.",
-     "عندما يسأل PocketServer عن البطارية اضغط متابعة ثم سماح.",
-     "يمكنك التحقق من ذلك في أي وقت من الإعدادات."
-    ],
-    "tip": "تتوقف الخوادم عند الضغط على إيقاف الكل أو عند إطفائها."
-   },
-   {
-    "id": "safety",
-    "icon": "shield",
-    "title": "حافظ على أمانك",
-    "intro": "مشاركة الملفات آمنة إذا اتبعت بعض القواعد البسيطة.",
-    "steps": [
-     "استخدم كلمة مرور قوية لـ FTP وWebDAV.",
-     "شارك فقط على شبكات واي فاي أو هوت سبوت تثق بها.",
-     "أطفئ الخوادم عند الانتهاء.",
-     "لا تعطِ عنوانك أو كلمة مرورك لأشخاص لا تعرفهم.",
-     "لا تفتح منافذ في الراوتر نحو الإنترنت."
-    ],
-    "tip": "الويب وFTP وWebDAV العادية غير مشفّرة: قد يرى شخص على نفس الواي فاي حركة البيانات. استخدم FTPS عند الشك."
-   },
-   {
-    "id": "trouble",
-    "icon": "help",
-    "title": "لا يتصل؟",
-    "intro": "راجع هذه القائمة من الأعلى إلى الأسفل.",
-    "steps": [
-     "هل الخادم مشغّل في PocketServer؟",
-     "هل الجهازان على نفس الواي فاي، أو الجهاز الآخر على هوت سبوت هذا الهاتف؟",
-     "هل كتبت العنوان كما هو تماماً، مع الرقم الذي بعد النقطتين؟",
-     "أوقف أي VPN على الجهازين.",
-     "كلمة المرور خاطئة؟ راجع اسم المستخدم وكلمة المرور من تعديل.",
-     "أغلق PocketServer وافتحه ثم حاول مرة أخرى."
-    ],
-    "tip": ""
-   }
-  ]
- }
+  "en": {
+    "topics": [
+      {
+        "id": "start",
+        "icon": "lightbulb",
+        "title": "What is PocketServer?",
+        "intro": "PocketServer turns this phone (or computer) into a small file box. Other devices nearby, like your laptop, your TV or a friend's phone, can open your files, upload new ones or download them. No cables and no internet needed.",
+        "steps": [
+          "Switch a server on in PocketServer.",
+          "On the other device, type the address shown on the server card.",
+          "Browse, upload or download your files."
+        ],
+        "tip": "Your files never go to a company or a website. They only travel inside your own WiFi or hotspot."
+      },
+      {
+        "id": "wifi",
+        "icon": "wifi",
+        "title": "Step 1: Connect both devices",
+        "intro": "PocketServer only works between devices that are on the same network. This is the most common reason something does not connect.",
+        "steps": [
+          "Easiest: connect both devices to the same WiFi (same WiFi name).",
+          "No WiFi? Turn on the Hotspot on the phone that runs PocketServer, then connect the other device to that hotspot.",
+          "Mobile data alone does not work. WiFi or Hotspot must be on.",
+          "The address on each server card starts with numbers like 192.168.1.5. Those numbers are the address of this phone on the network."
+        ],
+        "tip": "Guest WiFi, public WiFi and some routers stop devices from seeing each other. If it never connects, use the phone's Hotspot instead. Turn off any VPN on both devices."
+      },
+      {
+        "id": "static",
+        "icon": "pin",
+        "action": "wifi",
+        "title": "Make the address fixed (static IP)",
+        "intro": "The address of your phone (like 192.168.1.5) is given by the router and it can change when the WiFi reconnects or the phone restarts. Then the old link or bookmark stops working. If you want the same address every time, set a fixed (static) IP for this WiFi on your phone. This is optional: PocketServer works without it.",
+        "steps": [
+          "Open the phone Settings, then WiFi, and tap the name of the WiFi you are connected to (or the gear icon next to it).",
+          "Find Advanced options or IP settings (on some phones: Edit, then Advanced, or View more). Change DHCP to Static.",
+          "In IP address, keep the first three groups of numbers the same as now and change only the last number to one between 100 and 199 that no other device uses, for example 192.168.1.150.",
+          "Leave Gateway and DNS as they are. If they are empty: Gateway = your router address (often 192.168.1.1), DNS = 8.8.8.8. Then tap Save and reconnect to the WiFi.",
+          "Come back to PocketServer: the address shown on the server cards is now your fixed address. Use it from any device on the same WiFi.",
+          "iPhone: Settings, WiFi, tap the (i) next to the network, Configure IP, Manual, then fill in the same numbers."
+        ],
+        "tip": "The setting is saved only for the WiFi you changed. On another WiFi (home, work, a friend's) the address will change again until you repeat these steps while connected to that WiFi. If the address does not work after you set it, choose Automatic (DHCP) again. When other devices connect to your phone's Hotspot, the phone's own address there is usually the same every time."
+      },
+      {
+        "id": "web",
+        "icon": "web",
+        "title": "Web hub (the easiest way)",
+        "intro": "A web hub is a page you open in any browser (Chrome, Safari, Edge...). Nothing to install on the other device.",
+        "steps": [
+          "Switch on the Web hub card in PocketServer.",
+          "On the other device, open the browser and type the address from the card, for example http://192.168.1.5:2011 . Or press QR and scan it with the camera.",
+          "Create an account the first time, then sign in. Guest mode shows only public files.",
+          "Use the buttons on the page to upload, download, share links and more."
+        ],
+        "tip": "Type the address exactly, including http:// and the number after the colon."
+      },
+      {
+        "id": "ftp",
+        "icon": "dns",
+        "title": "FTP and FTPS",
+        "intro": "FTP is a classic way to move many files between a phone and a computer, using an FTP app. FTPS is the same thing with a lock: the data is encrypted.",
+        "steps": [
+          "Press Add server, then New FTP / FTPS server.",
+          "Choose a name, a username, a password and a port. If you are not sure, keep the port as it is.",
+          "Switch the server on. The card shows an address like ftp://192.168.1.5:2121",
+          "On the computer, open an FTP app (for example FileZilla) or type the address in the Windows File Explorer address bar.",
+          "Enter the host (the numbers), the port, your username and your password."
+        ],
+        "tip": "At home plain FTP is simpler. Use FTPS on WiFi you do not fully trust. Your FTP app may ask you to accept a certificate: this is normal."
+      },
+      {
+        "id": "webdav",
+        "icon": "storage",
+        "title": "WebDAV (network drive)",
+        "intro": "WebDAV shows the files of this phone like a normal drive on your computer, so you can open and copy files directly.",
+        "steps": [
+          "Press Add server, then New WebDAV server, and choose a username and a password.",
+          "Switch it on and note the address, for example http://192.168.1.5:8080/",
+          "Windows: open This PC, choose Map network drive, paste the address and sign in.",
+          "Mac: in Finder press Go, then Connect to Server, and paste the address.",
+          "Android: use an app that supports WebDAV, for example Solid Explorer or X-plore."
+        ],
+        "tip": "Windows sometimes refuses drives that use plain http. If that happens, use the Web hub or FTP instead: they work everywhere."
+      },
+      {
+        "id": "background",
+        "icon": "battery",
+        "title": "Keep it running",
+        "intro": "Android may stop apps to save battery. PocketServer shows a notification while it runs so it can stay alive.",
+        "steps": [
+          "Allow notifications when Android asks.",
+          "When PocketServer asks about the battery, press Continue and then Allow.",
+          "You can check this at any time in Settings."
+        ],
+        "tip": "Servers stop when you press Stop everything or switch them off."
+      },
+      {
+        "id": "safety",
+        "icon": "shield",
+        "title": "Stay safe",
+        "intro": "Sharing files is safe when you follow a few simple rules.",
+        "steps": [
+          "Use a strong password for FTP and WebDAV.",
+          "Share only on WiFi or hotspots you trust.",
+          "Switch servers off when you are finished.",
+          "Never give your address or password to people you do not know.",
+          "Do not open ports on your router to the internet."
+        ],
+        "tip": "Plain web, FTP and WebDAV are not encrypted: someone on the same WiFi could see the traffic. Use FTPS when in doubt."
+      },
+      {
+        "id": "trouble",
+        "icon": "help",
+        "title": "It does not connect?",
+        "intro": "Go through this list from top to bottom.",
+        "steps": [
+          "Is the server switched on in PocketServer?",
+          "Are both devices on the same WiFi, or is the other device on this phone's hotspot?",
+          "Did you type the address exactly, including the number after the colon?",
+          "Turn off any VPN on both devices.",
+          "Wrong password? Check the username and password in Edit.",
+          "Close and open PocketServer, then try again."
+        ],
+        "tip": ""
+      }
+    ]
+  },
+  "ar": {
+    "topics": [
+      {
+        "id": "start",
+        "icon": "lightbulb",
+        "title": "ما هو PocketServer؟",
+        "intro": "يحوّل PocketServer هذا الهاتف (أو الحاسوب) إلى صندوق ملفات صغير. الأجهزة القريبة، مثل اللابتوب أو التلفزيون أو هاتف صديقك، تستطيع فتح ملفاتك ورفع ملفات جديدة أو تنزيلها. بدون كابلات وبدون إنترنت.",
+        "steps": [
+          "شغّل أي خادم في PocketServer.",
+          "على الجهاز الآخر اكتب العنوان الظاهر في بطاقة الخادم.",
+          "تصفّح ملفاتك أو ارفعها أو نزّلها."
+        ],
+        "tip": "ملفاتك لا تذهب إلى أي شركة أو موقع. تنتقل فقط داخل شبكة الواي فاي أو الهوت سبوت الخاصة بك."
+      },
+      {
+        "id": "wifi",
+        "icon": "wifi",
+        "title": "الخطوة 1: وصّل الجهازين",
+        "intro": "يعمل PocketServer فقط بين أجهزة على نفس الشبكة. وهذا أكثر سبب شائع لعدم الاتصال.",
+        "steps": [
+          "الأسهل: صِل الجهازين بنفس شبكة الواي فاي (نفس اسم الشبكة).",
+          "لا يوجد واي فاي؟ شغّل الهوت سبوت في الهاتف الذي يعمل عليه PocketServer ثم صِل الجهاز الآخر به.",
+          "بيانات الهاتف وحدها لا تكفي. يجب تشغيل الواي فاي أو الهوت سبوت.",
+          "العنوان في بطاقة كل خادم يبدأ بأرقام مثل 192.168.1.5. هذه الأرقام هي عنوان هذا الهاتف على الشبكة."
+        ],
+        "tip": "شبكات الضيوف والشبكات العامة وبعض أجهزة الراوتر تمنع الأجهزة من رؤية بعضها. إذا لم يتصل أبداً فاستخدم هوت سبوت الهاتف. وأوقف أي VPN على الجهازين."
+      },
+      {
+        "id": "static",
+        "icon": "pin",
+        "action": "wifi",
+        "title": "تثبيت العنوان (IP ثابت)",
+        "intro": "عنوان هاتفك (مثل 192.168.1.5) يعطيه الراوتر وقد يتغير عند إعادة اتصال الواي فاي أو إعادة تشغيل الهاتف، فيتوقف الرابط القديم عن العمل. إذا أردت نفس العنوان في كل مرة، ثبّت عنوان IP لهذه الشبكة على هاتفك. هذا اختياري: PocketServer يعمل بدونه.",
+        "steps": [
+          "افتح إعدادات الهاتف ثم الواي فاي، واضغط على اسم الشبكة المتصل بها (أو على أيقونة الترس بجانبها).",
+          "ابحث عن خيارات متقدمة أو إعدادات IP (في بعض الهواتف: تعديل ثم خيارات متقدمة، أو عرض المزيد). غيّر DHCP إلى ثابت (Static).",
+          "في خانة عنوان IP أبقِ الأرقام الثلاثة الأولى كما هي وغيّر الرقم الأخير فقط إلى رقم بين 100 و199 لا يستخدمه جهاز آخر، مثل 192.168.1.150.",
+          "اترك البوابة (Gateway) وDNS كما هما. إذا كانتا فارغتين: البوابة = عنوان الراوتر (غالباً 192.168.1.1) وDNS = 8.8.8.8. ثم اضغط حفظ وأعد الاتصال بالشبكة.",
+          "ارجع إلى PocketServer: العنوان الظاهر في بطاقات الخوادم هو الآن عنوانك الثابت. استخدمه من أي جهاز على نفس الواي فاي.",
+          "آيفون: الإعدادات ثم الواي فاي، اضغط (i) بجانب الشبكة، ثم Configure IP، ثم Manual، واملأ نفس الأرقام."
+        ],
+        "tip": "الإعداد يُحفظ فقط للشبكة التي غيّرته عليها. في شبكة أخرى (البيت، العمل، بيت صديق) سيتغير العنوان من جديد حتى تكرر هذه الخطوات وأنت متصل بتلك الشبكة. إذا لم يعمل العنوان بعد تثبيته، اختر تلقائي (DHCP) مرة أخرى. وعندما تتصل أجهزة أخرى بهوتسبوت هاتفك، يكون عنوان الهاتف هناك غالباً نفس العنوان في كل مرة."
+      },
+      {
+        "id": "web",
+        "icon": "web",
+        "title": "مركز الويب (الطريقة الأسهل)",
+        "intro": "مركز الويب هو صفحة تفتحها في أي متصفح (كروم، سفاري، إيدج...). لا حاجة لتثبيت أي شيء على الجهاز الآخر.",
+        "steps": [
+          "شغّل بطاقة مركز الويب في PocketServer.",
+          "على الجهاز الآخر افتح المتصفح واكتب العنوان الظاهر في البطاقة، مثل http://192.168.1.5:2011 . أو اضغط QR وامسحه بالكاميرا.",
+          "أنشئ حساباً في أول مرة ثم سجّل الدخول. وضع الضيف يعرض الملفات العامة فقط.",
+          "استخدم الأزرار في الصفحة للرفع والتنزيل ومشاركة الروابط وغيرها."
+        ],
+        "tip": "اكتب العنوان كما هو تماماً، مع http:// والرقم الذي بعد النقطتين."
+      },
+      {
+        "id": "ftp",
+        "icon": "dns",
+        "title": "FTP وFTPS",
+        "intro": "FTP طريقة كلاسيكية لنقل ملفات كثيرة بين الهاتف والحاسوب باستخدام تطبيق FTP. أما FTPS فهو نفسه لكن مع قفل: البيانات تكون مشفّرة.",
+        "steps": [
+          "اضغط إضافة خادم ثم خادم FTP / FTPS جديد.",
+          "اختر اسماً واسم مستخدم وكلمة مرور ومنفذاً. إذا لم تكن متأكداً فاترك المنفذ كما هو.",
+          "شغّل الخادم. ستظهر في البطاقة عنوان مثل ftp://192.168.1.5:2121",
+          "على الحاسوب افتح تطبيق FTP (مثل FileZilla) أو اكتب العنوان في شريط عنوان مستكشف ملفات ويندوز.",
+          "أدخل المضيف (الأرقام) والمنفذ واسم المستخدم وكلمة المرور."
+        ],
+        "tip": "في البيت FTP العادي أبسط. استخدم FTPS على شبكة واي فاي لا تثق بها تماماً. قد يطلب منك تطبيق FTP قبول شهادة: هذا طبيعي."
+      },
+      {
+        "id": "webdav",
+        "icon": "storage",
+        "title": "WebDAV (قرص شبكة)",
+        "intro": "يعرض WebDAV ملفات هذا الهاتف كقرص عادي على حاسوبك، فتفتح الملفات وتنسخها مباشرة.",
+        "steps": [
+          "اضغط إضافة خادم ثم خادم WebDAV جديد، واختر اسم مستخدم وكلمة مرور.",
+          "شغّله وسجّل العنوان، مثل http://192.168.1.5:8080/",
+          "ويندوز: افتح هذا الكمبيوتر، اختر Map network drive، الصق العنوان وسجّل الدخول.",
+          "ماك: في Finder اضغط Go ثم Connect to Server والصق العنوان.",
+          "أندرويد: استخدم تطبيقاً يدعم WebDAV مثل Solid Explorer أو X-plore."
+        ],
+        "tip": "أحياناً يرفض ويندوز الأقراص التي تستخدم http العادي. في هذه الحالة استخدم مركز الويب أو FTP: يعملان في كل مكان."
+      },
+      {
+        "id": "background",
+        "icon": "battery",
+        "title": "أبقِه يعمل",
+        "intro": "قد يوقف أندرويد التطبيقات لتوفير البطارية. يعرض PocketServer إشعاراً أثناء عمله حتى يبقى شغّالاً.",
+        "steps": [
+          "اسمح بالإشعارات عندما يطلب أندرويد ذلك.",
+          "عندما يسأل PocketServer عن البطارية اضغط متابعة ثم سماح.",
+          "يمكنك التحقق من ذلك في أي وقت من الإعدادات."
+        ],
+        "tip": "تتوقف الخوادم عند الضغط على إيقاف الكل أو عند إطفائها."
+      },
+      {
+        "id": "safety",
+        "icon": "shield",
+        "title": "حافظ على أمانك",
+        "intro": "مشاركة الملفات آمنة إذا اتبعت بعض القواعد البسيطة.",
+        "steps": [
+          "استخدم كلمة مرور قوية لـ FTP وWebDAV.",
+          "شارك فقط على شبكات واي فاي أو هوت سبوت تثق بها.",
+          "أطفئ الخوادم عند الانتهاء.",
+          "لا تعطِ عنوانك أو كلمة مرورك لأشخاص لا تعرفهم.",
+          "لا تفتح منافذ في الراوتر نحو الإنترنت."
+        ],
+        "tip": "الويب وFTP وWebDAV العادية غير مشفّرة: قد يرى شخص على نفس الواي فاي حركة البيانات. استخدم FTPS عند الشك."
+      },
+      {
+        "id": "trouble",
+        "icon": "help",
+        "title": "لا يتصل؟",
+        "intro": "راجع هذه القائمة من الأعلى إلى الأسفل.",
+        "steps": [
+          "هل الخادم مشغّل في PocketServer؟",
+          "هل الجهازان على نفس الواي فاي، أو الجهاز الآخر على هوت سبوت هذا الهاتف؟",
+          "هل كتبت العنوان كما هو تماماً، مع الرقم الذي بعد النقطتين؟",
+          "أوقف أي VPN على الجهازين.",
+          "كلمة المرور خاطئة؟ راجع اسم المستخدم وكلمة المرور من تعديل.",
+          "أغلق PocketServer وافتحه ثم حاول مرة أخرى."
+        ],
+        "tip": ""
+      }
+    ]
+  }
 }
